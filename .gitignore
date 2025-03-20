@@ -1,0 +1,10 @@
+# Ignorer l'environnement virtuel
+serverweb/venv/
+
+# Ignorer les fichiers de configuration et secrets
+serverweb/.env
+
+# Ignorer les fichiers temporaires et logs
+__pycache__/
+*.log
+*.sqlite3
