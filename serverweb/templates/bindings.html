@@ -1,0 +1,179 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>Netilion Accounts</title>
+	<style>
+		body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; flex-direction: column; margin: 0; background-color: #f4f4f9; color: #333; }
+		.container { width: 90%; text-align: center; align-items: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; }
+		h1 { font-size: 1.8em; color: #1971c2; margin-bottom: 20px; padding: 10px 50px; }
+		.nav-bar { text-align: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; width: 90%; }
+		.nav-bar a { justify-content: space-around; color: #1971c2; text-decoration: none; padding: 5px 30px; font-weight: bold; }
+		.nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
+		.nav-bar .a-logout {color: #000000;}
+		.nav-bar .a-logout:hover {background: #f8a6a6;}
+		.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+		.table-header,
+		.table-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 20px; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; }
+		.table-header { font-weight: bold; background: #e0e0e0; }
+		.table-row input { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+		.table-row select { width: 90%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+		.btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 50; font-size: 14px; }
+		.btn-danger { background: #c21d1d; width: auto; align-self: center; padding: 5px 10px; }
+		.btn:hover { background-color: #0e5a91; }
+		.btn-danger:hover { background-color: #a91d1d; }
+		.btn-save { background-color: #1971c2; color: white; }
+		.btn-save:hover, .file-label:hover { opacity: 0.8; }
+
+	</style>
+
+	<script>
+		let bindings = [];
+		let accounts = [];
+
+		function fetchData() {
+		  Promise.all([
+			fetch("/api/get_netilion_config").then(res => res.json()),
+			fetch("/api/get_bindings").then(res => res.json())
+		  ])
+		  .then(([netilionData, bindingsData]) => {
+			accounts = netilionData;
+			bindings = bindingsData;
+			renderBindings();
+		  })
+		  .catch(error => console.error("Erreur lors du chargement des données:", error));
+		}
+
+		function renderBindings() {
+			let container = document.getElementById("bindings-list");
+			container.innerHTML = ""; // Nettoyage avant affichage
+
+			bindings.forEach((binding, index) => {
+				let row = document.createElement("div");
+				row.classList.add("table-row");
+
+				// Récupérer les bindable_objects du compte Netilion lié à ce binding
+				let netilionAccount = accounts.find(acc => acc.id === binding.netilion_account_id);
+				let bindableOptions = netilionAccount ? netilionAccount.bindable_objects : [];
+
+				row.innerHTML = `
+					<div><input type="text" value="${binding.identification}" onchange="updateBinding(${index}, 'identification', this.value)"></div>
+					<div>
+						<select onchange="updateBinding(${index}, 'protocol', this.value)">
+							<option value="RTU" ${binding.protocol === "RTU" ? "selected" : ""}>RTU</option>
+							<option value="TCP" ${binding.protocol === "TCP" ? "selected" : ""}>TCP</option>
+						</select>
+					</div>
+					<div><input type="text" value="${binding.slaveadress}" onchange="updateBinding(${index}, 'slaveadress', this.value)"></div>
+					<div><input type="text" value="${binding.registeradress}" onchange="updateBinding(${index}, 'registeradress', this.value)"></div>
+					<div>
+						<select onchange="updateBinding(${index}, 'datatype', this.value)">
+							<option value="float32" ${binding.datatype === "float32" ? "selected" : ""}>Float32</option>
+							<option value="int16" ${binding.datatype === "int16" ? "selected" : ""}>Int16</option>
+							<option value="int32" ${binding.datatype === "int32" ? "selected" : ""}>Int32</option>
+						</select>
+					</div>
+					<div>
+						<select onchange="updateBinding(${index}, 'netilion_account_id', this.value)">
+							${accounts.map(acc => `<option value="${acc.id}" ${acc.id === binding.netilion_account_id ? "selected" : ""}>${acc.identification}</option>`).join("")}
+						</select>
+					</div>
+					<div>
+						<select onchange="updateBinding(${index}, 'netilion_binding_id', this.value)">
+							${bindableOptions.map(obj => `<option value="${obj.id}" ${obj.id === binding.netilion_binding_id ? "selected" : ""}>${obj.description || obj.serial_number || obj.tag}</option>`).join("")}
+						</select>
+					</div>
+					<div><button class="btn btn-danger" onclick="deleteBinding(${index})">Supprimer</button></div>
+				`;
+
+				container.appendChild(row);
+			});
+		}
+
+
+		function updateBinding(index, field, value) {
+		  bindings[index][field] = value;
+
+		  // Si on change de compte Netilion, on reset le netilion_binding_id
+		  if (field === "netilion_account_id") {
+			bindings[index].netilion_binding_id = "";
+		  }
+
+		  renderBindings(); // Pour rafraîchir les objets Netilion associés
+		}
+
+		function addBinding() {
+		  let newBinding = {
+			identification: "Nouveau Binding",
+			protocol: "RTU",
+			slaveadress: "1",
+			registeradress: "4000",
+			datatype: "float32",
+			netilion_account_id: accounts.length > 0 ? accounts[0].id : "",
+			netilion_binding_id: ""
+		  };
+		  bindings.push(newBinding);
+		  renderBindings();
+		}
+
+		function deleteBinding(index) {
+		  bindings.splice(index, 1);
+		  renderBindings();
+		}
+
+		function saveBindings() {
+		  fetch("/api/save_bindings", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(bindings)
+		  })
+		  		.then(response => response.json())  // Convertit la réponse en JSON
+				.then(data => {
+					if (data.status === "success") {
+						alert("✅ Bindings enregistrés !");
+					} else {
+						alert("❌ Erreur lors de l'enregistrement !");
+					}
+				})
+				.catch(error => console.error("Erreur lors de l'enregistrement:", error));
+		}
+
+		document.addEventListener("DOMContentLoaded", fetchData);
+
+	</script>
+</head>
+<body>
+    <!-- Bandeau de navigation -->
+    <div class="nav-bar">
+        <a href="{{ url_for('web.overview') }}">Overview</a>
+        <a href="{{ url_for('web.networks') }}">Networks</a>
+        <a href="{{ url_for('web.modbus') }}">Modbus</a>
+        <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
+        <a href="{{ url_for('web.bindings') }}">Bindings</a>
+        <a href="{{ url_for('web.misc') }}">Miscellaneous</a>
+		<a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
+    </div>
+
+    <div class="container">
+        <h1>Bindings</h1>
+
+        <!-- En-tête des colonnes -->
+        <div class="table-header">
+            <div>Identification</div>
+            <div>Protocole</div>
+            <div>Slave Address</div>
+            <div>Register Address</div>
+            <div>Data Type</div>
+            <div>Compte Netilion</div>
+            <div>Objet Bindable</div>
+            <div>Actions</div>
+        </div>
+
+        <!-- Conteneur des bindings -->
+        <div id="bindings-list"></div>
+
+        <!-- Bouton pour ajouter un binding -->
+        <button class="btn" onclick="addBinding()">Ajouter un binding</button>
+		<button class="btn" onclick="saveBindings()">Enregistrer</button>
+    </div>
+</body>
+</html>

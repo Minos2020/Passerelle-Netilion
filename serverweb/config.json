@@ -1,0 +1,244 @@
+{
+    "networks": [
+        {
+            "identification": "configuration",
+            "description": "This network configuration will be used to serve the configuration webserver",
+            "ipadress": "192.168.44.88",
+            "subnetmask": "255.255.255.0",
+            "gateway": "192.168.44.1",
+            "dns": "192.168.44.1",
+            "dhcp": "off"
+        },
+        {
+            "identification": "internet",
+            "description": "This network configuration will be used to access Netilion and the NTP clock server)",
+            "ipadress": "",
+            "subnetmask": "",
+            "gateway": "",
+            "dns": "",
+            "dhcp": "on"
+        },
+        {
+            "identification": "modbus",
+            "description": "This network configuration will be used to access devices on the local modbus TCP network (if different than the internet access network)",
+            "ipadress": "192.168.200.40",
+            "subnetmask": "255.255.255.0",
+            "gateway": "192.168.44.1",
+            "dns": "192.168.44.1",
+            "dhcp": "off"
+        }
+    ],
+    "credentials": {
+        "username": "admin",
+        "password": "malo"
+    },
+    "modbus": {
+        "rate": "8",
+        "waitdelay": "1",
+        "modbusRTU": {
+            "baudrate": "19200",
+            "parity": "1",
+            "stopbits": "1"
+        }
+    },
+    "netilion": {
+        "accounts": [
+            {
+                "bindable_objects": [
+                    {
+                        "description": "Blabla",
+                        "id": "1999331",
+                        "serial_number": "020202020202",
+                        "type": "asset"
+                    },
+                    {
+                        "description": "Concentrateur de signaux HART",
+                        "id": "2159190",
+                        "serial_number": "3022228005",
+                        "type": "asset"
+                    },
+                    {
+                        "description": "",
+                        "id": "2163151",
+                        "serial_number": "MC042B04484",
+                        "type": "asset"
+                    },
+                    {
+                        "description": "",
+                        "id": "2163177",
+                        "serial_number": "N7044904428",
+                        "type": "asset"
+                    },
+                    {
+                        "id": "1809662",
+                        "tag": "Test_Tag",
+                        "type": "instrumentation"
+                    }
+                ],
+                "credentials": {
+                    "client_id": "client_id_1",
+                    "client_secret": "client_secret_1",
+                    "pass": "password_1",
+                    "username": "username_1"
+                },
+                "id": "1",
+                "identification": "Compte Malo Forrest"
+            },
+            {
+                "bindable_objects": [
+                    {
+                        "description": "Blabla22",
+                        "id": "1999331",
+                        "serial_number": "020202020202",
+                        "type": "asset"
+                    },
+                    {
+                        "description": "Concentrateur de signaux HART22",
+                        "id": "215919022",
+                        "serial_number": "302222800522",
+                        "type": "asset"
+                    },
+                    {
+                        "description": "",
+                        "id": "216315122",
+                        "serial_number": "MC042B0448422",
+                        "type": "asset"
+                    },
+                    {
+                        "description": "22",
+                        "id": "216317722",
+                        "serial_number": "N704490442822",
+                        "type": "asset"
+                    },
+                    {
+                        "id": "18096622",
+                        "tag": "Test_Tag2",
+                        "type": "instrumentation"
+                    }
+                ],
+                "credentials": {
+                    "client_id": "client_id_2",
+                    "client_secret": "client_secret_2",
+                    "pass": "password_2",
+                    "username": "username_2"
+                },
+                "id": "2",
+                "identification": "Compte Salle Eur\u00eaka"
+            },
+            {
+                "bindable_objects": [],
+                "credentials": {
+                    "client_id": "",
+                    "client_secret": "",
+                    "pass": "",
+                    "username": ""
+                },
+                "id": "3",
+                "identification": "Patate"
+            },
+            {
+                "bindable_objects": [],
+                "credentials": {
+                    "client_id": "",
+                    "client_secret": "",
+                    "pass": "",
+                    "username": ""
+                },
+                "id": "4",
+                "identification": "Choufleur"
+            }
+        ]
+    },
+    "bindings": [
+        {
+            "datatype": "float32",
+            "identification": "Niveau cuve externe",
+            "netilion_account_id": "1",
+            "netilion_binding_id": "2159190",
+            "protocol": "RTU",
+            "registeradress": "4204",
+            "slaveadress": "1"
+        },
+        {
+            "datatype": "float32",
+            "identification": "Consommation groupe froid",
+            "netilion_account_id": "1",
+            "netilion_binding_id": "1999331",
+            "protocol": "RTU",
+            "registeradress": "4206",
+            "slaveadress": "1"
+        },
+        {
+            "datatype": "float32",
+            "identification": "D\u00e9bit rejet",
+            "netilion_account_id": "2",
+            "netilion_binding_id": "1809662",
+            "protocol": "TCP",
+            "registeradress": "4208",
+            "slaveadress": "1"
+        },
+        {
+            "datatype": "float32",
+            "identification": "D\u00e9bit pompage eau",
+            "netilion_account_id": "2",
+            "netilion_binding_id": "2163151",
+            "protocol": "TCP",
+            "registeradress": "4232",
+            "slaveadress": "192.168.200.23"
+        },
+        {
+            "datatype": "float32",
+            "identification": "Nouveau Binding",
+            "netilion_account_id": "1",
+            "netilion_binding_id": "",
+            "protocol": "RTU",
+            "registeradress": "4000",
+            "slaveadress": "1"
+        },
+        {
+            "datatype": "float32",
+            "identification": "Nouveau Binding",
+            "netilion_account_id": "3",
+            "netilion_binding_id": "",
+            "protocol": "RTU",
+            "registeradress": "4000",
+            "slaveadress": "1"
+        },
+        {
+            "datatype": "float32",
+            "identification": "Nouveau Binding",
+            "netilion_account_id": "3",
+            "netilion_binding_id": "",
+            "protocol": "RTU",
+            "registeradress": "4000",
+            "slaveadress": "1"
+        },
+        {
+            "identification": "Nouveau Binding",
+            "protocol": "RTU",
+            "slaveadress": "1",
+            "registeradress": "4000",
+            "datatype": "float32",
+            "netilion_account_id": "1",
+            "netilion_binding_id": ""
+        },
+        {
+            "identification": "Nouveau Binding",
+            "protocol": "RTU",
+            "slaveadress": "1",
+            "registeradress": "4000",
+            "datatype": "float32",
+            "netilion_account_id": "1",
+            "netilion_binding_id": ""
+        },
+        {
+            "identification": "Nouveau Binding",
+            "protocol": "RTU",
+            "slaveadress": "1",
+            "registeradress": "4000",
+            "datatype": "float32",
+            "netilion_account_id": "1",
+            "netilion_binding_id": ""
+        }
+    ]
+}

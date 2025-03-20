@@ -1,0 +1,24 @@
+from flask import Blueprint, render_template
+
+web_bp = Blueprint('web', __name__)
+
+@web_bp.route('/')
+def overview():
+    return render_template('overview.html')
+
+@web_bp.route('/settings')
+def settings():
+    with open('config.json') as f:
+   @web_bp.route('/settings')
+def settings():
+    # Récupérer les données du fichier de configuration pour les afficher
+    with open('config.json') as f:
+        config = json.load(f)
+    return render_template('settings.html', config=config)@web_bp.route('/settings')
+def settings():
+    # Récupérer les données du fichier de configuration pour les afficher
+    with open('config.json') as f:
+        config = json.load(f)
+    return render_template('settings.html', config=config) config = json.load(f)
+    return render_template('settings.html')
+

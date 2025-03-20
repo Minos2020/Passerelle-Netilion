@@ -1,0 +1,239 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Overview</title>
+  <style>
+		body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; flex-direction: column; margin: 0; background-color: #f4f4f9; color: #333; }
+		.container { display: flex; flex-direction: column; width: 90%; text-align: center; align-items: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; }
+		.container-internal {display: flex; flex-direction: column; width: 60%; text-align: center; align-items: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px;}
+    .cards-container { place-content: center; max-width: 100%; display: flex; flex-wrap: wrap; gap: 20px; margin: 20px 0px 10px; }
+    h1 { color: #1971c2; }
+		.nav-bar { text-align: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; width: 90%; }
+		.nav-bar a { justify-content: space-around; color: #1971c2; text-decoration: none; padding: 5px 30px; font-weight: bold; }
+		.nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
+    .nav-bar .a-logout {color: #000000;}
+    .nav-bar .a-logout:hover {background: #f8a6a6;}
+
+		.box { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background: #fff; text-align: center; width: 80%; }
+		.box h2 { margin: 10px 0px 20px; color: #1971c2; }
+		.info { font-size: 14px; margin: 5px 0; }
+		.button-container { display: flex; justify-content: center; margin-top: 20px; gap: 10px; }
+    
+    label.file-label { padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; margin-top: 10px; width: 50; font-size: 14px; background-color: #28a745; color: white;}
+		input[type="file"] { display: none; }
+		
+    .btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 50; font-size: 14px; }
+    .btn-danger { background: #c21d1d; width: auto; align-self: center; padding: 5px 10px; }
+    .btn:hover { background-color: #0e5a91; }
+    .btn-danger:hover { background-color: #a91d1d; }
+    .btn-save { background-color: #1971c2; color: white; }
+		.btn-save:hover, .file-label:hover { opacity: 0.8; }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 2fr; /* Deux colonnes : une pour les clés, l'autre pour les valeurs */
+        grid-gap: 5px;
+        width:min-content;
+        max-width: 300px;
+        background: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
+    }
+    .grid-header {
+        grid-column: span 2; /* Étend le titre sur les 2 colonnes */
+        background: #cae5fd;
+        text-align: center;
+        justify-content: center;
+        font-weight: bold;
+        padding: 8px;
+        border-radius: 8px;
+        margin-bottom: 5px;
+    }
+    .grid-key {background: #f3f3f3;padding: 5px 10px 5px;font-weight: bold;text-align: left; align-content: center; white-space: nowrap;}
+    .grid-value { background: #fafafa; padding: 5px 30px 5px;text-align: center; align-content: center; justify-content: center; white-space: nowrap;}
+    .grid-singleH { background: #cae5fd; text-align: center; font-weight: bold; padding: 8px;  ; border-radius: 8px; align-content: center; justify-content: center;white-space: nowrap;}
+    .grid-singleV {  padding: 5px 40px 5px; font-weight: bold; font-size:xx-large ; text-align: center; align-content: center; justify-content: center; white-space: nowrap;}
+    .summary-icon img {
+        width: 30px;  /* Taille de l'icône */
+        height: 30px;
+        margin: 15px 5px 5px;
+    }
+</style>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+    fetch("/api/get_config")
+        .then(response => response.json())
+        .then(data => {
+
+          console.log("Données reçues :", data);
+            // Résumé condensé
+            let summaryContainer = document.getElementById("summary");
+            summaryContainer.innerHTML = ""; // Clear before rendering
+            let divSummary = document.createElement("div");
+            divSummary.classList.add("grid-container");
+
+            let numNetilionAccounts = data.netilion.accounts.length;
+            let numBindings = data.bindings.length;
+
+            divSummary.innerHTML = `
+                  <div class="grid-singleH">Netilion accounts<div class="summary-icon"><img src="/static/icons/netilion_accounts.svg"></div></div>
+                  <div class="grid-singleV">${numNetilionAccounts}</div>            
+            `;
+            summaryContainer.appendChild(divSummary);
+            let divSummary2 = document.createElement("div");
+            divSummary2.classList.add("grid-container");
+            divSummary2.innerHTML = `
+                  <div class="grid-singleH">Bindings <div class="summary-icon"><img src="/static/icons/bindings.svg"></div></div>
+                  <div class="grid-singleV">${numBindings}</div>
+            `;
+            summaryContainer.appendChild(divSummary2);
+
+            // Networks
+            let networkContainer = document.getElementById("networks");
+            networkContainer.innerHTML = ""; // Clear before rendering
+
+            data.networks.forEach((net) => {
+                let div = document.createElement("div");
+                div.classList.add("grid-container");
+
+                div.innerHTML = `
+                    <div class="grid-header">${net.identification}</div>
+                    <div class="grid-key">IP Address</div><div class="grid-value">${net.ipadress}</div>
+                    <div class="grid-key">Subnet Mask</div><div class="grid-value">${net.subnetmask}</div>
+                    <div class="grid-key">Gateway</div><div class="grid-value">${net.gateway}</div>
+                    <div class="grid-key">DHCP</div><div class="grid-value">${net.dhcp}</div>
+                `;
+
+                networkContainer.appendChild(div);
+            });
+            
+            // Modbus settings
+            let modbusContainer = document.getElementById("modbus");
+            modbusContainer.innerHTML = ""; // Clear before rendering
+            let divModbus = document.createElement("div");
+            divModbus.classList.add("grid-container");
+            divModbus.innerHTML = `
+                <div class="grid-key">Rate</div><div class="grid-value">${data.modbus.rate}</div>
+                <div class="grid-key">Modbus RTU Baudrate</div><div class="grid-value">${data.modbus.modbusRTU.baudrate}</div>
+                <div class="grid-key">Parity</div><div class="grid-value">${data.modbus.modbusRTU.parity}</div>
+                <div class="grid-key">Stop bits</div><div class="grid-value">${data.modbus.modbusRTU.stopbits}</div>
+            `;
+
+            modbusContainer.appendChild(divModbus);
+
+            // Netilion accounts
+            let netilionContainer = document.getElementById("netilion-accounts");
+            netilionContainer.innerHTML = ""; // Clear before rendering
+
+            data.netilion.accounts.forEach((account, index) => {
+              let div = document.createElement("div");
+              let bindingCount = data.bindings.filter(obj => obj.netilion_account_id === account.id).length;
+              div.classList.add("grid-container");
+              div.innerHTML = `
+                <div class="grid-header">${account.identification}</div>
+                <div class="grid-key">Bindings</div><div class="grid-value">${bindingCount}</div>
+              `;
+              
+
+              netilionContainer.appendChild(div);
+            });
+          });
+    });
+
+    // Fonction pour télécharger la configuration
+    function saveConfig() {
+        fetch("/api/get_config")
+            .then(response => response.json())
+            .then(data => {
+                let blob = new Blob([JSON.stringify(data, null, 2)], { type: "text/plain" });
+                let a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "configuration.txt";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+    }
+
+    // Fonction pour charger une configuration depuis un fichier
+    function loadConfig(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function (e) {
+            let content = e.target.result;
+            try {
+                let jsonData = JSON.parse(content);
+                fetch("/api/load_config", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(jsonData)
+                }).then(response => response.json())
+                  .then(data => {
+              if (data.status === "success") {
+                alert("✅ Configuration modbus enregistrée !");
+                window.location.reload(); // 🔄 Rechargement immédiat de la page
+              } else {
+                alert("❌ Erreur lors de l'enregistrement !");
+              }
+            })
+            } catch (error) {
+                alert("Erreur : fichier de configuration invalide.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+  </script>
+</head>
+<body>
+  <!-- Bandeau de navigation -->
+  <div class="nav-bar">
+      <a href="{{ url_for('web.overview') }}">Overview</a>
+      <a href="{{ url_for('web.networks') }}">Networks</a>
+      <a href="{{ url_for('web.modbus') }}">Modbus</a>
+      <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
+      <a href="{{ url_for('web.bindings') }}">Bindings</a>
+      <a href="{{ url_for('web.misc') }}">Miscellaneous</a>
+      <a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
+  </div>
+
+  
+
+  <div class="container-internal">
+    <h1>Overview</h1>
+
+    <!-- Résumé global condensé -->
+    <div class="box">
+      <div class="cards-container" id="summary"></div>
+    </div>
+
+    <div class="box">
+      <h2>Networks</h2>
+      <div class="cards-container" id="networks"></div>
+    </div>
+    
+    <div class="box">
+      <h2>Modbus settings</h2>
+      <div class="cards-container" id="modbus"></div>
+    </div>
+
+    <div class="box">
+      <h2>Netilion accounts</h2>
+      <div class="cards-container" id="netilion-accounts"></div>
+    </div>
+
+    <!-- Boutons pour enregistrer et charger la config -->
+    <div class="button-container">
+      <button class="btn" onclick="saveConfig()">Enregistrer la configuration</button>
+      <label for="file-input" class="file-label">Charger une configuration</label>
+      <input type="file" id="file-input" accept=".txt" onchange="loadConfig(event)">
+	  </div>
+
+
+  </div>
+</body>
+</html>
