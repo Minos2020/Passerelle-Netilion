@@ -33,7 +33,7 @@
         "password": "malo"
     },
     "modbus": {
-        "rate": "8",
+        "rate": "3",
         "waitdelay": "1",
         "modbusRTU": {
             "baudrate": "19200",
@@ -169,76 +169,22 @@
             "slaveadress": "1"
         },
         {
-            "datatype": "float32",
+            "datatype": "FLOAT_B",
             "identification": "D\u00e9bit rejet",
             "netilion_account_id": "2",
             "netilion_binding_id": "1809662",
             "protocol": "TCP",
-            "registeradress": "4208",
-            "slaveadress": "1"
+            "registeradress": "4204",
+            "slaveadress": "192.168.200.23"
         },
         {
-            "datatype": "float32",
+            "datatype": "FLOAT_B",
             "identification": "D\u00e9bit pompage eau",
             "netilion_account_id": "2",
             "netilion_binding_id": "2163151",
             "protocol": "TCP",
-            "registeradress": "4232",
+            "registeradress": "4208",
             "slaveadress": "192.168.200.23"
-        },
-        {
-            "datatype": "float32",
-            "identification": "Nouveau Binding",
-            "netilion_account_id": "1",
-            "netilion_binding_id": "",
-            "protocol": "RTU",
-            "registeradress": "4000",
-            "slaveadress": "1"
-        },
-        {
-            "datatype": "float32",
-            "identification": "Nouveau Binding",
-            "netilion_account_id": "3",
-            "netilion_binding_id": "",
-            "protocol": "RTU",
-            "registeradress": "4000",
-            "slaveadress": "1"
-        },
-        {
-            "datatype": "float32",
-            "identification": "Nouveau Binding",
-            "netilion_account_id": "3",
-            "netilion_binding_id": "",
-            "protocol": "RTU",
-            "registeradress": "4000",
-            "slaveadress": "1"
-        },
-        {
-            "identification": "Nouveau Binding",
-            "protocol": "RTU",
-            "slaveadress": "1",
-            "registeradress": "4000",
-            "datatype": "float32",
-            "netilion_account_id": "1",
-            "netilion_binding_id": ""
-        },
-        {
-            "identification": "Nouveau Binding",
-            "protocol": "RTU",
-            "slaveadress": "1",
-            "registeradress": "4000",
-            "datatype": "float32",
-            "netilion_account_id": "1",
-            "netilion_binding_id": ""
-        },
-        {
-            "identification": "Nouveau Binding",
-            "protocol": "RTU",
-            "slaveadress": "1",
-            "registeradress": "4000",
-            "datatype": "float32",
-            "netilion_account_id": "1",
-            "netilion_binding_id": ""
         }
     ]
 }
