@@ -82,7 +82,7 @@
 							${bindableOptions.map(obj => `<option value="${obj.id}" ${obj.id === binding.netilion_binding_id ? "selected" : ""}>${obj.description || obj.serial_number || obj.tag}</option>`).join("")}
 						</select>
 					</div>
-					<div><button class="btn btn-danger" onclick="deleteBinding(${index})">Supprimer</button></div>
+					<div><button class="btn btn-save" onclick="">Test</button><button class="btn btn-danger" onclick="deleteBinding(${index})">Supprimer</button></div>
 				`;
 
 				container.appendChild(row);
