@@ -26,7 +26,7 @@ class NetilionAuth:
     )
 
 
-    def _request_token(self, grant_type, extra_data=None):
+    def _request_token(self, grant_type, extra_data=None) -> None:
         """
         Demande un token d'accès OAuth2 (soit initial, soit via refresh).
         """

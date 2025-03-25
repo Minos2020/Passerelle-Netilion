@@ -9,7 +9,7 @@ api_bp = Blueprint('api', __name__)
 
 @api_bp.route('/get_config', methods=['GET'])
 def get_config():
-    return jsonify(NETILION_CONFIG)
+    return jsonify(GLOBAL_CONFIG)
 
 @api_bp.route('/load_config', methods=['POST'])
 def load_config():
@@ -93,8 +93,8 @@ def modbus_test():
 
 @api_bp.route('/get_networks_config', methods=['GET'])
 def get_networks_config():
-    netilion_config = get_config_value('networks')
-    return jsonify(netilion_config)
+    networks_config = get_config_value('networks')
+    return jsonify(networks_config)
 
 @api_bp.route('/save_networks_config', methods=['POST'])
 def save_networks_config():
