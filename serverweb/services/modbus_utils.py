@@ -1,7 +1,8 @@
-from config_utils import*
+from services.config_utils import*
 import struct
 import time
 import json
+from flask import  jsonify
 from pymodbus.client import ModbusTcpClient #, ModbusSerialClient
 from datetime import datetime
 
@@ -10,11 +11,26 @@ MODBUS_CONFIG = get_config_value('modbus')
 
 BINDINGS = get_config_value('bindings')
 
-def read_register(client, slave_address, register_address, count, datatype):
+counts = {
+    "INT16": 1,
+    "UINT16": 1,
+    "INT32_B": 2,
+    "INT32_L": 2,
+    "UINT32_B": 2,
+    "UINT32_L": 2,
+    "FLOAT_B": 2,
+    "FLOAT_L": 2,
+    "DOUBLE_B": 4,
+    "DOUBLE_L": 4
+}
+
+def read_register(client, slave_address, register_address, datatype):
     """ Lire un registre Modbus de type float32 """
     try:
         if isinstance(client, ModbusTcpClient):
-            result = client.read_holding_registers(int(register_address), count=int(count))
+            #print(datatype)
+            #print("Count : " + str(counts[datatype]))
+            result = client.read_holding_registers(int(register_address), count=counts[datatype])
         # elif isinstance(client, ModbusSerialClient):
         #     result = client.read_holding_registers(register_address, count, unit=slave_address)
         else:
@@ -28,7 +44,7 @@ def read_register(client, slave_address, register_address, count, datatype):
             data = result.registers  # Par exemple, pour 1 registre de 16 bits
             return convert_modbus_data(data, datatype)
     except Exception as e:
-        print(f"Erreur dans la lecture du registre Modbus: {e}")
+        print(f"Erreur lecture registre Modbus: {e}")
         return None
 
 def modbus_tcp_client(ip, port=502):
@@ -42,7 +58,6 @@ def modbus_tcp_client(ip, port=502):
 #     client = ModbusSerialClient(port=port, baudrate=baudrate, parity=parity, stopbits=stopbits)
 #     client.connect()
 #     return client
-
 
 def convert_modbus_data(data, datatype):
     """
@@ -107,7 +122,7 @@ def main():
                 print(f"Protocole inconnu pour l'identification {binding['identification']}")
                 continue
 
-            valeur = read_register(client, binding["slaveadress"], binding["registeradress"], 2, binding["datatype"])
+            valeur = read_register(client, binding["slaveadress"], binding["registeradress"], binding["datatype"])
 
             if valeur is not None:
                 timestamp = get_current_time()

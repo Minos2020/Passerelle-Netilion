@@ -1,204 +1,40 @@
-{"identification": "D\u00e9bit rejet", "value": 17462, "timestamp": "2025-03-21T14:26:00Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0, "timestamp": "2025-03-21T14:26:08Z"}
-{"identification": "D\u00e9bit rejet", "value": 17480, "timestamp": "2025-03-21T14:35:54Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0, "timestamp": "2025-03-21T14:36:02Z"}
-{"identification": "D\u00e9bit rejet", "value": [17475, 27197], "timestamp": "2025-03-21T14:42:57Z"}
-{"identification": "D\u00e9bit pompage eau", "value": [0, 0], "timestamp": "2025-03-21T14:43:05Z"}
-{"identification": "D\u00e9bit rejet", "value": 763.0930786132812, "timestamp": "2025-03-21T14:43:55Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T14:44:03Z"}
-{"identification": "D\u00e9bit rejet", "value": -3.585257958571564e-12, "timestamp": "2025-03-21T14:44:13Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T14:44:21Z"}
-{"identification": "D\u00e9bit rejet", "value": 762.2131958007812, "timestamp": "2025-03-21T14:44:26Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T14:44:34Z"}
-{"identification": "D\u00e9bit rejet", "value": 713.60400390625, "timestamp": "2025-03-21T14:44:39Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T14:44:42Z"}
-{"identification": "D\u00e9bit rejet", "value": 791.709716796875, "timestamp": "2025-03-21T14:48:31.507164Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T14:48:34.520923Z"}
-{"identification": "D\u00e9bit rejet", "value": 806.2196655273438, "timestamp": "2025-03-21T22:17:43.760947Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:17:46.770092Z"}
-{"identification": "D\u00e9bit rejet", "value": 775.93505859375, "timestamp": "2025-03-21T22:19:57.080802Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:19:57.093402Z"}
-{"identification": "D\u00e9bit rejet", "value": 756.0687255859375, "timestamp": "2025-03-21T22:20:00.106682Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:20:00.117938Z"}
-{"identification": "D\u00e9bit rejet", "value": 742.0439453125, "timestamp": "2025-03-21T22:20:03.132334Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:20:03.144716Z"}
-{"identification": "D\u00e9bit rejet", "value": 730.1700439453125, "timestamp": "2025-03-21T22:20:06.158634Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:20:06.170394Z"}
-{"identification": "D\u00e9bit rejet", "value": 721.5078125, "timestamp": "2025-03-21T22:20:09.181640Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:20:09.195053Z"}
-{"identification": "D\u00e9bit rejet", "value": 716.8308715820312, "timestamp": "2025-03-21T22:20:12.206486Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:20:12.219945Z"}
-{"identification": "D\u00e9bit rejet", "value": 716.5572509765625, "timestamp": "2025-03-21T22:20:15.230793Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:20:15.243382Z"}
-{"identification": "D\u00e9bit rejet", "value": 720.7112426757812, "timestamp": "2025-03-21T22:20:18.254911Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:20:18.267480Z"}
-{"identification": "D\u00e9bit rejet", "value": 728.9219360351562, "timestamp": "2025-03-21T22:20:21.278295Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-21T22:20:21.292029Z"}
-{"identification": "D\u00e9bit rejet", "value": 739.7716674804688, "timestamp": "2025-03-24T09:20:16.583754Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:16.594859Z"}
-{"identification": "D\u00e9bit rejet", "value": 754.3685913085938, "timestamp": "2025-03-24T09:20:19.605032Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:19.625145Z"}
-{"identification": "D\u00e9bit rejet", "value": 769.2604370117188, "timestamp": "2025-03-24T09:20:22.640435Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:22.656349Z"}
-{"identification": "D\u00e9bit rejet", "value": 783.1170654296875, "timestamp": "2025-03-24T09:20:25.668235Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:25.685914Z"}
-{"identification": "D\u00e9bit rejet", "value": 794.7007446289062, "timestamp": "2025-03-24T09:20:28.703597Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:28.717783Z"}
-{"identification": "D\u00e9bit rejet", "value": 802.9767456054688, "timestamp": "2025-03-24T09:20:31.735649Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:31.748992Z"}
-{"identification": "D\u00e9bit rejet", "value": 807.2059326171875, "timestamp": "2025-03-24T09:20:34.762790Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:34.784007Z"}
-{"identification": "D\u00e9bit rejet", "value": 807.0105590820312, "timestamp": "2025-03-24T09:20:37.799488Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:37.812464Z"}
-{"identification": "D\u00e9bit rejet", "value": 802.4080810546875, "timestamp": "2025-03-24T09:20:40.822851Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:40.837393Z"}
-{"identification": "D\u00e9bit rejet", "value": 793.8097534179688, "timestamp": "2025-03-24T09:20:43.849895Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:43.866621Z"}
-{"identification": "D\u00e9bit rejet", "value": 781.983642578125, "timestamp": "2025-03-24T09:20:46.881568Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:46.893167Z"}
-{"identification": "D\u00e9bit rejet", "value": 767.9862060546875, "timestamp": "2025-03-24T09:20:49.915372Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:49.928935Z"}
-{"identification": "D\u00e9bit rejet", "value": 753.06787109375, "timestamp": "2025-03-24T09:20:52.945848Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:52.963555Z"}
-{"identification": "D\u00e9bit rejet", "value": 738.5613403320312, "timestamp": "2025-03-24T09:20:55.977492Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:55.989989Z"}
-{"identification": "D\u00e9bit rejet", "value": 725.7623901367188, "timestamp": "2025-03-24T09:20:59.006563Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:20:59.019278Z"}
-{"identification": "D\u00e9bit rejet", "value": 715.8145141601562, "timestamp": "2025-03-24T09:21:02.029397Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:02.043240Z"}
-{"identification": "D\u00e9bit rejet", "value": 709.6062622070312, "timestamp": "2025-03-24T09:21:05.054845Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:05.068877Z"}
-{"identification": "D\u00e9bit rejet", "value": 707.6922607421875, "timestamp": "2025-03-24T09:21:08.082086Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:08.092783Z"}
-{"identification": "D\u00e9bit rejet", "value": 712.0582885742188, "timestamp": "2025-03-24T09:21:11.101867Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:11.130057Z"}
-{"identification": "D\u00e9bit rejet", "value": 720.1422729492188, "timestamp": "2025-03-24T09:21:14.147217Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:14.183789Z"}
-{"identification": "D\u00e9bit rejet", "value": 731.5796508789062, "timestamp": "2025-03-24T09:21:17.199312Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:17.220046Z"}
-{"identification": "D\u00e9bit rejet", "value": 745.3486938476562, "timestamp": "2025-03-24T09:21:20.229425Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:20.245288Z"}
-{"identification": "D\u00e9bit rejet", "value": 760.2196044921875, "timestamp": "2025-03-24T09:21:23.257894Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:23.273519Z"}
-{"identification": "D\u00e9bit rejet", "value": 774.8639526367188, "timestamp": "2025-03-24T09:21:26.287871Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:26.301957Z"}
-{"identification": "D\u00e9bit rejet", "value": 787.9738159179688, "timestamp": "2025-03-24T09:21:29.316683Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:29.330938Z"}
-{"identification": "D\u00e9bit rejet", "value": 798.3781127929688, "timestamp": "2025-03-24T09:21:32.346985Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:32.359835Z"}
-{"identification": "D\u00e9bit rejet", "value": 805.1474609375, "timestamp": "2025-03-24T09:21:35.374400Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:35.389431Z"}
-{"identification": "D\u00e9bit rejet", "value": 807.6773071289062, "timestamp": "2025-03-24T09:21:38.405127Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:38.426937Z"}
-{"identification": "D\u00e9bit rejet", "value": 805.74169921875, "timestamp": "2025-03-24T09:21:41.444993Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:41.461966Z"}
-{"identification": "D\u00e9bit rejet", "value": 799.5136108398438, "timestamp": "2025-03-24T09:21:44.478885Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:44.493614Z"}
-{"identification": "D\u00e9bit rejet", "value": 789.5493774414062, "timestamp": "2025-03-24T09:21:47.504865Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:47.519644Z"}
-{"identification": "D\u00e9bit rejet", "value": 776.7391967773438, "timestamp": "2025-03-24T09:21:50.535046Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:50.549214Z"}
-{"identification": "D\u00e9bit rejet", "value": 762.2274169921875, "timestamp": "2025-03-24T09:21:53.564243Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:53.580042Z"}
-{"identification": "D\u00e9bit rejet", "value": 747.3104248046875, "timestamp": "2025-03-24T09:21:56.592978Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:56.607802Z"}
-{"identification": "D\u00e9bit rejet", "value": 733.3206176757812, "timestamp": "2025-03-24T09:21:59.622496Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:21:59.637049Z"}
-{"identification": "D\u00e9bit rejet", "value": 721.5078735351562, "timestamp": "2025-03-24T09:22:02.653022Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:02.667634Z"}
-{"identification": "D\u00e9bit rejet", "value": 712.9274291992188, "timestamp": "2025-03-24T09:22:05.682345Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:05.697822Z"}
-{"identification": "D\u00e9bit rejet", "value": 708.345703125, "timestamp": "2025-03-24T09:22:08.709550Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:08.726573Z"}
-{"identification": "D\u00e9bit rejet", "value": 708.172119140625, "timestamp": "2025-03-24T09:22:11.742374Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:11.768347Z"}
-{"identification": "D\u00e9bit rejet", "value": 712.4222412109375, "timestamp": "2025-03-24T09:22:14.781978Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:14.795222Z"}
-{"identification": "D\u00e9bit rejet", "value": 720.7164306640625, "timestamp": "2025-03-24T09:22:17.806767Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:17.817175Z"}
-{"identification": "D\u00e9bit rejet", "value": 732.3139038085938, "timestamp": "2025-03-24T09:22:20.827051Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:20.839027Z"}
-{"identification": "D\u00e9bit rejet", "value": 746.1786499023438, "timestamp": "2025-03-24T09:22:23.852055Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:23.861666Z"}
-{"identification": "D\u00e9bit rejet", "value": 761.0723266601562, "timestamp": "2025-03-24T09:22:26.872422Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:26.882755Z"}
-{"identification": "D\u00e9bit rejet", "value": 775.6646118164062, "timestamp": "2025-03-24T09:22:29.896877Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:29.909064Z"}
-{"identification": "D\u00e9bit rejet", "value": 788.6519775390625, "timestamp": "2025-03-24T09:22:32.923965Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:32.934627Z"}
-{"identification": "D\u00e9bit rejet", "value": 798.8743896484375, "timestamp": "2025-03-24T09:22:35.942556Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:35.955017Z"}
-{"identification": "D\u00e9bit rejet", "value": 805.4187622070312, "timestamp": "2025-03-24T09:22:38.969760Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:38.979698Z"}
-{"identification": "D\u00e9bit rejet", "value": 807.7006225585938, "timestamp": "2025-03-24T09:22:41.994684Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:42.011796Z"}
-{"identification": "D\u00e9bit rejet", "value": 805.51611328125, "timestamp": "2025-03-24T09:22:45.024827Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:45.036305Z"}
-{"identification": "D\u00e9bit rejet", "value": 799.060546875, "timestamp": "2025-03-24T09:22:48.049576Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:48.060065Z"}
-{"identification": "D\u00e9bit rejet", "value": 788.9104614257812, "timestamp": "2025-03-24T09:22:51.070318Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:22:51.084391Z"}
-{"identification": "D\u00e9bit rejet", "value": 710.6505126953125, "timestamp": "2025-03-24T09:23:09.117943Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:09.135299Z"}
-{"identification": "D\u00e9bit rejet", "value": 707.7578125, "timestamp": "2025-03-24T09:23:12.144780Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:12.157803Z"}
-{"identification": "D\u00e9bit rejet", "value": 709.3269653320312, "timestamp": "2025-03-24T09:23:15.172325Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:15.187961Z"}
-{"identification": "D\u00e9bit rejet", "value": 715.2178955078125, "timestamp": "2025-03-24T09:23:18.204021Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:18.223118Z"}
-{"identification": "D\u00e9bit rejet", "value": 724.9044189453125, "timestamp": "2025-03-24T09:23:21.232809Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:21.249641Z"}
-{"identification": "D\u00e9bit rejet", "value": 737.5213012695312, "timestamp": "2025-03-24T09:23:24.265689Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:24.286913Z"}
-{"identification": "D\u00e9bit rejet", "value": 751.941650390625, "timestamp": "2025-03-24T09:23:27.300888Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:27.314213Z"}
-{"identification": "D\u00e9bit rejet", "value": 766.8772583007812, "timestamp": "2025-03-24T09:23:30.331335Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:30.350714Z"}
-{"identification": "D\u00e9bit rejet", "value": 780.994140625, "timestamp": "2025-03-24T09:23:33.365344Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:33.395990Z"}
-{"identification": "D\u00e9bit rejet", "value": 793.0313110351562, "timestamp": "2025-03-24T09:23:36.408943Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:36.420935Z"}
-{"identification": "D\u00e9bit rejet", "value": 801.91357421875, "timestamp": "2025-03-24T09:23:39.433947Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:39.446268Z"}
-{"identification": "D\u00e9bit rejet", "value": 806.8475341796875, "timestamp": "2025-03-24T09:23:42.458668Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:42.471183Z"}
-{"identification": "D\u00e9bit rejet", "value": 807.392578125, "timestamp": "2025-03-24T09:23:45.484375Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:45.495827Z"}
-{"identification": "D\u00e9bit rejet", "value": 803.5, "timestamp": "2025-03-24T09:23:48.511309Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:48.521999Z"}
-{"identification": "D\u00e9bit rejet", "value": 795.5176391601562, "timestamp": "2025-03-24T09:23:51.537010Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:51.550705Z"}
-{"identification": "D\u00e9bit rejet", "value": 784.1585083007812, "timestamp": "2025-03-24T09:23:54.564544Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:54.579205Z"}
-{"identification": "D\u00e9bit rejet", "value": 770.4374389648438, "timestamp": "2025-03-24T09:23:57.592518Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:23:57.603143Z"}
-{"identification": "D\u00e9bit rejet", "value": 755.5801391601562, "timestamp": "2025-03-24T09:24:00.617083Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:00.629213Z"}
-{"identification": "D\u00e9bit rejet", "value": 740.9137573242188, "timestamp": "2025-03-24T09:24:03.657903Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:03.674262Z"}
-{"identification": "D\u00e9bit rejet", "value": 727.7484741210938, "timestamp": "2025-03-24T09:24:06.687870Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:06.699610Z"}
-{"identification": "D\u00e9bit rejet", "value": 717.2604370117188, "timestamp": "2025-03-24T09:24:09.710258Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:09.725639Z"}
-{"identification": "D\u00e9bit rejet", "value": 710.386474609375, "timestamp": "2025-03-24T09:24:12.737024Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:12.755590Z"}
-{"identification": "D\u00e9bit rejet", "value": 707.74072265625, "timestamp": "2025-03-24T09:24:15.772049Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:15.785294Z"}
-{"identification": "D\u00e9bit rejet", "value": 709.5595092773438, "timestamp": "2025-03-24T09:24:18.794579Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:18.811146Z"}
-{"identification": "D\u00e9bit rejet", "value": 715.6805419921875, "timestamp": "2025-03-24T09:24:21.822191Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:21.839391Z"}
-{"identification": "D\u00e9bit rejet", "value": 725.5570678710938, "timestamp": "2025-03-24T09:24:24.852961Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:24.864777Z"}
-{"identification": "D\u00e9bit rejet", "value": 738.3068237304688, "timestamp": "2025-03-24T09:24:27.879573Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:27.895089Z"}
-{"identification": "D\u00e9bit rejet", "value": 752.791015625, "timestamp": "2025-03-24T09:24:30.906965Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:30.919369Z"}
-{"identification": "D\u00e9bit rejet", "value": 767.7159423828125, "timestamp": "2025-03-24T09:24:33.937870Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:33.952455Z"}
-{"identification": "D\u00e9bit rejet", "value": 781.7483520507812, "timestamp": "2025-03-24T09:24:36.965435Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:36.977657Z"}
-{"identification": "D\u00e9bit rejet", "value": 793.6348876953125, "timestamp": "2025-03-24T09:24:39.989680Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:40.002861Z"}
-{"identification": "D\u00e9bit rejet", "value": 802.3138427734375, "timestamp": "2025-03-24T09:24:43.012974Z"}
-{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T09:24:43.028450Z"}
+{"identification": "D\u00e9bit rejet", "value": 757.9329833984375, "timestamp": "2025-03-24T11:27:34.707382Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T11:27:34.730833Z"}
+{"identification": "D\u00e9bit rejet", "value": 719.29150390625, "timestamp": "2025-03-24T11:27:43.754971Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T11:27:43.768617Z"}
+{"identification": "D\u00e9bit rejet", "value": 710.912353515625, "timestamp": "2025-03-24T11:27:52.791565Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T11:27:52.803432Z"}
+{"identification": "D\u00e9bit rejet", "value": 739.1380004882812, "timestamp": "2025-03-24T11:28:01.828116Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T11:28:01.843690Z"}
+{"identification": "D\u00e9bit rejet", "value": 782.6093139648438, "timestamp": "2025-03-24T11:28:10.876477Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T11:28:10.900436Z"}
+{"identification": "D\u00e9bit rejet", "value": 808.9418334960938, "timestamp": "2025-03-24T11:35:42.071989Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T11:35:42.084305Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:20:32.568824Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:20:51.855806Z"}
+{"identification": "D\u00e9bit rejet", "value": 786.166259765625, "timestamp": "2025-03-24T13:23:22.100802Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:23:48.471469Z"}
+{"identification": "D\u00e9bit rejet", "value": 751.0764770507812, "timestamp": "2025-03-24T13:23:50.099822Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:26:06.284115Z"}
+{"identification": "D\u00e9bit rejet", "value": 711.319091796875, "timestamp": "2025-03-24T13:26:11.778626Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:27:51.112655Z"}
+{"identification": "D\u00e9bit rejet", "value": 794.423095703125, "timestamp": "2025-03-24T13:27:52.985174Z"}
+{"identification": "D\u00e9bit rejet", "value": 730.0540771484375, "timestamp": "2025-03-24T13:28:06.752527Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:28:07.476831Z"}
+{"identification": "D\u00e9bit rejet", "value": 774.0852661132812, "timestamp": "2025-03-24T13:31:42.105428Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:31:49.422816Z"}
+{"identification": "D\u00e9bit rejet", "value": 806.8040161132812, "timestamp": "2025-03-24T13:31:51.195133Z"}
+{"identification": "D\u00e9bit rejet", "value": 810.5352783203125, "timestamp": "2025-03-24T13:31:56.176611Z"}
+{"identification": "D\u00e9bit rejet", "value": 773.4215698242188, "timestamp": "2025-03-24T13:33:11.471324Z"}
+{"identification": "D\u00e9bit rejet", "value": 741.4695434570312, "timestamp": "2025-03-24T13:33:41.302024Z"}
+{"identification": "D\u00e9bit rejet", "value": 786.4481201171875, "timestamp": "2025-03-24T13:34:11.101527Z"}
+{"identification": "D\u00e9bit rejet", "value": 767.70947265625, "timestamp": "2025-03-24T13:34:15.853956Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:34:16.525227Z"}
+{"identification": "D\u00e9bit rejet", "value": 789.8602905273438, "timestamp": "2025-03-24T13:34:54.980981Z"}
+{"identification": "D\u00e9bit rejet", "value": 726.8819580078125, "timestamp": "2025-03-24T13:36:46.905381Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:36:48.799465Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:37:11.463098Z"}
+{"identification": "D\u00e9bit rejet", "value": 808.855224609375, "timestamp": "2025-03-24T13:37:12.276024Z"}
+{"identification": "D\u00e9bit rejet", "value": 807.2230224609375, "timestamp": "2025-03-24T13:37:13.335085Z"}
+{"identification": "D\u00e9bit pompage eau", "value": 0.0, "timestamp": "2025-03-24T13:37:20.668120Z"}
+{"identification": "D\u00e9bit rejet", "value": 779.7623901367188, "timestamp": "2025-03-24T13:37:21.640091Z"}

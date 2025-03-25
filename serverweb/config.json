@@ -33,7 +33,7 @@
         "password": "malo"
     },
     "modbus": {
-        "rate": "3",
+        "rate": "8",
         "waitdelay": "1",
         "modbusRTU": {
             "baudrate": "19200",
@@ -76,10 +76,10 @@
                     }
                 ],
                 "credentials": {
-                    "client_id": "client_id_1",
-                    "client_secret": "client_secret_1",
-                    "pass": "password_1",
-                    "username": "username_1"
+                    "client_id": "c8b322d582afd6abf3b1cf8ddf5daf20",
+                    "client_secret": "e325642efe0fb9c8292c7e30b94388006e4f4681521fb8cc493f79dcd7790526",
+                    "username": "testapi268510@connect",
+                    "pass": "/2b0/O4SY/Ml9/gUBLzlHUNyq6jUoRg="
                 },
                 "id": "1",
                 "identification": "Compte Malo Forrest"
@@ -151,39 +151,39 @@
     },
     "bindings": [
         {
-            "datatype": "float32",
-            "identification": "Niveau cuve externe",
+            "datatype": "FLOAT_B",
+            "identification": "Math 4",
             "netilion_account_id": "1",
             "netilion_binding_id": "2159190",
-            "protocol": "RTU",
-            "registeradress": "4204",
-            "slaveadress": "1"
-        },
-        {
-            "datatype": "float32",
-            "identification": "Consommation groupe froid",
-            "netilion_account_id": "1",
-            "netilion_binding_id": "1999331",
-            "protocol": "RTU",
+            "protocol": "TCP",
             "registeradress": "4206",
-            "slaveadress": "1"
+            "slaveadress": "192.168.200.23"
         },
         {
             "datatype": "FLOAT_B",
-            "identification": "D\u00e9bit rejet",
-            "netilion_account_id": "2",
-            "netilion_binding_id": "1809662",
+            "identification": "Niveau 3",
+            "netilion_account_id": "1",
+            "netilion_binding_id": "1999331",
             "protocol": "TCP",
             "registeradress": "4204",
             "slaveadress": "192.168.200.23"
         },
         {
             "datatype": "FLOAT_B",
-            "identification": "D\u00e9bit pompage eau",
+            "identification": "Niveau 1",
+            "netilion_account_id": "2",
+            "netilion_binding_id": "",
+            "protocol": "TCP",
+            "registeradress": "4200",
+            "slaveadress": "192.168.200.23"
+        },
+        {
+            "datatype": "FLOAT_B",
+            "identification": "Math 11",
             "netilion_account_id": "2",
             "netilion_binding_id": "2163151",
             "protocol": "TCP",
-            "registeradress": "4208",
+            "registeradress": "4220",
             "slaveadress": "192.168.200.23"
         }
     ]

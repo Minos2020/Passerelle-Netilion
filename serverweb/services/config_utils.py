@@ -5,7 +5,7 @@ CONFIG_PATH = "config.json"
 SAVE_INTERVAL = 60  # secondes
 
 # Stockage de la configuration en mémoire
-config = {}
+NETILION_CONFIG = {}
 config_modified = False
 last_save_time = time.time()
 
@@ -13,14 +13,14 @@ last_save_time = time.time()
 # Chargement de la config en mémoire depuis le fichier de sauvegarde
 def load_config():
     """Charge la configuration JSON en mémoire."""
-    global config
+    global NETILION_CONFIG
     try:
         with open(CONFIG_PATH, "r") as f:
-            config = json.load(f)
+            NETILION_CONFIG = json.load(f)
         print("✅ Configuration chargée en mémoire !")
     except Exception as e:
         print(f"❌ Erreur lors du chargement de la configuration : {e}")
-        config = {}
+        NETILION_CONFIG = {}
 
 # Ecrase la configuration du fichier de sauvegarde avec celle qui est en mémoire
 def save_config():
@@ -28,7 +28,7 @@ def save_config():
     """Sauvegarde la configuration en mémoire vers le fichier JSON."""
     try:
         with open(CONFIG_PATH, "w") as f:
-            json.dump(config, f, indent=4)
+            json.dump(NETILION_CONFIG, f, indent=4)
         print("💾 Configuration mise à jour !")
         config_modified = False
         last_save_time = time.time()
@@ -47,7 +47,7 @@ def save_periodically():
 
 # Chargement du fichier JSON et accès aux valeurs
 def get_config_value(key):
-    temp = config
+    temp = NETILION_CONFIG
     return find_nested_key(temp, key)
 
 # trouver une clé imbriquée dans un fichier json (dict)
@@ -81,7 +81,7 @@ def set_config_value(key, value):
     global config_modified
     try:
         # Trouver et modifier la clé si elle existe
-        if update_nested_key(config, key, value):
+        if update_nested_key(NETILION_CONFIG, key, value):
             config_modified = True  # Marque la config comme modifiée
 
 

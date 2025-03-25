@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 import json
 from services.config_utils import*
+from services.modbus_utils import*
 
 api_bp = Blueprint('api', __name__)
 
@@ -8,7 +9,7 @@ api_bp = Blueprint('api', __name__)
 
 @api_bp.route('/get_config', methods=['GET'])
 def get_config():
-    return jsonify(config)
+    return jsonify(NETILION_CONFIG)
 
 @api_bp.route('/load_config', methods=['POST'])
 def load_config():
@@ -56,7 +57,36 @@ def save_modbus_config():
     else:
         print("❌ Problème lors de l'enregistrement")
         return jsonify({"status": "error"})
-    
+
+@api_bp.route('/modbus_test', methods=['POST'])
+def modbus_test():
+    binding = request.json
+    if binding["protocol"]!="TCP":
+        return jsonify({"status": "error", "type": "Protocole non géré"})
+    try:
+        try:
+            client = modbus_tcp_client(binding["slaveadress"])
+            if not client.connect():  # Vérifie si la connexion est bien établie
+                raise ConnectionError(f"Impossible de se connecter à {binding['slaveadress']}:502")
+        except Exception as conn_err:
+            return jsonify({"status": "error", "type": str(conn_err)})
+        
+        try:
+            valeur = read_register(client, binding["slaveadress"], binding["registeradress"], binding["datatype"])
+        except Exception as read_err:
+            return jsonify({"status": "error", "type": f"Erreur de lecture Modbus : {str(read_err)}"})
+        
+        client.close()  # Fermer la connexion après chaque lecture  
+        
+        # print(valeur)
+        if valeur != None:
+            return jsonify({"status": "success", "value": round(valeur, 3)})
+        else:
+            return jsonify({"status": "error", "type": "Valeur non lue"})
+            
+    except Exception as e:
+        print(f"❌ Problème lors de la lecture: {e}")
+        return jsonify({"status": "error", "type": str(e)})
 
     
 # -------------  NETWORKS ------------
