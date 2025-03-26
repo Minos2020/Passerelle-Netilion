@@ -1,34 +1,48 @@
-import json, time, threading
+import json, time
+
+from services.encryption_utils import*
+from services.netilion_auth import*
 
 # Chemin du fichier de configuration
-CONFIG_PATH = "config.json"
+CONFIG_PATH = "config.conf"
 SAVE_INTERVAL = 60  # secondes
+
+CONFIG_ENCRYPTION_KEY = os.getenv("CONFIG_ENCRYPTION_KEY")
 
 # Stockage de la configuration en mémoire
 GLOBAL_CONFIG = {}
 config_modified = False
 last_save_time = time.time()
 
+def get_config() -> dict:
+    return GLOBAL_CONFIG
 
 # Chargement de la config en mémoire depuis le fichier de sauvegarde
 def load_config():
-    """Charge la configuration JSON en mémoire."""
+    """Charge la configuration depuis un fichier JSON chiffré."""
     global GLOBAL_CONFIG
+    global accounts
     try:
-        with open(CONFIG_PATH, "r") as f:
-            GLOBAL_CONFIG = json.load(f)
+        decrypted_json = decrypt_data_from_file(CONFIG_PATH, CONFIG_ENCRYPTION_KEY)
+        GLOBAL_CONFIG = json.loads(decrypted_json)
+        netilion_data = GLOBAL_CONFIG["netilion"]["accounts"]
+        accounts = {acc['credentials']['account_id']: NetilionAuth.from_dict(acc['credentials']) for acc in netilion_data}
+        # print ("Après chargement")
+        # for account in accounts.values():
+        #     print(str(account))
         print("✅ Configuration chargée en mémoire !")
     except Exception as e:
         print(f"❌ Erreur lors du chargement de la configuration : {e}")
         GLOBAL_CONFIG = {}
+    
 
 # Ecrase la configuration du fichier de sauvegarde avec celle qui est en mémoire
 def save_config():
     global config_modified, last_save_time
     """Sauvegarde la configuration en mémoire vers le fichier JSON."""
     try:
-        with open(CONFIG_PATH, "w") as f:
-            json.dump(GLOBAL_CONFIG, f, indent=4)
+        data_to_encrypt = json.dumps(GLOBAL_CONFIG, indent=4)
+        encrypt_data_into_file(data_to_encrypt.encode(), CONFIG_PATH, CONFIG_ENCRYPTION_KEY)
         print("💾 Configuration mise à jour !")
         config_modified = False
         last_save_time = time.time()
@@ -86,6 +100,7 @@ def set_config_value(key, value):
 
 
             save_config()  #A ENLEVER ENSUITE
+            # lorsqu'un bouton écraser config sera implémenté
 
 
             
@@ -140,9 +155,20 @@ def get_element_from_array(array, key, value):
     return None
 
 
-        
-# Charger la configuration au démarrage
-load_config()
+if __name__ == '__main__':
 
-# Lancer la sauvegarde automatique en arrière-plan
-threading.Thread(target=save_periodically, daemon=True).start()
+    # load_dotenv()
+    # CONFIG_ENCRYPTION_KEY = os.getenv("CONFIG_ENCRYPTION_KEY")
+    
+    # encrypt_file(CONFIG_PATH, CONFIG_ENCRYPTION_KEY)
+
+    # print ("Avant chargement")
+    # for account in accounts.values():
+    #     print(str(account))
+
+    # load_config()
+
+    # print ("Après chargement")
+    # for account in accounts.values():
+    #   print(str(account))
+    pass

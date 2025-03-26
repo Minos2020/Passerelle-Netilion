@@ -122,10 +122,10 @@
 		function addBinding() {
 			let newBinding = {
 				identification: "Nouveau Binding",
-				protocol: "RTU",
-				slaveadress: "1",
-				registeradress: "4000",
-				datatype: "float32",
+				protocol: "TCP",
+				slaveadress: "",
+				registeradress: "",
+				datatype: "INT16",
 				netilion_account_id: accounts.length > 0 ? accounts[0].id : "",
 				netilion_binding_id: ""
 			};

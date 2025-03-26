@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from services.config_utils import*
+from routes.api import login_required
 
 # Suppose que nous avons un fichier de configuration où les identifiants sont stockés
-# Par exemple : config.json
+# Par exemple : config.conf
 
 # Définition du Blueprint
 web_bp = Blueprint('web', __name__)
@@ -36,46 +37,37 @@ def logout():
       
 
 @web_bp.route('/overview')
+@login_required  # 🔒 Protège cette route
 def overview():
-    # Vérifier si l'utilisateur est authentifié
-    if 'authenticated' not in session:
-        return redirect(url_for('web.login'))  # Rediriger vers la page de connexion si non authentifié
-    return render_template('overview.html')  # Afficher la page d'aperçu si authentifié
+    return render_template('overview.html')
 
 @web_bp.route('/')
+@login_required  # 🔒 Protège cette route
 def home():
-    # Vérifier si l'utilisateur est authentifié
-    if 'authenticated' not in session:
-        return redirect(url_for('web.login'))  # Rediriger vers la page de connexion si non authentifié
-    return redirect(url_for('web.overview'))  # Rediriger vers la page d'aperçu si authentifié
+    return redirect(url_for('web.overview')) 
 
 
 @web_bp.route('/networks')
+@login_required  # 🔒 Protège cette route
 def networks():
-    if 'authenticated' not in session:
-        return redirect(url_for('web.login'))
     return render_template('networks.html')
 
 @web_bp.route('/modbus')
+@login_required  # 🔒 Protège cette route
 def modbus():
-    if 'authenticated' not in session:
-        return redirect(url_for('web.login'))
     return render_template('modbus.html')
 
 @web_bp.route('/netilion')
+@login_required  # 🔒 Protège cette route
 def netilion():
-    if 'authenticated' not in session:
-        return redirect(url_for('web.login'))
     return render_template('netilion.html')
 
 @web_bp.route('/bindings')
+@login_required  # 🔒 Protège cette route
 def bindings():
-    if 'authenticated' not in session:
-        return redirect(url_for('web.login'))
     return render_template('bindings.html')
 
 @web_bp.route('/misc')
+@login_required  # 🔒 Protège cette route
 def misc():
-    if 'authenticated' not in session:
-        return redirect(url_for('web.login'))
     return render_template('misc.html')

@@ -64,13 +64,13 @@
           <input class="grid-value" type="text" value="${account.credentials.client_id}" onchange="updateAccount(${index}, 'client_id', this.value)">
           
           <div class="grid-key">Client Secret:</div>
-          <input class="grid-value" type="text" value="${account.credentials.client_secret}" onchange="updateAccount(${index}, 'client_secret', this.value)">
+          <input class="grid-value" type="password" value="${account.credentials.client_secret}" onchange="updateAccount(${index}, 'client_secret', this.value)">
           
           <div class="grid-key">Username:</div>
           <input class="grid-value" type="text" value="${account.credentials.username}" onchange="updateAccount(${index}, 'username', this.value)">
           
           <div class="grid-key">Password:</div>
-          <input class="grid-value" type="password" value="${account.credentials.pass}" onchange="updateAccount(${index}, 'pass', this.value)">
+          <input class="grid-value" type="password" value="${account.credentials.password}" onchange="updateAccount(${index}, 'password', this.value)">
           
           <button class="btn btn-danger grid-footer" onclick="deleteAccount(${index})">Supprimer</button>
         `;
@@ -79,7 +79,7 @@
     }
 
     function updateAccount(index, field, value) {
-      if (["client_id", "client_secret", "username", "pass"].includes(field)) {
+      if (["client_id", "client_secret", "username", "password"].includes(field)) {
         accounts[index].credentials[field] = value;
       } else {
         accounts[index][field] = value;
@@ -100,10 +100,14 @@
         id: newId.toString(), // Utilise l'ID trouvé
         identification: "Nouveau Compte",
         credentials: {
+          account_id: newId.toString(), // copie pour l'instant, A MODIFIER
           client_id: "",
           client_secret: "",
           username: "",
-          pass: ""
+          password: "",
+          access_token: "",
+          refresh_token: "",
+          token_expiry: 0
         },
         bindable_objects: []
       };

@@ -142,17 +142,17 @@
 
     // Fonction pour télécharger la configuration
     function saveConfig() {
-        fetch("/api/get_config")
-            .then(response => response.json())
-            .then(data => {
-                let blob = new Blob([JSON.stringify(data, null, 2)], { type: "text/plain" });
+        fetch("/api/get_config_file")
+            .then(response => response.blob()) // pas de conversion en json, on conserve en tant que blob (Binary Large Object)
+            .then(blob => {
                 let a = document.createElement("a");
                 a.href = URL.createObjectURL(blob);
-                a.download = "configuration.txt";
+                a.download = "config.conf";
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-            });
+            })
+          .catch(error => console.error("❌ Erreur lors du téléchargement du fichier :", error));
     }
 
     // Fonction pour charger une configuration depuis un fichier
@@ -164,15 +164,13 @@
         reader.onload = function (e) {
             let content = e.target.result;
             try {
-                let jsonData = JSON.parse(content);
-                fetch("/api/load_config", {
+                fetch("/api/load_config_file", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(jsonData)
+                    body: content
                 }).then(response => response.json())
                   .then(data => {
               if (data.status === "success") {
-                alert("✅ Configuration modbus enregistrée !");
+                alert("✅ Configuration chargée !");
                 window.location.reload(); // 🔄 Rechargement immédiat de la page
               } else {
                 alert("❌ Erreur lors de l'enregistrement !");
@@ -228,7 +226,7 @@
     <div class="button-container">
       <button class="btn" onclick="saveConfig()">Enregistrer la configuration</button>
       <label for="file-input" class="file-label">Charger une configuration</label>
-      <input type="file" id="file-input" accept=".txt" onchange="loadConfig(event)">
+      <input type="file" id="file-input" accept=".conf" onchange="loadConfig(event)">
 	  </div>
 
 

@@ -1,39 +1,109 @@
-from flask import Blueprint, jsonify, request
-import json
-from services.config_utils import*
+from flask import Blueprint, jsonify, request, session
+from functools import wraps
 from services.modbus_utils import*
+from services.config_utils import*
+from services.encryption_utils import*
 
 api_bp = Blueprint('api', __name__)
+
+
+# ------------  DECORATEUR LOGIN  -----------
+
+# Permet de restraindre l'accès aux différentes pages
+def login_required(f):
+    @wraps(f)  # Garde les métadonnées de la fonction originale
+    def decorated_function(*args, **kwargs):
+        if 'authenticated' not in session:
+            return """
+            <!DOCTYPE html>
+            <html>            
+                <head>
+                    <title>Accès refusé</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .container { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; }
+                        button { background-color: #007BFF; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; }
+                        button:hover { background-color: #0056b3; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h2>⛔ Access denied</h2>
+                        <p style="margin-bottom: 50px;">You must be authenticated to access this ressource.</p>
+                        <a href='/login'><button>Login page</button></a>
+                    </div>
+                </body>
+            </html>
+            """, 403  # 403 = Forbidden (Accès refusé)
+        return f(*args, **kwargs)  # Exécute la fonction originale si l'utilisateur est authentifié
+    return decorated_function
 
 # -------------  GESTION CONFIG  ------------
 
 @api_bp.route('/get_config', methods=['GET'])
-def get_config():
-    return jsonify(GLOBAL_CONFIG)
+@login_required  # 🔒 Protège cette route
+def get_config_as_JSON():
+    return jsonify(get_config())
 
-@api_bp.route('/load_config', methods=['POST'])
-def load_config():
-    if (
-        set_config_value("bindings", find_nested_key(request.json, "bindings")) and
-        set_config_value("netilion", find_nested_key(request.json, "netilion")) and
-        set_config_value("credentials", find_nested_key(request.json, "credentials")) and
-        set_config_value("modbus", find_nested_key(request.json, "modbus")) and
-        set_config_value("networks", find_nested_key(request.json, "networks"))
-    ):
+@api_bp.route('/get_config_file', methods=['GET'])
+@login_required  # 🔒 Protège cette route
+def get_config_encrypted():
+    save_config()
+    with open(CONFIG_PATH, "rb") as f:
+            encrypted_data = f.read()
+    return encrypted_data
+
+@api_bp.route('/load_config_file', methods=['POST'])
+@login_required  # 🔒 Protège cette route
+def load_config_encrypted():
+    try:
+        # Déchiffrer les données reçues
+        decrypted_data = decrypt_data(request.data, CONFIG_ENCRYPTION_KEY)
+        
+        # Vérifier si le contenu est bien un JSON valide
+        json_data = json.loads(decrypted_data)  # Déclenche une erreur si invalide
+        
+        # Sauvegarder les données chiffrées dans le fichier (on garde les données en clair en mémoire)
+        with open(CONFIG_PATH, "wb") as f:
+            f.write(request.data)  # Stockage chiffré
+        load_config()
+        print("✅ Configuration mise à jour avec succès !")
+        
         return jsonify({"status": "success"})
-    else:
-        print("❌ Problème lors de l'enregistrement.\nRetour à la configuration originale.")
-        return jsonify({"status": "error"})
+
+    except json.JSONDecodeError:
+        print("❌ Erreur : le fichier déchiffré n'est pas un JSON valide.")
+        return jsonify({"status": "error", "message": "Fichier de configuration invalide."})
+
+    except Exception as e:
+        print(f"❌ Erreur inattendue : {e}")
+        return jsonify({"status": "error", "message": str(e)})
+
+# @api_bp.route('/load_config', methods=['POST'])
+# def load_config():
+#     if (
+#         set_config_value("bindings", find_nested_key(request.json, "bindings")) and
+#         set_config_value("netilion", find_nested_key(request.json, "netilion")) and
+#         set_config_value("credentials", find_nested_key(request.json, "credentials")) and
+#         set_config_value("modbus", find_nested_key(request.json, "modbus")) and
+#         set_config_value("networks", find_nested_key(request.json, "networks"))
+#     ):
+#         return jsonify({"status": "success"})
+#     else:
+#         print("❌ Problème lors de l'enregistrement.\nRetour à la configuration originale.")
+#         return jsonify({"status": "error"})
 
 
 # -------------  BINDINGS ------------
 
 @api_bp.route('/get_bindings', methods=['GET'])
+@login_required  # 🔒 Protège cette route
 def get_bindings():
     bindings = get_config_value('bindings')
     return jsonify(bindings)
 
 @api_bp.route('/save_bindings', methods=['POST'])
+@login_required  # 🔒 Protège cette route
 def save_bindings():
     if set_config_value("bindings", request.json):
         return jsonify({"status": "success"})
@@ -46,11 +116,13 @@ def save_bindings():
 # -------------  MODBUS ------------
 
 @api_bp.route('/get_modbus_config', methods=['GET'])
+@login_required  # 🔒 Protège cette route
 def get_modbus_config():
     netilion_config = get_config_value('modbus')
     return jsonify(netilion_config)
 
 @api_bp.route('/save_modbus_config', methods=['POST'])
+@login_required  # 🔒 Protège cette route
 def save_modbus_config():
     if set_config_value("modbus", request.json):
         return jsonify({"status": "success"})
@@ -59,6 +131,7 @@ def save_modbus_config():
         return jsonify({"status": "error"})
 
 @api_bp.route('/modbus_test', methods=['POST'])
+@login_required  # 🔒 Protège cette route
 def modbus_test():
     binding = request.json
     if binding["protocol"]!="TCP":
@@ -72,7 +145,7 @@ def modbus_test():
             return jsonify({"status": "error", "type": str(conn_err)})
         
         try:
-            valeur = read_register(client, binding["slaveadress"], binding["registeradress"], binding["datatype"])
+            valeur = read_registers(client, binding["slaveadress"], binding["registeradress"], binding["datatype"])
         except Exception as read_err:
             return jsonify({"status": "error", "type": f"Erreur de lecture Modbus : {str(read_err)}"})
         
@@ -92,11 +165,13 @@ def modbus_test():
 # -------------  NETWORKS ------------
 
 @api_bp.route('/get_networks_config', methods=['GET'])
+@login_required  # 🔒 Protège cette route
 def get_networks_config():
     networks_config = get_config_value('networks')
     return jsonify(networks_config)
 
 @api_bp.route('/save_networks_config', methods=['POST'])
+@login_required  # 🔒 Protège cette route
 def save_networks_config():
     if set_config_value("networks", request.json):
         return jsonify({"status": "success"})
@@ -109,11 +184,13 @@ def save_networks_config():
 # -------------  NETILION ------------
 
 @api_bp.route('/get_netilion_config', methods=['GET'])
+@login_required  # 🔒 Protège cette route
 def get_netilion_config():
     netilion_config = get_config_value('accounts')
     return jsonify(netilion_config)
 
 @api_bp.route('/save_netilion_config', methods=['POST'])
+@login_required  # 🔒 Protège cette route
 def save_netilion_config():
     if set_config_value("accounts", request.json):
         return jsonify({"status": "success"})

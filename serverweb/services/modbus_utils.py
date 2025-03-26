@@ -11,6 +11,7 @@ MODBUS_CONFIG = get_config_value('modbus')
 
 BINDINGS = get_config_value('bindings')
 
+# Index des datatypes et du nombre de registres associé
 counts = {
     "INT16": 1,
     "UINT16": 1,
@@ -24,8 +25,8 @@ counts = {
     "DOUBLE_L": 4
 }
 
-def read_register(client, slave_address, register_address, datatype):
-    """ Lire un registre Modbus de type float32 """
+def read_registers(client, slave_address, register_address, datatype):
+    """ Lire un registre Modbus sur x registres  """
     try:
         if isinstance(client, ModbusTcpClient):
             #print(datatype)
@@ -91,11 +92,6 @@ def convert_modbus_data(data, datatype):
     else:
         raise ValueError(f"Type de donnée inconnu : {datatype}")
 
-# # Exemple d'utilisation avec une valeur FLOAT_B stockée sur 2 registres Modbus (32 bits)
-# data = [0x41C8, 0x0000]  # Représente un float en big-endian (ex: 25.0)
-# value = convert_modbus_data(data, "FLOAT_B")
-# print(value)  # 25.0
-
 
 def get_current_time():
     """ Récupère l'heure actuelle sous forme ISO 8601 """
@@ -122,7 +118,7 @@ def main():
                 print(f"Protocole inconnu pour l'identification {binding['identification']}")
                 continue
 
-            valeur = read_register(client, binding["slaveadress"], binding["registeradress"], binding["datatype"])
+            valeur = read_registers(client, binding["slaveadress"], binding["registeradress"], binding["datatype"])
 
             if valeur is not None:
                 timestamp = get_current_time()

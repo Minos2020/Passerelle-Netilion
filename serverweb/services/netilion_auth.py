@@ -1,8 +1,9 @@
-import requests
-import time
-from config_utils import*
+import requests, os, time, json
+from services.config_utils import*
+from services.encryption_utils import*
 
-accounts = {}
+accounts: dict[int, "NetilionAuth"] = {}
+
 
 token_url = "https://api.netilion.endress.com/oauth/token"
 
@@ -18,13 +19,38 @@ class NetilionAuth:
         self.token_expiry: int = 0  # Timestamp d'expiration
 
     def __str__(self):
+        """Permet de faire un print(str(instance)) pour voir les informations voulues"""
         return (
-        f"\nID : {self.account_id},\n"
+        f"\nAcc ID : {self.account_id}, Client ID: {self.client_id}\n"
         f"Acces token : {self.access_token if self.access_token is not None else 'Pas d\'access token'},\n"
         f"Refresh token : {self.refresh_token if self.refresh_token is not None else 'Pas de refresh token'},\n"
         f"{'Expiration token dans ' + str(int(self.token_expiry - time.time())) + ' secondes' if time.time() < self.token_expiry else ('Pas d\'access token' if not self.access_token else 'Token expiré')}"
     )
 
+    def to_dict(self):
+        """Convertit l'objet en dictionnaire pour la sérialisation"""
+        return {
+            "account_id": self.account_id,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "username": self.username,
+            "password": self.password,
+            "access_token": self.access_token,
+            "refresh_token": self.refresh_token,
+            "token_expiry": self.token_expiry
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Crée une instance NetilionAuth à partir d'un dictionnaire"""
+        instance = cls(
+            data["account_id"], data["client_id"], data["client_secret"], data["username"], data["password"]
+        )
+        instance.access_token = data.get("access_token", None)
+        instance.refresh_token = data.get("refresh_token", None)
+        instance.token_expiry = data.get("token_expiry", 0)
+        return instance
+    
 
     def _request_token(self, grant_type, extra_data=None) -> None:
         """
@@ -83,25 +109,26 @@ class NetilionAuth:
         self.refresh_token_if_needed()
         return {"Authorization": f"Bearer {self.access_token}"}
 
-def load_accounts():
-    """Charge la configuration et initialise les comptes Netilion."""
-    NETILION_CONFIG = get_config_value("netilion")
+# def load_accounts():
+#     """Charge la configuration et initialise les comptes Netilion."""
+#     NETILION_CONFIG = get_config_value("netilion")
 
-    for account in NETILION_CONFIG.get("accounts", []):
-        if account["id"] in accounts:
-            continue  # Si le compte est déjà chargé, on l'ignore
-        credentials = account["credentials"]
-        if credentials["client_id"] and credentials["client_secret"]:
-            accounts[account["id"]] = NetilionAuth(
-                account_id=account["id"],
-                client_id=credentials["client_id"],
-                client_secret=credentials["client_secret"],
-                username=credentials["username"],
-                password=credentials["pass"]
-            )
-            print(f"✅ Compte chargé : {account['identification']} (ID {account['id']})")
-        else:
-            print(f"⚠️ Compte ignoré : {account['identification']} (ID {account['id']}) - Pas d'identifiants fournis")
+#     for account in NETILION_CONFIG.get("accounts", []):
+#         if account["id"] in accounts:
+#             continue  # Si le compte est déjà chargé, on l'ignore
+#         credentials = account["credentials"]
+#         if credentials["client_id"] and credentials["client_secret"]:
+#             accounts[account["id"]] = NetilionAuth(
+#                 account_id=account["id"],
+#                 client_id=credentials["client_id"],
+#                 client_secret=credentials["client_secret"],
+#                 username=credentials["username"],
+#                 password=credentials["pass"]
+#             )
+#             print(f"✅ Compte chargé : {account['identification']} (ID {account['id']})")
+#         else:
+#             print(f"⚠️ Compte ignoré : {account['identification']} (ID {account['id']}) - Pas d'identifiants fournis")
+
 
 def get_account(account_id):
     # print(self.accounts)
@@ -115,3 +142,18 @@ def get_headers(account_id):
         return account.get_headersForAuth()
     else:
         raise ValueError(f"Aucun compte trouvé pour l'ID {account_id}")
+    
+
+if __name__ == '__main__':
+    
+    load_dotenv()
+    
+    print ("Avant chargement")
+    for account in accounts.values():
+        print(str(account))
+
+    # save_accounts_to_file()
+    
+    # print ("Après chargement")
+    # for account in accounts.values():
+    #     print(str(account))

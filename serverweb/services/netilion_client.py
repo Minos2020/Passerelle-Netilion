@@ -1,8 +1,8 @@
 from netilion_auth import*
 import requests
 
-# Chargement des comptes depuis la configuration JSON
-load_accounts()
+# # Chargement des comptes depuis la configuration JSON
+# load_accounts()
 
 # Choisir un compte Netilion (ex: ID "1")
 account_id = "1"
