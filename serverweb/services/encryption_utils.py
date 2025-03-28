@@ -81,4 +81,4 @@ if __name__ == '__main__':
 
     # key = os.getenv("NETILION_ENCRYPTION_KEY")
 
-    # print(decrypt_data("netilion.json", key))
+    # print(decrypt_data("config.conf", key))

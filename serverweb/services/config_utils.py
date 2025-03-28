@@ -17,6 +17,10 @@ last_save_time = time.time()
 def get_config() -> dict:
     return GLOBAL_CONFIG
 
+def set_config(new_config: dict):
+    global GLOBAL_CONFIG
+    GLOBAL_CONFIG = new_config
+
 # Chargement de la config en mémoire depuis le fichier de sauvegarde
 def load_config():
     """Charge la configuration depuis un fichier JSON chiffré."""
@@ -26,7 +30,8 @@ def load_config():
         decrypted_json = decrypt_data_from_file(CONFIG_PATH, CONFIG_ENCRYPTION_KEY)
         GLOBAL_CONFIG = json.loads(decrypted_json)
         netilion_data = GLOBAL_CONFIG["netilion"]["accounts"]
-        accounts = {acc['credentials']['account_id']: NetilionAuth.from_dict(acc['credentials']) for acc in netilion_data}
+        accounts = {acc['credentials']['account_id']: netilion_auth.NetilionAccount.from_dict(acc['credentials']) for acc in netilion_data}
+        netilion_auth.set_accounts(accounts)
         # print ("Après chargement")
         # for account in accounts.values():
         #     print(str(account))
@@ -47,7 +52,7 @@ def save_config():
         config_modified = False
         last_save_time = time.time()
     except Exception as e:
-        print(f"❌ Erreur lors de l'enregistrement de la configuration : {e}")
+        raise exceptions.ConfigSaveError(f"Erreur inattendue lors de l'enregistrement de la configuration : {e}") from e
 
 # Sauvegarde la config toutes les xx secondes, si elle a été modifiée entre temps
 def save_periodically():

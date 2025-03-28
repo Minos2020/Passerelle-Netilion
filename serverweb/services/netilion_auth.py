@@ -2,12 +2,12 @@ import requests, os, time, json
 from services.config_utils import*
 from services.encryption_utils import*
 
-accounts: dict[int, "NetilionAuth"] = {}
+accounts: dict[int, "NetilionAccount"] = {}
 
 
 token_url = "https://api.netilion.endress.com/oauth/token"
 
-class NetilionAuth:
+class NetilionAccount:
     def __init__(self, account_id: int, client_id: str, client_secret: str, username: str, password: str):
         self.account_id: int = account_id
         self.client_id: str = client_id
@@ -110,25 +110,21 @@ class NetilionAuth:
         return {"Authorization": f"Bearer {self.access_token}"}
 
 # def load_accounts():
-#     """Charge la configuration et initialise les comptes Netilion."""
-#     NETILION_CONFIG = get_config_value("netilion")
+#     """
+#     Initialise les comptes Netilion à partir de la configuration.
+#     """
+#     # print(accounts)
+#     for account in accounts.values():
+#         print(str(account))
 
-#     for account in NETILION_CONFIG.get("accounts", []):
-#         if account["id"] in accounts:
-#             continue  # Si le compte est déjà chargé, on l'ignore
-#         credentials = account["credentials"]
-#         if credentials["client_id"] and credentials["client_secret"]:
-#             accounts[account["id"]] = NetilionAuth(
-#                 account_id=account["id"],
-#                 client_id=credentials["client_id"],
-#                 client_secret=credentials["client_secret"],
-#                 username=credentials["username"],
-#                 password=credentials["pass"]
-#             )
-#             print(f"✅ Compte chargé : {account['identification']} (ID {account['id']})")
-#         else:
-#             print(f"⚠️ Compte ignoré : {account['identification']} (ID {account['id']}) - Pas d'identifiants fournis")
+def get_accounts() -> dict[int, NetilionAccount]:
+    """Retourne un dictionnaire des comptes."""
+    return accounts
 
+def set_accounts(new_accounts: dict[int, NetilionAccount]):
+    """Met à jour le dictionnaire de comtpes."""
+    global accounts
+    accounts = new_accounts
 
 def get_account(account_id):
     # print(self.accounts)
@@ -148,9 +144,7 @@ if __name__ == '__main__':
     
     load_dotenv()
     
-    print ("Avant chargement")
-    for account in accounts.values():
-        print(str(account))
+    
 
     # save_accounts_to_file()
     
