@@ -1,7 +1,7 @@
 import json, time
 
-from services.encryption_utils import decrypt_data_from_file
-from services.netilion_auth import*
+from services.encryption_utils import decrypt_data_from_file, encrypt_data_into_file
+from services.netilion_utils import*
 
 # Chemin du fichier de configuration
 CONFIG_PATH = "config.conf"

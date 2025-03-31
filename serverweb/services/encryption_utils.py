@@ -53,7 +53,7 @@ def decrypt_data(data, key: str) -> str:
     except Exception as e:
         print(f'Erreur lors du déchiffrement des données : {e}')
         traceback.print_exc()
-        raise exceptions.EncryptionError(f'Erreur lors du déchiffrement des données') from e
+        raise Exception(f'Erreur lors du déchiffrement des données') from e
 
 def encrypt_data_into_file(data: json, file_name: str, key: str):
     try:
@@ -64,7 +64,7 @@ def encrypt_data_into_file(data: json, file_name: str, key: str):
     except Exception as e:
             print(f'Erreur lors du chiffrement des données : {e}')
             traceback.print_exc()
-            raise exceptions.EncryptionError(f'Erreur lors du chiffrement des données') from e
+            raise Exception(f'Erreur lors du chiffrement des données') from e
 
 # Si ce fichier est directement run
 if __name__ == '__main__':

@@ -13,8 +13,9 @@
 		.nav-bar .a-logout:hover {background: #f8a6a6;}
 		.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
 		.table-header,
-		.table-row { display: grid; grid-template-columns: repeat(10, 1fr); gap: 20px; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; }
+		.table-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; }
 		.table-header { font-weight: bold; background: #e0e0e0; }
+		.table-double {grid-column: span 2;}
 		.table-row input { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
 		.table-row select { width: 90%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
 		.btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer;  width: 50; font-size: 14px; }
@@ -29,6 +30,23 @@
 	<script>
 		let bindings = [];
 		let accounts = [];
+		let units = []; // Contiendra toutes les unités Netilion
+		let unitsLoaded = false;
+
+		// Fonction pour charger les unités depuis le fichier
+		async function loadUnits() {
+			try {
+				let response = await fetch("/api/get_units"); // Mets le bon chemin ici
+				units = await response.json();
+				unitsLoaded = true; // Marque comme chargé
+				console.log("Units loaded:", units.length); // Debug
+			} catch (error) {
+				console.error("Erreur lors du chargement des unités :", error);
+			}
+		}
+
+		// Charger les unités immédiatement au démarrage
+		const unitsPromise = loadUnits();
 
 		function fetchData() {
 			Promise.all([
@@ -43,9 +61,15 @@
 				.catch(error => console.error("Erreur lors du chargement des données:", error));
 		}
 
-			function renderBindings() {
+			async function renderBindings() {
 				let container = document.getElementById("bindings-list");
 				container.innerHTML = ""; // Nettoyage avant affichage
+
+				// S'assurer que les unités sont chargées avant de continuer
+				if (!unitsLoaded) {
+					console.log("Attente du chargement des unités...");
+					await unitsPromise; // Attendre le chargement
+				}
 
 				bindings.forEach((binding, index) => {
 					let row = document.createElement("div");
@@ -78,6 +102,13 @@
 								<option value="DOUBLE_B" ${binding.datatype === "DOUBLE_B" ? "selected" : ""}>DOUBLE_B</option>
 								<option value="DOUBLE_L" ${binding.datatype === "DOUBLE_L" ? "selected" : ""}>DOUBLE_L</option>
 							</select>
+						</div>
+						<div class= "table-double">
+							<input type="text" list="units-list-${index}" value="${binding.unit || ''}" 
+								oninput="updateBinding(${index}, 'unit', this.value)">
+							<datalist id="units-list-${index}">
+								${units.map(unit => `<option value="${unit.name} (${unit.symbol})" label="${unit.name} (${unit.symbol})"></option>`).join("")}
+							</datalist>
 						</div>
 						<div>
 							<button id="test-btn-${index}" class="btn btn-test" onclick="testBinding(${index})">Test</button>
@@ -126,6 +157,7 @@
 				slaveadress: "",
 				registeradress: "",
 				datatype: "INT16",
+				unit_id: "",
 				netilion_account_id: accounts.length > 0 ? accounts[0].id : "",
 				netilion_binding_id: ""
 			};
@@ -221,6 +253,7 @@
             <div>Slave Address</div>
             <div>Register Address</div>
             <div>Data Type</div>
+			<div class= "table-double">Unit</div>
 			<div></div>
 			<div></div>
             <div>Compte Netilion</div>

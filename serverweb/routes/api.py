@@ -79,20 +79,6 @@ def load_config_encrypted():
         print(f"❌ Erreur inattendue : {e}")
         return jsonify({"status": "error", "message": str(e)})
 
-# @api_bp.route('/load_config', methods=['POST'])
-# def load_config():
-#     if (
-#         set_config_value("bindings", find_nested_key(request.json, "bindings")) and
-#         set_config_value("netilion", find_nested_key(request.json, "netilion")) and
-#         set_config_value("credentials", find_nested_key(request.json, "credentials")) and
-#         set_config_value("modbus", find_nested_key(request.json, "modbus")) and
-#         set_config_value("networks", find_nested_key(request.json, "networks"))
-#     ):
-#         return jsonify({"status": "success"})
-#     else:
-#         print("❌ Problème lors de l'enregistrement.\nRetour à la configuration originale.")
-#         return jsonify({"status": "error"})
-
 
 # -------------  BINDINGS ------------
 
@@ -197,3 +183,15 @@ def save_netilion_config():
     else:
         print("❌ Problème lors de l'enregistrement")
         return jsonify({"status": "error"})
+
+@api_bp.route('/get_units',  methods=['GET'])
+@login_required  # 🔒 Protège cette route
+def get_units():
+    try:
+        with open("units.json", "r", encoding="utf-8") as f:
+            units = json.load(f)  # Charger le JSON
+
+    except (json.JSONDecodeError, FileNotFoundError):
+        units = []  # Retourne une liste vide si le fichier est corrompu ou absent
+
+    return jsonify(units)
