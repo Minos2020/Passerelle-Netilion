@@ -1,3 +1,4 @@
+
 from cryptography.fernet import Fernet
 from services.config_utils import*
 import os, traceback
@@ -51,11 +52,16 @@ def encrypt_data_into_file(data: json, file_name: str, key: str):
 
 # Si ce fichier est directement run
 if __name__ == '__main__':
+
+    import os
+    # Change le répertoire de travail au dossier du script
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     # Créer une nouvelle variable dans .env
     # set_key(".env", "CONFIG_ENCRYPTION_KEY", generate_key())
 
     # Charge les variables de .env dans les variables d'environnement
-    # load_dotenv()
+    load_dotenv()
 
     # # Récupération de la clé de chiffrement dans les variables d'environnement
     key = os.getenv('CONFIG_ENCRYPTION_KEY')
@@ -65,7 +71,7 @@ if __name__ == '__main__':
 
     # encrypt_file("Blablabla.txt", key)
 
-    encrypt_file("config.conf", key)
+    # encrypt_file("config.conf", key)
     # decrypt_file("config.conf", key)
     # decrypt_data("config.json", key)
 
