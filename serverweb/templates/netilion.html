@@ -31,6 +31,8 @@
     .btn-danger { background: #c21d1d; width: auto; align-self: center; padding: 5px 10px; }
     .btn:hover { background-color: #0e5a91; }
     .btn-danger:hover { background-color: #a91d1d; }
+    .btn-test { background: #a3a3a3; width: auto; align-self: center; padding: 5px 10px; }
+		.btn-test:hover { background-color: #585858; }
     .account-header { display: flex; justify-content: space-between; align-items: center; }
     .account-header h3 { font-size: 18px; margin: 0; }
     .account-header button { background: transparent; border: none; font-size: 18px; color: #c21d1d; cursor: pointer; }
@@ -72,7 +74,11 @@
           <div class="grid-key">Password:</div>
           <input class="grid-value" type="password" value="${account.credentials.password}" onchange="updateAccount(${index}, 'password', this.value)">
           
-          <button class="btn btn-danger grid-footer" onclick="deleteAccount(${index})">Supprimer</button>
+          
+          <button id="test-btn-${index}"class="btn btn-test grid-value" onclick="testConnection(${index})">Tester la connexion</button>
+          <button class="btn btn-danger grid-value" onclick="deleteAccount(${index})">Supprimer</button>
+          
+          <div id="test-result-${index}" class="test-result"></div>
         `;
         container.appendChild(div);
       });
@@ -134,6 +140,42 @@
                 alert("❌ Erreur lors de l'enregistrement !");
               }
             });
+    }
+
+    function testConnection(index) {
+      let account = accounts[index];
+      let button = document.getElementById(`test-btn-${index}`);
+      let resultDiv = document.getElementById(`test-result-${index}`);
+
+      // Reset visuel pendant le test de connexion
+			button.style.backgroundColor = "#1971c2";
+			resultDiv.innerText = "Test en cours...";
+			resultDiv.style.color = "#333";
+
+      fetch("/api/test_netilion_connection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(account.credentials)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          button.style.backgroundColor = "#28a745"; // Vert
+          resultDiv.innerHTML = "✅ Connexion réussie !";
+          resultDiv.style.color = "green";
+          // Met à jour l'objet account avec la nouvelle valeur
+          accounts[index].credentials.last_connection = data.last_connection;
+        } else {
+          button.style.backgroundColor = "#dc3545"; // Rouge
+          resultDiv.innerHTML = "❌ Échec de la connexion : " + data.error;
+          resultDiv.style.color = "red";
+        }
+      })
+      .catch(error => {
+        button.style.backgroundColor = "#dc3545"; // Rouge
+        console.error("Erreur:", error);
+        resultDiv.innerHTML = "❌ Erreur inattendue : " + error;
+      });
     }
 
     document.addEventListener("DOMContentLoaded", fetchAccounts);

@@ -132,7 +132,8 @@
               div.innerHTML = `
                 <div class="grid-header">${account.identification}</div>
                 <div class="grid-key">Bindings</div><div class="grid-value">${bindingCount}</div>
-              `;
+                <div class="grid-key">Last connection</div><div class="grid-value">${account.last_connection}</div>
+                `;
               
 
               netilionContainer.appendChild(div);

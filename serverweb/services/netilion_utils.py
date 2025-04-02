@@ -1,4 +1,5 @@
 import requests, os, time, json
+from datetime import datetime
 from services.config_utils import*
 from services.encryption_utils import*
 from services.netilion_client import Asset, Instrumentation, Node
@@ -19,6 +20,7 @@ class NetilionAccount:
         self.access_token: str = None
         self.refresh_token: str = None
         self.token_expiry: int = 0  # Timestamp d'expiration
+        self.last_connection: datetime = None  # Date/heure de la dernière connexion
         self.assets = list["Asset"]
         self.nodes = list["Node"]
         self.instrumentations = list["Instrumentation"]
@@ -26,9 +28,13 @@ class NetilionAccount:
     def __str__(self):
         """Permet de faire un print(str(instance)) pour voir les informations voulues"""
         return (
-        f"\nAcc ID : {self.account_id}, Client ID: {self.client_id}\n"
-        f"Acces token : {self.access_token if self.access_token is not None else 'Pas d\'access token'},\n"
-        f"Refresh token : {self.refresh_token if self.refresh_token is not None else 'Pas de refresh token'},\n"
+        f"\nAcc ID : {self.account_id}\n"
+        f"Client ID: {self.client_id}\n"
+        f"Client secret: {self.client_secret}\n"
+        f"Username : {self.username}\n"
+        f"Password : {self.password}\n"
+        f"Access token : {self.access_token if self.access_token is not None else 'Pas d\'access token'}\n"
+        f"Refresh token : {self.refresh_token if self.refresh_token is not None else 'Pas de refresh token'}\n"
         f"{'Expiration token dans ' + str(int(self.token_expiry - time.time())) + ' secondes' if time.time() < self.token_expiry else ('Pas d\'access token' if not self.access_token else 'Token expiré')}"
     )
 
@@ -43,6 +49,7 @@ class NetilionAccount:
             "access_token": self.access_token,
             "refresh_token": self.refresh_token,
             "token_expiry": self.token_expiry,
+            "last_connection": self.last_connection.isoformat() if self.last_connection else None,  # Conversion ISO 8601
             "assets": [asset.__dict__ for asset in self.assets],  # Sérialisation des assets
             "nodes": [node.__dict__ for node in self.nodes],  # Sérialisation des nodes
             "instrumentations": [inst.__dict__ for inst in self.instrumentations]  # Sérialisation des instrumentations
@@ -58,6 +65,9 @@ class NetilionAccount:
         instance.refresh_token = data.get("refresh_token", None)
         instance.token_expiry = data.get("token_expiry", 0)
 
+        # Désérialisation de la date de dernière connexion
+        instance.last_connection = datetime.fromisoformat(data.get("last_connection")) if data.get("last_connection") else None
+
          # Désérialisation des assets, nodes et instrumentations
         instance.assets = [Asset(**asset) for asset in data.get("assets", [])]
         instance.nodes = [Node(**node) for node in data.get("nodes", [])]
@@ -65,6 +75,14 @@ class NetilionAccount:
         
         return instance
     
+    def update_last_connection(self):
+        """Met à jour la date et l'heure de la dernière connexion."""
+        self.last_connection = datetime.now()
+
+    def get_last_connection(self) -> str:
+        """Retourne la dernière connexion sous forme lisible."""
+        return self.last_connection.strftime("%Y-%m-%d %H:%M:%S") if self.last_connection else "Jamais connecté"
+
 
     def _request_token(self, grant_type, extra_data=None) -> None:
         """
@@ -76,12 +94,18 @@ class NetilionAccount:
             "client_id": self.client_id,
             "client_secret": self.client_secret,
         }
+        
         if extra_data:
             token_data.update(extra_data)
 
         response = requests.post(token_url, data=token_data)
         response_data = response.json()
 
+        if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
+            self.update_last_connection()
+        
+        print(self.get_last_connection())
+        
         if response.status_code == 200:
             print(
                 "Access granted with password" if grant_type == "password"
@@ -90,18 +114,21 @@ class NetilionAccount:
             self.access_token = response_data['access_token']
             self.refresh_token = response_data.get('refresh_token', self.refresh_token)
             self.token_expiry = time.time() + response_data.get("expires_in", 660) - 10
+            self.update_last_connection()
         else:
             raise Exception(f"Failed to obtain access token: {response_data}")
+        return response
 
 
     def authenticate(self):
         """
         Authentifie l'utilisateur et stocke le token.
         """
-        self._request_token("password", {
+        response = self._request_token("password", {
             "username": self.username,
             "password": self.password
         })
+        return response
 
     def refresh_token_if_needed(self):
         """
@@ -157,6 +184,11 @@ class NetilionAccount:
             response = requests.request(method, url, json=data, params=params, headers=headers)
 
         response.raise_for_status()  # Lève une exception en cas d'erreur HTTP
+
+        if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
+            self.update_last_connection()
+        
+        print(self.get_last_connection())
         return response
 
 

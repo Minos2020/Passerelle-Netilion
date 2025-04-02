@@ -71,9 +71,9 @@ if __name__ == '__main__':
 
     # encrypt_file("Blablabla.txt", key)
 
-    # encrypt_file("config.conf", key)
+    encrypt_file("config.conf", key)
     # decrypt_file("config.conf", key)
-    # decrypt_data("config.json", key)
+    # decrypt_data("config.conf", key)
 
     # key = os.getenv("NETILION_ENCRYPTION_KEY")
 

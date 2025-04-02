@@ -3,6 +3,7 @@ from functools import wraps
 from services.modbus_utils import*
 from services.config_utils import*
 from services.encryption_utils import*
+from services.netilion_utils import NetilionAccount, getAccountByID
 
 api_bp = Blueprint('api', __name__)
 
@@ -184,6 +185,36 @@ def save_netilion_config():
         print("❌ Problème lors de l'enregistrement")
         return jsonify({"status": "error"})
 
+@api_bp.route('/test_netilion_connection',  methods=['POST'])
+@login_required  # 🔒 Protège cette route
+def test_netilion_connection():
+    try:
+        data = request.json
+        tested_account = NetilionAccount(
+            data["account_id"],
+            data["client_id"],
+            data["client_secret"],
+            data["username"],
+            data["password"]
+        )
+        tested_account._request_token("password", {"username": tested_account.username, "password": tested_account.password})
+        
+        return jsonify({"success": True, "last_connection": tested_account.get_last_connection()})
+    
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+    
+
+@api_bp.route('/get_last_connection',  methods=['POST'])
+@login_required  # 🔒 Protège cette route
+def get_last_connection():
+    data = request.json
+    account = getAccountByID(data["account_id"])
+    if not account:    
+        return jsonify({"success": False, "error": str(e)})
+    else:
+        return jsonify({"success": True, "last_connection": account.get_last_connection()})
+    
 @api_bp.route('/get_units',  methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_units():
