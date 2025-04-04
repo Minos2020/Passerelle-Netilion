@@ -21,9 +21,9 @@ class NetilionAccount:
         self.refresh_token: str = None
         self.token_expiry: int = 0  # Timestamp d'expiration
         self.last_connection: datetime = None  # Date/heure de la dernière connexion
-        self.assets = list["Asset"]
-        self.nodes = list["Node"]
-        self.instrumentations = list["Instrumentation"]
+        self.assets = []
+        self.nodes = []
+        self.instrumentations = []
 
     def __str__(self):
         """Permet de faire un print(str(instance)) pour voir les informations voulues"""

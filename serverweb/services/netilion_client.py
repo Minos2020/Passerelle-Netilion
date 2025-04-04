@@ -9,12 +9,48 @@ class Asset:
         self.product_id: int = product_id
         self.nodes: list[int] = nodes
         self.instrumentation: list[int] = instrumentation
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "serial_number": self.serial_number,
+            "description": self.description,
+            "product_id": self.product_id,
+            "nodes": self.nodes,
+            "instrumentation": self.instrumentation
+        }
 
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data["id"],
+            serial_number=data["serial_number"],
+            description=data["description"],
+            product_id=data["product_id"],
+            nodes=data["nodes"],
+            instrumentation=data["instrumentation"]
+        )
+    
 class Node:
     def __init__(self, id: int, name: str, product_code: str):
         self.id: int = id
         self.name: str = name
         self.product_code: str = product_code
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "product_code": self.product_code
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            product_code=data["product_code"]
+        )
 
 class Instrumentation:
     def __init__(self, id: int, name: str, description: str, parent_id: int):
@@ -23,12 +59,46 @@ class Instrumentation:
         self.description: str = description
         self.parent_id: int = parent_id
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "parent_id": self.parent_id
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            description=data["description"],
+            parent_id=data["parent_id"]
+        )
+
 class Value:
     def __init__(self, id: int, name: str, description: str, parent_id: int):
         self.id: int = id
         self.name: str = name
         self.description: str = description
         self.parent_id: int = parent_id
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "parent_id": self.parent_id
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            description=data["description"],
+            parent_id=data["parent_id"]
+        )
 
 class Binding:
     def __init__(self, identification: int, protocol: str, slaveadress: str, registeradress: str,
@@ -42,6 +112,32 @@ class Binding:
         self.netilion_account_id: str = netilion_account_id
         self.netilion_binding_id: str = netilion_binding_id
 
+    def to_dict(self):
+        """Convertit l'objet en dictionnaire pour la sérialisation JSON."""
+        return {
+            "identification": self.identification,
+            "protocol": self.protocol,
+            "slaveadress": self.slaveadress,
+            "registeradress": self.registeradress,
+            "datatype": self.datatype,
+            "unit_id": self.unit_id,
+            "netilion_account_id": self.netilion_account_id,
+            "netilion_binding_id": self.netilion_binding_id
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Crée une instance de Binding à partir d'un dictionnaire."""
+        return cls(
+            identification=data["identification"],
+            protocol=data["protocol"],
+            slaveadress=data["slaveadress"],
+            registeradress=data["registeradress"],
+            datatype=data["datatype"],
+            unit_id=data["unit_id"],
+            netilion_account_id=data["netilion_account_id"],
+            netilion_binding_id=data["netilion_binding_id"]
+        )
 
 if __name__ == '__main__':
     # # # Chargement des comptes depuis la configuration JSON
