@@ -4,6 +4,8 @@ from services.modbus_utils import*
 from services.config_utils import*
 from services.encryption_utils import*
 from services.netilion_utils import NetilionAccount, getAccountByID
+from services.netilion_client import Binding
+from model import PasserelleNetilion
 
 api_bp = Blueprint('api', __name__)
 
@@ -44,15 +46,16 @@ def login_required(f):
 @api_bp.route('/get_config', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_config_as_JSON():
-    return jsonify(get_config())
+    passerelle = PasserelleNetilion()
+    return jsonify(passerelle.to_dict())
 
 @api_bp.route('/get_config_file', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_config_encrypted():
     save_config()
     with open(CONFIG_PATH, "rb") as f:
-            encrypted_data = f.read()
-    return encrypted_data
+            data = f.read()
+    return data
 
 @api_bp.route('/load_config_file', methods=['POST'])
 @login_required  # 🔒 Protège cette route
@@ -86,36 +89,54 @@ def load_config_encrypted():
 @api_bp.route('/get_bindings', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_bindings():
-    bindings = get_config_value('bindings')
+    passerelle = PasserelleNetilion()
+    bindings = passerelle.to_dict()["bindings"]
     return jsonify(bindings)
 
 @api_bp.route('/save_bindings', methods=['POST'])
 @login_required  # 🔒 Protège cette route
 def save_bindings():
-    if set_config_value("bindings", request.json):
+    try:
+        passerelle = PasserelleNetilion()
+        passerelle.bindings = [Binding.from_dict(b) for b in request.json]
+
+
+        save_config(False) # A ENLEVER
+
+
         return jsonify({"status": "success"})
-    else:
-        print("❌ Problème lors de l'enregistrement")
-        return jsonify({"status": "error"})
+    except Exception as e:
+        print("❌ Erreur dans save_bindings:", e)
+        return jsonify({"status": "error", "message": str(e)})
     
 
 
 # -------------  MODBUS ------------
 
-@api_bp.route('/get_modbus_config', methods=['GET'])
+@api_bp.route('/get_general_config', methods=['GET'])
 @login_required  # 🔒 Protège cette route
-def get_modbus_config():
-    netilion_config = get_config_value('modbus')
-    return jsonify(netilion_config)
+def get_general_config():
+    passerelle = PasserelleNetilion()
+    response = {
+        "modbus_rate": passerelle.to_dict()["modbus_rate"]
+    }
+    return jsonify(response)
 
-@api_bp.route('/save_modbus_config', methods=['POST'])
+@api_bp.route('/save_general_config', methods=['POST'])
 @login_required  # 🔒 Protège cette route
-def save_modbus_config():
-    if set_config_value("modbus", request.json):
+def save_general_config():
+    try:
+        passerelle = PasserelleNetilion()
+        passerelle.modbus_rate = request.json["modbus_rate"]
+
+
+        save_config(False) # A ENLEVER
+
+
         return jsonify({"status": "success"})
-    else:
-        print("❌ Problème lors de l'enregistrement")
-        return jsonify({"status": "error"})
+    except Exception as e:
+        print("❌ Erreur dans save_general_config:", e)
+        return jsonify({"status": "error", "message": str(e)})
 
 @api_bp.route('/modbus_test', methods=['POST'])
 @login_required  # 🔒 Protège cette route
@@ -170,27 +191,40 @@ def save_networks_config():
 
 # -------------  NETILION ------------
 
-@api_bp.route('/get_netilion_config', methods=['GET'])
+@api_bp.route('/get_accounts', methods=['GET'])
 @login_required  # 🔒 Protège cette route
-def get_netilion_config():
-    netilion_config = get_config_value('accounts')
-    return jsonify(netilion_config)
+def get_accounts():
+    passerelle = PasserelleNetilion()
+    accounts = passerelle.to_dict()["accounts"]
+    return jsonify(accounts)
 
-@api_bp.route('/save_netilion_config', methods=['POST'])
+@api_bp.route('/save_accounts', methods=['POST'])
 @login_required  # 🔒 Protège cette route
 def save_netilion_config():
-    if set_config_value("accounts", request.json):
-        return jsonify({"status": "success"})
-    else:
-        print("❌ Problème lors de l'enregistrement")
-        return jsonify({"status": "error"})
+    try:
+        passerelle = PasserelleNetilion()
+        passerelle.accounts = {
+            acc_data["account_id"]: NetilionAccount.from_dict(acc_data)
+            for acc_data in request.json
+        }
 
-@api_bp.route('/test_netilion_connection',  methods=['POST'])
+
+        save_config(False) # A ENLEVER
+
+
+        return jsonify({"status": "success"})
+    except Exception as e:
+        print("❌ Erreur dans save_general_config:", e)
+        return jsonify({"status": "error", "message": str(e)})
+    
+
+@api_bp.route('/test_account_connection',  methods=['POST'])
 @login_required  # 🔒 Protège cette route
-def test_netilion_connection():
+def test_account_connection():
     try:
         data = request.json
         tested_account = NetilionAccount(
+            "tested_account",
             data["account_id"],
             data["client_id"],
             data["client_secret"],

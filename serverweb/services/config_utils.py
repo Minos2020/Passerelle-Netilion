@@ -1,9 +1,10 @@
 import json, time, os, psutil, socket, subprocess
 from services.encryption_utils import decrypt_data_from_file, encrypt_data_into_file
 from services.netilion_utils import*
+from model import PasserelleNetilion
 
 # Chemin du fichier de configuration
-CONFIG_PATH = "config.conf"
+CONFIG_PATH = "tempconf.conf"
 SAVE_INTERVAL = 60  # secondes
 
 CONFIG_ENCRYPTION_KEY = os.getenv("CONFIG_ENCRYPTION_KEY")
@@ -21,23 +22,22 @@ def set_config(new_config: dict):
     GLOBAL_CONFIG = new_config
 
 # Chargement de la config en mémoire depuis le fichier de sauvegarde
-def load_config():
+def load_config(encrypted=True):
     """Charge la configuration depuis un fichier JSON chiffré."""
     global GLOBAL_CONFIG
     global accounts
+    print(f"💾 Chargement de la configuration {"CHIFFREE" if encrypted else "EN CLAIR"}")
     try:
-        decrypted_json = decrypt_data_from_file(CONFIG_PATH, CONFIG_ENCRYPTION_KEY)
-        GLOBAL_CONFIG = json.loads(decrypted_json)
-        netilion_data = GLOBAL_CONFIG["netilion"]["accounts"]
-        accounts = {acc['credentials']['account_id']: NetilionAccount.from_dict(acc['credentials']) for acc in netilion_data}
-        set_accounts(accounts)
-        # print ("Après chargement")
-        # for account in accounts.values():
-        #     print(str(account))
+        decrypted_conf = decrypt_data_from_file(CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
+        dataconf = json.loads(decrypted_conf)
+
+        passerelle = PasserelleNetilion.from_dict(dataconf)
+        print(passerelle.to_dict())
+
         print("✅ Configuration chargée en mémoire !")
     except Exception as e:
         print(f"❌ Erreur lors du chargement de la configuration : {e}")
-        GLOBAL_CONFIG = {}
+        passerelle = PasserelleNetilion()
     
 
 # Ecrase la configuration du fichier de sauvegarde avec celle qui est en mémoire
@@ -45,7 +45,8 @@ def save_config(encrypted=True):
     global config_modified, last_save_time
     """Sauvegarde la configuration en mémoire vers le fichier JSON."""
     try:
-        data_to_encrypt = json.dumps(GLOBAL_CONFIG, indent=4)
+        passerelle = PasserelleNetilion()
+        data_to_encrypt = json.dumps(passerelle.to_dict(), indent=4)
         encrypt_data_into_file(data_to_encrypt.encode(), CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
         print("💾 Configuration mise à jour !")
         config_modified = False
@@ -158,81 +159,7 @@ def get_element_from_array(array, key, value):
     print("⚠ Aucun élément trouvé.")
     return None
 
-class Network:
-    def __init__(self, ipadress: str, subnetmask: str, gateway: str, description: str = None, usage: str = None):
-        self.ipadress: str = ipadress
-        self.subnetmask: str = subnetmask
-        self.gateway: str = gateway
-        self.description: str = description
-        self.usage: str = usage
 
-    def to_dict(self):
-        return {
-            "ipadress": self.ipadress,
-            "subnetmask": self.subnetmask,
-            "gateway": self.gateway,
-            "description": self.description,
-            "usage": self.usage
-        }
-
-    @classmethod
-    def from_dict(cls, data):
-        return cls(
-            ipadress=data["ipadress"],
-            subnetmask=data["subnetmask"],
-            gateway=data["gateway"],
-            description=data["description"],
-            usage=data["usage"]
-        )
-
-def getNetworkSettings():
-    """
-    Récupère les configurations réseau de l'ordinateur.
-    Ne retourne que les interfaces Ethernet et Wi-Fi.
-    """
-    network_settings = []
-    valid_interfaces = ["eno1", "enp4s0", "wlp2s0"]  # Liste des préfixes des interfaces Ethernet et Wi-Fi
-
-    # Récupère toutes les interfaces réseau disponibles
-    for interface, addrs in psutil.net_if_addrs().items():
-        # Filtre les interfaces Ethernet (eth, en) et Wi-Fi (wlan)
-        if any(interface.startswith(prefix) for prefix in valid_interfaces):
-            # Initialiser les champs pour cette interface
-            ip_address = None
-            subnet_mask = None
-            gateway = None
-
-            for addr in addrs:
-                try:
-                    # On vérifie si l'adresse est de type IPv4 (pas IPv6)
-                    if addr.family == socket.AF_INET:  # Utilisation de socket.AF_INET
-                        ip_address = addr.address
-                        subnet_mask = addr.netmask
-                except AttributeError as e:
-                    print(f"Erreur lors de l'accès à addr.family : {e}")
-
-            # Maintenant, obtenons la passerelle et DHCP
-            if ip_address:
-                # Utilisation de "ip route" pour obtenir la passerelle par défaut
-                try:
-                    route_output = subprocess.check_output(["ip", "route"]).decode("utf-8")
-                    for line in route_output.splitlines():
-                        if "default via" in line:
-                            # Vérifie si la ligne correspond à l'interface actuelle
-                            if interface in line:
-                                gateway = line.split()[2]  # La passerelle par défaut est après "default via"
-                except subprocess.CalledProcessError as e:
-                    print(f"Erreur lors de la récupération de la passerelle : {e}")
-                    gateway = 'N/A'
-
-                # Création de l'objet Network et ajout à la liste
-                network_settings.append(Network(
-                    ipadress=ip_address,
-                    subnetmask=subnet_mask,
-                    gateway=gateway if gateway else 'N/A',
-                ))
-
-    return network_settings
 
 
 if __name__ == '__main__':

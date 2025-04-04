@@ -76,9 +76,9 @@
 					row.classList.add("table-row");
 
 					// Récupérer les bindable_objects du compte Netilion lié à ce binding
-					let netilionAccount = accounts.find(acc => acc.id === binding.netilion_account_id);
-					let bindableOptions = netilionAccount ? netilionAccount.bindable_objects : [];
-
+					let netilionAccount = accounts.find(acc => acc.account_id === binding.netilion_account_id);
+					let bindableOptions = netilionAccount ? netilionAccount.assets : [];
+					
 					row.innerHTML = `
 						<div><input type="text" value="${binding.identification}" onchange="updateBinding(${index}, 'identification', this.value)"></div>
 						<div>
@@ -118,7 +118,7 @@
 						</div>
 						<div>
 							<select onchange="updateBinding(${index}, 'netilion_account_id', this.value, true)">
-								${accounts.map(acc => `<option value="${acc.id}" ${acc.id === binding.netilion_account_id ? "selected" : ""}>${acc.identification}</option>`).join("")}
+								${accounts.map(acc => `<option value="${acc.account_id}" ${acc.account_id === binding.netilion_account_id ? "selected" : ""}>${acc.identification}</option>`).join("")}
 							</select>
 						</div>
 						<div>
@@ -138,12 +138,13 @@
 		
 
 		function updateBinding(index, field, value, render) {
-			bindings[index][field] = value;
-
-			// Si on change de compte Netilion, on reset le netilion_binding_id
 			if (field === "netilion_account_id") {
-				bindings[index].netilion_binding_id = "";
+				bindings[index][field] = parseInt(value);  // <- ici
+				bindings[index].netilion_binding_id = null;
+			} else {
+				bindings[index][field] = value;
 			}
+
 			if (render){
 				renderBindings(); // Pour rafraîchir les objets Netilion associés
 			}
@@ -159,7 +160,7 @@
 				datatype: "INT16",
 				unit_id: "",
 				netilion_account_id: accounts.length > 0 ? accounts[0].id : "",
-				netilion_binding_id: ""
+				netilion_binding_id: "",
 			};
 			bindings.push(newBinding);
 			renderBindings();
@@ -181,7 +182,7 @@
 					if (data.status === "success") {
 						alert("✅ Bindings enregistrés !");
 					} else {
-						alert("❌ Erreur lors de l'enregistrement !");
+						alert(`❌ Erreur lors de l'enregistrement : ${data.message || "Erreur inconnue"}`);
 					}
 				})
 				.catch(error => console.error("Erreur lors de l'enregistrement:", error));

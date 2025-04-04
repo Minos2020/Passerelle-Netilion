@@ -72,7 +72,7 @@
             let divSummary = document.createElement("div");
             divSummary.classList.add("grid-container");
 
-            let numNetilionAccounts = data.netilion.accounts.length;
+            let numNetilionAccounts = data.accounts.length;
             let numBindings = data.bindings.length;
 
             divSummary.innerHTML = `
@@ -101,7 +101,7 @@
                     <div class="grid-key">IP Address</div><div class="grid-value">${net.ipadress}</div>
                     <div class="grid-key">Subnet Mask</div><div class="grid-value">${net.subnetmask}</div>
                     <div class="grid-key">Gateway</div><div class="grid-value">${net.gateway}</div>
-                    <div class="grid-key">DHCP</div><div class="grid-value">${net.dhcp}</div>
+                    <div class="grid-key">Usage</div><div class="grid-value">${net.usage}</div>
                 `;
 
                 networkContainer.appendChild(div);
@@ -113,10 +113,7 @@
             let divModbus = document.createElement("div");
             divModbus.classList.add("grid-container");
             divModbus.innerHTML = `
-                <div class="grid-key">Rate</div><div class="grid-value">${data.modbus.rate}</div>
-                <div class="grid-key">Modbus RTU Baudrate</div><div class="grid-value">${data.modbus.modbusRTU.baudrate}</div>
-                <div class="grid-key">Parity</div><div class="grid-value">${data.modbus.modbusRTU.parity}</div>
-                <div class="grid-key">Stop bits</div><div class="grid-value">${data.modbus.modbusRTU.stopbits}</div>
+                <div class="grid-key">Rate</div><div class="grid-value">${data.modbus_rate}</div>
             `;
 
             modbusContainer.appendChild(divModbus);
@@ -125,9 +122,9 @@
             let netilionContainer = document.getElementById("netilion-accounts");
             netilionContainer.innerHTML = ""; // Clear before rendering
 
-            data.netilion.accounts.forEach((account, index) => {
+            data.accounts.forEach((account, index) => {
               let div = document.createElement("div");
-              let bindingCount = data.bindings.filter(obj => obj.netilion_account_id === account.id).length;
+              let bindingCount = data.bindings.filter(obj => obj.netilion_account_id === account.account_id).length;
               div.classList.add("grid-container");
               div.innerHTML = `
                 <div class="grid-header">${account.identification}</div>

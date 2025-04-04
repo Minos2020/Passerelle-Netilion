@@ -48,29 +48,19 @@
   </style>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      fetch("/api/get_modbus_config")
+      fetch("/api/get_general_config")
         .then(response => response.json())
         .then(data => {
-          document.getElementById("rate").value = data.rate;
-          document.getElementById("waitdelay").value = data.waitdelay;
-          document.getElementById("baudrate").value = data.modbusRTU.baudrate;
-          document.getElementById("parity").value = data.modbusRTU.parity;
-          document.getElementById("stopbits").value = data.modbusRTU.stopbits;
+          document.getElementById("rate").value = data.modbus_rate;
         });
 
       document.getElementById("modbus-form").addEventListener("submit", function (event) {
         event.preventDefault();
         const configData = {
-          rate: document.getElementById("rate").value,
-          waitdelay: document.getElementById("waitdelay").value,
-          modbusRTU: {
-            baudrate: document.getElementById("baudrate").value,
-            parity: document.getElementById("parity").value,
-            stopbits: document.getElementById("stopbits").value
-          }
+          modbus_rate: document.getElementById("rate").value,
         };
 
-        fetch("/api/save_modbus_config", {
+        fetch("/api/save_general_config", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(configData)
@@ -79,7 +69,7 @@
             if (data.status === "success") {
               alert("✅ Configuration modbus enregistrée !");
             } else {
-              alert("❌ Erreur lors de l'enregistrement !");
+              alert(`❌ Erreur lors de l'enregistrement : ${data.message || "Erreur inconnue"}`);
             }
           })
       });

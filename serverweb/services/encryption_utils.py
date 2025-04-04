@@ -30,13 +30,16 @@ def decrypt_file(file_name: str, key: str):
     print(decrypted_data.decode())
 
 # Retourner les données contenues dans un fichier chiffré
-def decrypt_data_from_file(file_name: str, key: str) -> str:
+def decrypt_data_from_file(file_name: str, key: str, encrypted=True) -> str:
     try:
         with open(file_name, "rb") as f:
             encrypted_data = f.read()
         fernet = Fernet(key)
-        decrypted_data = fernet.decrypt(encrypted_data)
-        return decrypted_data.decode()
+        if encrypted:
+            decrypted_data = fernet.decrypt(encrypted_data)
+            return decrypted_data.decode()
+        else:
+            return encrypted_data
     except IOError as e:
         print(f"Problème d'accès au fichier de configuration : {e}")
         raise IOError(f"Problème d'accès au fichier de configuration : {e}") from e

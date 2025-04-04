@@ -19,7 +19,7 @@ if __name__ == '__main__':
     
     app.secret_key = os.getenv("FLASK_SECRET_KEY")
     
-    load_config()
+    load_config(False)
 
     # Enregistrer les routes
     app.register_blueprint(web_bp)

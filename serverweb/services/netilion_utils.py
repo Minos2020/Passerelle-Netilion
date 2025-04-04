@@ -11,7 +11,8 @@ token_url = "https://api.netilion.endress.com/oauth/token"
 BASE_URL = "https://api.netilion.endress.com/v1"
 
 class NetilionAccount:
-    def __init__(self, account_id: int, client_id: str, client_secret: str, username: str, password: str):
+    def __init__(self, identification: str, account_id: int, client_id: str, client_secret: str, username: str, password: str):
+        self.identification: str = identification
         self.account_id: int = account_id
         self.client_id: str = client_id
         self.client_secret: str = client_secret
@@ -28,7 +29,7 @@ class NetilionAccount:
     def __str__(self):
         """Permet de faire un print(str(instance)) pour voir les informations voulues"""
         return (
-        f"\nAcc ID : {self.account_id}\n"
+        f"\nAcc ID : {self.account_id} - {self.identification}\n"
         f"Client ID: {self.client_id}\n"
         f"Client secret: {self.client_secret}\n"
         f"Username : {self.username}\n"
@@ -41,6 +42,7 @@ class NetilionAccount:
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour la sérialisation"""
         return {
+            "identification": self.identification,
             "account_id": self.account_id,
             "client_id": self.client_id,
             "client_secret": self.client_secret,
@@ -59,7 +61,7 @@ class NetilionAccount:
     def from_dict(cls, data):
         """Crée une instance NetilionAuth à partir d'un dictionnaire"""
         instance = cls(
-            data["account_id"], data["client_id"], data["client_secret"], data["username"], data["password"]
+            data["identification"], data["account_id"], data["client_id"], data["client_secret"], data["username"], data["password"]
         )
         instance.access_token = data.get("access_token", None)
         instance.refresh_token = data.get("refresh_token", None)

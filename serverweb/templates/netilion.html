@@ -43,7 +43,7 @@
     let accounts = [];
 
     function fetchAccounts() {
-      fetch("/api/get_netilion_config")
+      fetch("/api/get_accounts")
         .then(response => response.json())
         .then(data => {
           accounts = data;
@@ -63,16 +63,16 @@
           <input class="grid-value" type="text" value="${account.identification}" onchange="updateAccount(${index}, 'identification', this.value)">
           
           <div class="grid-key">Client ID:</div>
-          <input class="grid-value" type="text" value="${account.credentials.client_id}" onchange="updateAccount(${index}, 'client_id', this.value)">
+          <input class="grid-value" type="text" value="${account.client_id}" onchange="updateAccount(${index}, 'client_id', this.value)">
           
           <div class="grid-key">Client Secret:</div>
-          <input class="grid-value" type="password" value="${account.credentials.client_secret}" onchange="updateAccount(${index}, 'client_secret', this.value)">
+          <input class="grid-value" type="password" value="${account.client_secret}" onchange="updateAccount(${index}, 'client_secret', this.value)">
           
           <div class="grid-key">Username:</div>
-          <input class="grid-value" type="text" value="${account.credentials.username}" onchange="updateAccount(${index}, 'username', this.value)">
+          <input class="grid-value" type="text" value="${account.username}" onchange="updateAccount(${index}, 'username', this.value)">
           
           <div class="grid-key">Password:</div>
-          <input class="grid-value" type="password" value="${account.credentials.password}" onchange="updateAccount(${index}, 'password', this.value)">
+          <input class="grid-value" type="password" value="${account.password}" onchange="updateAccount(${index}, 'password', this.value)">
           
           
           <button id="test-btn-${index}"class="btn btn-test grid-value" onclick="testConnection(${index})">Tester la connexion</button>
@@ -86,7 +86,7 @@
 
     function updateAccount(index, field, value) {
       if (["client_id", "client_secret", "username", "password"].includes(field)) {
-        accounts[index].credentials[field] = value;
+        accounts[index][field] = value;
       } else {
         accounts[index][field] = value;
       }
@@ -105,16 +105,14 @@
       let newAccount = {
         id: newId.toString(), // Utilise l'ID trouvé
         identification: "Nouveau Compte",
-        credentials: {
-          account_id: newId.toString(), // copie pour l'instant, A MODIFIER
-          client_id: "",
-          client_secret: "",
-          username: "",
-          password: "",
-          access_token: "",
-          refresh_token: "",
-          token_expiry: 0
-        },
+        account_id: newId.toString(), // copie pour l'instant, A MODIFIER
+        client_id: "",
+        client_secret: "",
+        username: "",
+        password: "",
+        access_token: "",
+        refresh_token: "",
+        token_expiry: 0,
         bindable_objects: []
       };
       accounts.push(newAccount);
@@ -128,7 +126,7 @@
 
     function saveAccounts() {
       
-      fetch("/api/save_netilion_config", {
+      fetch("/api/save_accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(accounts)
@@ -152,10 +150,10 @@
 			resultDiv.innerText = "Test en cours...";
 			resultDiv.style.color = "#333";
 
-      fetch("/api/test_netilion_connection", {
+      fetch("/api/test_account_connection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(account.credentials)
+        body: JSON.stringify(account)
       })
       .then(response => response.json())
       .then(data => {
@@ -164,7 +162,7 @@
           resultDiv.innerHTML = "✅ Connexion réussie !";
           resultDiv.style.color = "green";
           // Met à jour l'objet account avec la nouvelle valeur
-          accounts[index].credentials.last_connection = data.last_connection;
+          accounts[index].last_connection = data.last_connection;
         } else {
           button.style.backgroundColor = "#dc3545"; // Rouge
           resultDiv.innerHTML = "❌ Échec de la connexion : " + data.error;

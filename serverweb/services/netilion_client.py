@@ -101,16 +101,16 @@ class Value:
         )
 
 class Binding:
-    def __init__(self, identification: int, protocol: str, slaveadress: str, registeradress: str,
-                 datatype: str, unit_id: int, netilion_account_id: str, netilion_binding_id: str):
-        self.identification: int = identification
+    def __init__(self, identification: str, protocol: str, slaveadress: str, registeradress: str,
+                 datatype: str, unit_id: int, netilion_account_id: int, netilion_binding_id: int):
+        self.identification: str = identification
         self.protocol: str = protocol
         self.slaveadress: str = slaveadress
         self.registeradress: str = registeradress
         self.datatype: str = datatype
         self.unit_id: int = unit_id
-        self.netilion_account_id: str = netilion_account_id
-        self.netilion_binding_id: str = netilion_binding_id
+        self.netilion_account_id: int = netilion_account_id
+        self.netilion_binding_id: int = netilion_binding_id
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour la sérialisation JSON."""
