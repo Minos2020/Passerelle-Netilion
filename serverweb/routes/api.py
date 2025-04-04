@@ -232,7 +232,9 @@ def test_account_connection():
             data["password"]
         )
         tested_account._request_token("password", {"username": tested_account.username, "password": tested_account.password})
-        
+        passerelle = PasserelleNetilion()
+
+        passerelle.accounts[tested_account.account_id].last_connection = tested_account.last_connection
         return jsonify({"success": True, "last_connection": tested_account.get_last_connection()})
     
     except Exception as e:

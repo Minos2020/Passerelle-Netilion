@@ -50,7 +50,7 @@
 
 		function fetchData() {
 			Promise.all([
-				fetch("/api/get_netilion_config").then(res => res.json()),
+				fetch("/api/get_accounts").then(res => res.json()),
 				fetch("/api/get_bindings").then(res => res.json())
 			])
 				.then(([netilionData, bindingsData]) => {
