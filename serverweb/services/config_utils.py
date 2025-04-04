@@ -158,12 +158,39 @@ def get_element_from_array(array, key, value):
     print("⚠ Aucun élément trouvé.")
     return None
 
+class Network:
+    def __init__(self, ipadress: str, subnetmask: str, gateway: str, description: str = None, usage: str = None):
+        self.ipadress: str = ipadress
+        self.subnetmask: str = subnetmask
+        self.gateway: str = gateway
+        self.description: str = description
+        self.usage: str = usage
+
+    def to_dict(self):
+        return {
+            "ipadress": self.ipadress,
+            "subnetmask": self.subnetmask,
+            "gateway": self.gateway,
+            "description": self.description,
+            "usage": self.usage
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            ipadress=data["ipadress"],
+            subnetmask=data["subnetmask"],
+            gateway=data["gateway"],
+            description=data["description"],
+            usage=data["usage"]
+        )
+
 def getNetworkSettings():
     """
     Récupère les configurations réseau de l'ordinateur.
     Ne retourne que les interfaces Ethernet et Wi-Fi.
     """
-    network_settings = {}
+    network_settings = []
     valid_interfaces = ["eno1", "enp4s0", "wlp2s0"]  # Liste des préfixes des interfaces Ethernet et Wi-Fi
 
     # Récupère toutes les interfaces réseau disponibles
@@ -198,12 +225,12 @@ def getNetworkSettings():
                     print(f"Erreur lors de la récupération de la passerelle : {e}")
                     gateway = 'N/A'
 
-                # Ajouter cette configuration au dictionnaire
-                network_settings[interface] = {
-                    "IP Address": ip_address,
-                    "Subnet Mask": subnet_mask,
-                    "Gateway": gateway if gateway else 'N/A',
-                }
+                # Création de l'objet Network et ajout à la liste
+                network_settings.append(Network(
+                    ipadress=ip_address,
+                    subnetmask=subnet_mask,
+                    gateway=gateway if gateway else 'N/A',
+                ))
 
     return network_settings
 

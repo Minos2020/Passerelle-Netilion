@@ -139,6 +139,7 @@ class Binding:
             netilion_binding_id=data["netilion_binding_id"]
         )
 
+
 if __name__ == '__main__':
     # # # Chargement des comptes depuis la configuration JSON
     # # load_accounts()

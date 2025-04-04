@@ -1,13 +1,14 @@
 import psutil
 import socket
 import subprocess
+from services.config_utils import Network
 
 def getNetworkSettings():
     """
     Récupère les configurations réseau de l'ordinateur.
     Ne retourne que les interfaces Ethernet et Wi-Fi.
     """
-    network_settings = {}
+    network_settings = []
     valid_interfaces = ["eno1", "enp4s0", "wlp2s0"]  # Liste des préfixes des interfaces Ethernet et Wi-Fi
 
     # Récupère toutes les interfaces réseau disponibles
@@ -42,15 +43,16 @@ def getNetworkSettings():
                     print(f"Erreur lors de la récupération de la passerelle : {e}")
                     gateway = 'N/A'
 
-                # Ajouter cette configuration au dictionnaire
-                network_settings[interface] = {
-                    "IP Address": ip_address,
-                    "Subnet Mask": subnet_mask,
-                    "Gateway": gateway if gateway else 'N/A',
-                }
+                # Création de l'objet Network et ajout à la liste
+                network_settings.append(Network(
+                    ipadress=ip_address,
+                    subnetmask=subnet_mask,
+                    gateway=gateway if gateway else 'N/A',
+                ))
 
     return network_settings
 
 # Tester la fonction
-network_settings = getNetworkSettings()
-print(network_settings)
+networks = getNetworkSettings()
+for network in networks:
+    print(network.to_dict())
