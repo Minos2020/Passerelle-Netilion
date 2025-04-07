@@ -247,7 +247,7 @@ def get_last_connection():
     data = request.json
     account = getAccountByID(data["account_id"])
     if not account:    
-        return jsonify({"success": False, "error": str(e)})
+        return jsonify({"success": False, "error": "no account found"})
     else:
         return jsonify({"success": True, "last_connection": account.get_last_connection()})
     

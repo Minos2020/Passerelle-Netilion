@@ -32,7 +32,7 @@ def load_config(encrypted=True):
         dataconf = json.loads(decrypted_conf)
 
         passerelle = PasserelleNetilion.from_dict(dataconf)
-        print(passerelle.to_dict())
+        # print(passerelle.to_dict())
 
         print("✅ Configuration chargée en mémoire !")
     except Exception as e:

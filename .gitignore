@@ -8,3 +8,4 @@ serverweb/.env
 __pycache__/
 *.log
 *.sqlite3
+.env

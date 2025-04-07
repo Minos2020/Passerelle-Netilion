@@ -19,8 +19,9 @@ def login():
         password = request.form['password']
         
         # Vérification des identifiants (ici tu peux les valider contre un fichier JSON, base de données, etc.)
-        stored_username = get_config_value('username')
-        stored_password = get_config_value('password')
+        passerelle = PasserelleNetilion()
+        stored_username = passerelle.to_dict()["username"]
+        stored_password = passerelle.to_dict()["password"]
         
         if username == stored_username and password == stored_password:
             session['authenticated'] = True  # Enregistrer dans la session que l'utilisateur est authentifié
