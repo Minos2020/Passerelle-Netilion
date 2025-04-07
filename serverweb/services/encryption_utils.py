@@ -34,8 +34,9 @@ def decrypt_data_from_file(file_name: str, key: str, encrypted=True) -> str:
     try:
         with open(file_name, "rb") as f:
             encrypted_data = f.read()
-        fernet = Fernet(key)
+        
         if encrypted:
+            fernet = Fernet(key)
             decrypted_data = fernet.decrypt(encrypted_data)
             return decrypted_data.decode()
         else:
