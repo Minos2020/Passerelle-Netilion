@@ -3,9 +3,8 @@ from functools import wraps
 from services.modbus_utils import*
 from services.config_utils import*
 from services.encryption_utils import*
-from services.netilion_utils import NetilionAccount, getAccountByID
-from services.netilion_client import Binding
-from model import PasserelleNetilion, getNetworkSettings
+from services.network_utils import getNetworkSettings
+from model import PasserelleNetilion, NetilionAccount
 
 api_bp = Blueprint('api', __name__)
 
@@ -46,16 +45,14 @@ def login_required(f):
 @api_bp.route('/get_config', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_config_as_JSON():
-    passerelle = PasserelleNetilion()
-    return jsonify(passerelle.to_dict())
+    return jsonify(PasserelleNetilion().to_dict())
 
 @api_bp.route('/get_config_file', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_config_encrypted():
-    passerelle = PasserelleNetilion()
     # print(type(passerelle.to_dict()["encryption"]))
     # print(passerelle.to_dict()["encryption"])
-    save_config(passerelle.to_dict()["encryption"])
+    save_config(PasserelleNetilion().to_dict()["encryption"])
     with open(CONFIG_PATH, "rb") as f:
             data = f.read()
     return data
@@ -92,16 +89,14 @@ def load_config_encrypted():
 @api_bp.route('/get_bindings', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_bindings():
-    passerelle = PasserelleNetilion()
-    bindings = passerelle.to_dict()["bindings"]
+    bindings = PasserelleNetilion().to_dict()["bindings"]
     return jsonify(bindings)
 
 @api_bp.route('/save_bindings', methods=['POST'])
 @login_required  # 🔒 Protège cette route
 def save_bindings():
     try:
-        passerelle = PasserelleNetilion()
-        passerelle.bindings = [Binding.from_dict(b) for b in request.json]
+        PasserelleNetilion().bindings = [Binding.from_dict(b) for b in request.json]
 
 
         save_config(False) # A ENLEVER
@@ -119,9 +114,8 @@ def save_bindings():
 @api_bp.route('/get_general_config', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_general_config():
-    passerelle = PasserelleNetilion()
     response = {
-        "modbus_rate": passerelle.to_dict()["modbus_rate"]
+        "modbus_rate": PasserelleNetilion().to_dict()["modbus_rate"]
     }
     return jsonify(response)
 
@@ -129,11 +123,10 @@ def get_general_config():
 @login_required  # 🔒 Protège cette route
 def save_general_config():
     try:
-        passerelle = PasserelleNetilion()
-        passerelle.modbus_rate = request.json["modbus_rate"]
+        PasserelleNetilion().modbus_rate = request.json["modbus_rate"]
 
 
-        save_config(False) # A ENLEVER
+        save_config(False) # A ENLEVER (False pour ne pas chiffrer les données)
 
 
         return jsonify({"status": "success"})
@@ -239,6 +232,7 @@ def test_account_connection():
         passerelle = PasserelleNetilion()
 
         passerelle.accounts[tested_account.account_id].last_connection = tested_account.last_connection
+        save_config(False)
         return jsonify({"success": True, "last_connection": tested_account.get_last_connection()})
     
     except Exception as e:
@@ -249,7 +243,7 @@ def test_account_connection():
 @login_required  # 🔒 Protège cette route
 def get_last_connection():
     data = request.json
-    account = getAccountByID(data["account_id"])
+    account = PasserelleNetilion().getAccountByID(data["account_id"])
     if not account:    
         return jsonify({"success": False, "error": "no account found"})
     else:

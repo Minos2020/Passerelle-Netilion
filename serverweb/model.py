@@ -1,8 +1,13 @@
+from __future__ import annotations
 from services.netilion_utils import*
-from services.netilion_client import*
+
 # from services.config_utils import getNetworkSettings
 # from services.encryption_utils import encrypt_data_into_file
-import requests, json, time, os, psutil, subprocess, socket, platform, re
+import psutil, subprocess, socket, platform, re
+
+
+token_url = "https://api.netilion.endress.com/oauth/token"
+BASE_URL = "https://api.netilion.endress.com/v1"
 
 
 class PasserelleNetilion:
@@ -56,15 +61,13 @@ class Network:
         self.subnetmask: str = subnetmask
         self.gateway: str = gateway
         self.description: str = description
-        self.internet_access: str = internet_access
 
     def to_dict(self):
         return {
             "ipadress": self.ipadress,
             "subnetmask": self.subnetmask,
             "gateway": self.gateway,
-            "description": self.description,
-            "internet_access": self.internet_access
+            "description": self.description
         }
 
     @classmethod
@@ -77,93 +80,348 @@ class Network:
             internet_access=data.get("internet_access", None)
         )
 
-def getNetworkSettings() -> list:
-    networks = []
-    system = platform.system()
+class NetilionAccount:
+    def __init__(self, identification: str, account_id: int, client_id: str, client_secret: str, username: str, password: str):
+        self.identification: str = identification
+        self.account_id: int = account_id
+        self.client_id: str = client_id
+        self.client_secret: str = client_secret
+        self.username: str = username
+        self.password: str = password
+        self.access_token: str = None
+        self.refresh_token: str = None
+        self.token_expiry: int = 0  # Timestamp d'expiration
+        self.last_connection: datetime = None  # Date/heure de la dernière connexion
+        self.assets = []
+        self.nodes = []
+        self.instrumentations = []
 
-    # Interfaces actives uniquement
-    for interface, stats in psutil.net_if_stats().items():
-        if not stats.isup:
-            continue  # interface inactive
+    def __str__(self):
+        """Permet de faire un print(str(instance)) pour voir les informations voulues"""
+        return (
+        f"\nAcc ID : {self.account_id} - {self.identification}\n"
+        f"Client ID: {self.client_id}\n"
+        f"Client secret: {self.client_secret}\n"
+        f"Username : {self.username}\n"
+        f"Password : {self.password}\n"
+        f"Access token : {self.access_token if self.access_token is not None else 'Pas d\'access token'}\n"
+        f"Refresh token : {self.refresh_token if self.refresh_token is not None else 'Pas de refresh token'}\n"
+        f"{'Expiration token dans ' + str(int(self.token_expiry - time.time())) + ' secondes' if time.time() < self.token_expiry else ('Pas d\'access token' if not self.access_token else 'Token expiré')}"
+    )
 
-        addrs = psutil.net_if_addrs().get(interface, [])
-        ip_address = None
-        subnet_mask = None
-        gateway = None
+    def to_dict(self):
+        """Convertit l'objet en dictionnaire pour la sérialisation"""
+        return {
+            "identification": self.identification,
+            "account_id": self.account_id,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "username": self.username,
+            "password": self.password,
+            "access_token": self.access_token,
+            "refresh_token": self.refresh_token,
+            "token_expiry": self.token_expiry,
+            "last_connection": self.last_connection.isoformat() if self.last_connection else None,  # Conversion ISO 8601
+            "assets": [asset.__dict__ for asset in self.assets],  # Sérialisation des assets
+            "nodes": [node.__dict__ for node in self.nodes],  # Sérialisation des nodes
+            "instrumentations": [inst.__dict__ for inst in self.instrumentations]  # Sérialisation des instrumentations
+        }
 
-        for addr in addrs:
-            if addr.family == socket.AF_INET:
-                ip = addr.address
-                if ip.startswith("169.254") or ip.startswith("127."):
-                    continue  # ignore APIPA et loopback
-                ip_address = ip
-                subnet_mask = addr.netmask
+    @classmethod
+    def from_dict(cls, data):
+        """Crée une instance NetilionAuth à partir d'un dictionnaire"""
+        instance = cls(
+            data["identification"], data["account_id"], data["client_id"], data["client_secret"], data["username"], data["password"]
+        )
+        instance.access_token = data.get("access_token", None)
+        instance.refresh_token = data.get("refresh_token", None)
+        instance.token_expiry = data.get("token_expiry", 0)
 
-        if not ip_address:
-            continue  # rien d'intéressant
+        # Désérialisation de la date de dernière connexion
+        instance.last_connection = datetime.fromisoformat(data.get("last_connection")) if data.get("last_connection") else None
 
-        # Récupérer la gateway
-        if system == "Linux":
-            try:
-                route_output = subprocess.check_output(["ip", "route"], encoding="utf-8")
-                for line in route_output.splitlines():
-                    if "default via" in line and interface in line:
-                        gateway = line.split()[2]
-                        break
-            except subprocess.CalledProcessError:
-                pass
+         # Désérialisation des assets, nodes et instrumentations
+        instance.assets = [Asset(**asset) for asset in data.get("assets", [])]
+        instance.nodes = [Node(**node) for node in data.get("nodes", [])]
+        instance.instrumentations = [Instrumentation(**inst) for inst in data.get("instrumentations", [])]
+        
+        return instance
+    
+    def update_last_connection(self):
+        """Met à jour la date et l'heure de la dernière connexion."""
+        self.last_connection = datetime.now()
 
-        elif system == "Windows":
-            try:
-                route_output = subprocess.check_output(
-                    ["route", "print", "-4"],
-                    encoding="cp1252"
-                )
-                capture = False
-                for line in route_output.splitlines():
-                    line = line.strip()
-                    if line.startswith("IPv4 Route Table"):
-                        capture = True
-                        continue
-                    if capture and line == "":
-                        break  # fin de table
+    def get_last_connection(self) -> str:
+        """Retourne la dernière connexion sous forme lisible."""
+        return self.last_connection.strftime("%Y-%m-%d %H:%M:%S") if self.last_connection else "Jamais connecté"
 
-                    # Cherche la ligne avec 0.0.0.0 comme destination (passerelle par défaut)
-                    if line.startswith("0.0.0.0"):
-                        parts = re.split(r"\s+", line)
-                        if len(parts) >= 5:
-                            gw_candidate = parts[2]
-                            iface_ip = parts[3]
-                            if iface_ip == ip_address:
-                                gateway = gw_candidate
-                                break
-            except subprocess.CalledProcessError:
-                pass
 
-        # Test de connectivité réseau (ping vers 8.8.8.8)
-        internet_access = False
-        try:
-            if system == "Linux":
-                # Commande ping sous Linux (utilise "-c" pour spécifier le nombre de paquets)
-                subprocess.check_call(["ping", "-c", "1", "8.8.8.8"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            elif system == "Windows":
-                # Commande ping sous Windows (utilise "-n" pour spécifier le nombre de paquets)
-                subprocess.check_call(["ping", "-n", "1", "8.8.8.8"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            internet_access = True
-        except subprocess.CalledProcessError as e:
-            print(f"Ping échoué pour l'interface {interface}. Erreur: {e}")
-            internet_access = False
+    def _request_token(self, grant_type, extra_data=None) -> None:
+        """
+        Demande un token d'accès OAuth2 (soit initial, soit via refresh).
+        """
+        print(f"...requesting access token ({grant_type})...")
+        token_data = {
+            "grant_type": grant_type,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+        }
+        
+        if extra_data:
+            token_data.update(extra_data)
 
-        # Créer et ajouter l'objet
-        networks.append(Network(
-            ipadress=ip_address,
-            subnetmask=subnet_mask,
-            gateway=gateway or 'N/A',
-            description=interface,
-            internet_access=internet_access
-        ))
+        response = requests.post(token_url, data=token_data)
+        response_data = response.json()
 
-    return networks
+        if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
+            self.update_last_connection()
+        
+        print(self.get_last_connection())
+        
+        if response.status_code == 200:
+            print(
+                "Access granted with password" if grant_type == "password"
+                else "Access granted with refresh token"
+            )
+            self.access_token = response_data['access_token']
+            self.refresh_token = response_data.get('refresh_token', self.refresh_token)
+            self.token_expiry = time.time() + response_data.get("expires_in", 660) - 10
+            self.update_last_connection()
+        else:
+            raise Exception(f"Failed to obtain access token: {response_data}")
+        return response
+
+
+    def authenticate(self):
+        """
+        Authentifie l'utilisateur et stocke le token.
+        """
+        response = self._request_token("password", {
+            "username": self.username,
+            "password": self.password
+        })
+        return response
+
+    def refresh_token_if_needed(self):
+        """
+        Rafraîchit le token si nécessaire avant un appel API.
+        """
+        if self.access_token is None or time.time() >= self.token_expiry:
+            print("🔄 Token expiré ou absent, rafraîchissement en cours...")
+            # Si le refresh_token existe, on rafraîchit le token sans redemander les credentials.
+            if self.refresh_token:
+                self._request_token("refresh_token", {"refresh_token": self.refresh_token})
+            else:
+                self.authenticate()  # Sinon, on réauthentifie avec les identifiants
+            return
+
+    def get_headersForAuth(self):
+        """
+        Retourne les headers avec le token à jour.
+        """
+        self.refresh_token_if_needed()
+        return {"Authorization": f"Bearer {self.access_token}"}
+    
+
+    def get_node_by_id(self, node_id: int) -> Node | None:
+        """Recherche un Node par son ID dans cet account"""
+        return next((node for node in self.nodes if node.id == node_id), None)
+    
+    def get_asset_by_id(self, asset_id: int) -> Asset | None:
+        """Recherche un Node par son ID dans cet account"""
+        return next((asset for asset in self.nodes if asset.id == asset_id), None)
+    
+    def get_instrumentation_by_id(self, instrumentation_id: int) -> Instrumentation | None:
+        """Recherche un Node par son ID dans cet account"""
+        return next((instrumentation for instrumentation in self.instrumentations if instrumentation.id == instrumentation_id), None)
+
+
+    def send_request(self, method, endpoint, data=None, params=None):
+        """Envoie une requête HTTP à Netilion avec gestion automatique du token."""
+        
+        # Obtenir les headers avec le token d'authentification
+        headers = self.get_headersForAuth()  # Appel de la méthode pour récupérer les headers
+        # Ajouter l'en-tête Content-Type
+        headers["Content-Type"] = "application/json"
+        # print(headers)
+
+        url = f"{BASE_URL}/{endpoint}"
+        # print(url)
+
+        response = requests.request(method, url, json=data, params=params, headers=headers)
+        if response.status_code == 401:  # Token expiré
+            self.refresh_access_token()
+            headers["Authorization"] = f"Bearer {self.access_token}"
+            headers['accept'] = "application/json"
+            response = requests.request(method, url, json=data, params=params, headers=headers)
+
+        response.raise_for_status()  # Lève une exception en cas d'erreur HTTP
+
+        if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
+            self.update_last_connection()
+        
+        print(self.get_last_connection())
+        return response
+    
+    def get_accounts(self) -> dict[int, NetilionAccount]:
+        """Retourne le dictionnaire des comptes Netilion."""
+        return self.to_dict()["accounts"]
+
+    def set_accounts(self, new_accounts: dict[int, NetilionAccount]):
+        """Met à jour le dictionnaire des comtpes Netilion. (OVERRIDE)"""
+        self.to_dict()["accounts"] = new_accounts
+
+    def getAccountByID(self, account_id):
+        """Récupère l'instance NetilionAuth associée à un compte donné."""
+        return self.to_dict()["accounts"].get(account_id)
+
+    def get_headers(self, account_id):
+        """Récupère les headers d'un compte spécifique."""
+        account = self.getAccountByID(account_id)
+        if account:
+            return account.get_headersForAuth()
+        else:
+            raise ValueError(f"Aucun compte trouvé pour l'ID {account_id}")
+
+
+class Asset:
+    def __init__(self, id: int, serial_number: str, description: str, product_id: int, nodes: list[int], instrumentation: list[int]):
+        self.id: int = id
+        self.serial_number: str = serial_number
+        self.description: str = description
+        self.product_id: int = product_id
+        self.nodes: list[int] = nodes
+        self.instrumentation: list[int] = instrumentation
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "serial_number": self.serial_number,
+            "description": self.description,
+            "product_id": self.product_id,
+            "nodes": self.nodes,
+            "instrumentation": self.instrumentation
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data["id"],
+            serial_number=data["serial_number"],
+            description=data["description"],
+            product_id=data["product_id"],
+            nodes=data["nodes"],
+            instrumentation=data["instrumentation"]
+        )
+    
+class Node:
+    def __init__(self, id: int, name: str, product_code: str):
+        self.id: int = id
+        self.name: str = name
+        self.product_code: str = product_code
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "product_code": self.product_code
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            product_code=data["product_code"]
+        )
+
+class Instrumentation:
+    def __init__(self, id: int, name: str, description: str, parent_id: int):
+        self.id: int = id
+        self.name: str = name
+        self.description: str = description
+        self.parent_id: int = parent_id
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "parent_id": self.parent_id
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            description=data["description"],
+            parent_id=data["parent_id"]
+        )
+
+class Value:
+    def __init__(self, id: int, name: str, description: str, parent_id: int):
+        self.id: int = id
+        self.name: str = name
+        self.description: str = description
+        self.parent_id: int = parent_id
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "parent_id": self.parent_id
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            description=data["description"],
+            parent_id=data["parent_id"]
+        )
+
+class Binding:
+    def __init__(self, identification: str, protocol: str, slaveadress: str, registeradress: str,
+                 datatype: str, unit_id: int, netilion_account_id: int, netilion_binding_id: int):
+        self.identification: str = identification
+        self.protocol: str = protocol
+        self.slaveadress: str = slaveadress
+        self.registeradress: str = registeradress
+        self.datatype: str = datatype
+        self.unit_id: int = unit_id
+        self.netilion_account_id: int = netilion_account_id
+        self.netilion_binding_id: int = netilion_binding_id
+
+    def to_dict(self):
+        """Convertit l'objet en dictionnaire pour la sérialisation JSON."""
+        return {
+            "identification": self.identification,
+            "protocol": self.protocol,
+            "slaveadress": self.slaveadress,
+            "registeradress": self.registeradress,
+            "datatype": self.datatype,
+            "unit_id": self.unit_id,
+            "netilion_account_id": self.netilion_account_id,
+            "netilion_binding_id": self.netilion_binding_id
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Crée une instance de Binding à partir d'un dictionnaire."""
+        return cls(
+            identification=data["identification"],
+            protocol=data["protocol"],
+            slaveadress=data["slaveadress"],
+            registeradress=data["registeradress"],
+            datatype=data["datatype"],
+            unit_id=data["unit_id"],
+            netilion_account_id=data["netilion_account_id"],
+            netilion_binding_id=data["netilion_binding_id"]
+        )
+    
 
 if __name__ == '__main__':
     

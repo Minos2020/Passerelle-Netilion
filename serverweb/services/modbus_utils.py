@@ -105,8 +105,11 @@ def store_data_to_json(data, filename="modbus_data.json"):
             f.write("\n")  # Ajouter un saut de ligne entre les entrées
     except Exception as e:
         print(f"Erreur lors de l'enregistrement des données dans le fichier JSON: {e}")
+    
 
-def main():
+
+
+if __name__ == "__main__":
     # Exemple d'utilisation de modbus_tcp_client ou modbus_rtu_client selon le type de protocole
     while (True):
         for binding in BINDINGS:
@@ -133,6 +136,3 @@ def main():
             client.close()  # Fermer la connexion après chaque lecture
         
         time.sleep(int(MODBUS_CONFIG["rate"]))  # Attendre avant de lire le prochain registre
-
-if __name__ == "__main__":
-    main()

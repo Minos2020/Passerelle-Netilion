@@ -6,7 +6,6 @@ load_dotenv()  # Charge les variables d'environnement depuis .env
 from flask import Flask
 import json, threading
 from services.config_utils import load_config, save_periodically
-from services.netilion_utils import NetilionAccount, fetch_all_units, get_accounts
 from routes.web import web_bp
 from routes.api import api_bp
 
