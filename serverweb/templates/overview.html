@@ -39,6 +39,7 @@
         box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
         margin-bottom: 10px;
     }
+    
     .grid-header {
         grid-column: span 2; /* Étend le titre sur les 2 colonnes */
         background: #cae5fd;
@@ -49,8 +50,22 @@
         border-radius: 8px;
         margin-bottom: 5px;
     }
-    .grid-key {background: #f3f3f3;padding: 5px 10px 5px;font-weight: bold;text-align: left; align-content: center; white-space: nowrap;}
-    .grid-value { background: #fafafa; padding: 5px 30px 5px;text-align: center; align-content: center; justify-content: center; white-space: nowrap;}
+    .grid-key {
+      padding: 0 10px 0;
+      font-weight: bold;
+      text-align: left;
+      align-content: center;
+      white-space: nowrap;
+    }
+
+    .grid-value {
+      text-align: right;
+      align-content: center;
+      justify-content: center;
+      white-space: nowrap;
+      width: auto;
+      padding: 0 10px 0;
+    }
     .grid-singleH { background: #cae5fd; text-align: center; font-weight: bold; padding: 8px;  ; border-radius: 8px; align-content: center; justify-content: center;white-space: nowrap;}
     .grid-singleV {  padding: 5px 40px 5px; font-weight: bold; font-size:xx-large ; text-align: center; align-content: center; justify-content: center; white-space: nowrap;}
     .summary-icon img {
@@ -91,20 +106,23 @@
             // Networks
             let networkContainer = document.getElementById("networks");
             networkContainer.innerHTML = ""; // Clear before rendering
+            fetch("/api/get_networks_config")
+              .then(response => response.json())
+              .then(data => {
+              data.forEach((net) => {
+                  let div = document.createElement("div");
+                  div.classList.add("grid-container");
 
-            data.networks.forEach((net) => {
-                let div = document.createElement("div");
-                div.classList.add("grid-container");
+                  div.innerHTML = `
+                    <div class="grid-header">${net.description || "Interface " + index}</div>
+                    <div class="grid-key">IP:</div><div class="grid-value">${net.ipadress}</div>
+                    <div class="grid-key">Subnet:</div><div class="grid-value">${net.subnetmask}</div>
+                    <div class="grid-key">Gateway:</div><div class="grid-value">${net.gateway}</div>
+                    <div class="grid-key">Internet:</div><div class="grid-value">${net.internet_access}</div>
+                  `;
 
-                div.innerHTML = `
-                    <div class="grid-header">${net.identification}</div>
-                    <div class="grid-key">IP Address</div><div class="grid-value">${net.ipadress}</div>
-                    <div class="grid-key">Subnet Mask</div><div class="grid-value">${net.subnetmask}</div>
-                    <div class="grid-key">Gateway</div><div class="grid-value">${net.gateway}</div>
-                    <div class="grid-key">Usage</div><div class="grid-value">${net.usage}</div>
-                `;
-
-                networkContainer.appendChild(div);
+                  networkContainer.appendChild(div);
+              });
             });
             
             // Modbus settings
@@ -129,7 +147,10 @@
               div.innerHTML = `
                 <div class="grid-header">${account.identification}</div>
                 <div class="grid-key">Bindings</div><div class="grid-value">${bindingCount}</div>
-                <div class="grid-key">Last connection</div><div class="grid-value">${account.last_connection?.replace('T', '<br>') || '—'}</div>
+                <div class="grid-key">Last connection</div>
+                <div class="grid-value">
+                  ${account.last_connection ? account.last_connection.split('T')[0] + '<br>' + account.last_connection.split('T')[1].split('.')[0] : '—'}
+                </div>
                 `;
               
 

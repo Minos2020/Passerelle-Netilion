@@ -99,11 +99,12 @@
       align-items: center;
     }
 
-
     #networks-container {
       place-content: center;
+      align-items: center;
       max-width: 100%;
       display: flex;
+      flex: 1;
       flex-wrap: wrap;
       gap: 20px;
       margin: 20px 40px 10px;
@@ -207,8 +208,6 @@
       width: 300px;
       min-height: 150px;
       margin: 20px;
-      float: left;
-      flex : 1;
       text-align: center;
       transition: border-color 0.3s;
     }
@@ -263,8 +262,13 @@
               document.getElementById("interface-list").appendChild(existingCard);
           }
 
-          dropzone.appendChild(draggedElement);
-          placeholder.style.display = "none";
+          ev.currentTarget.appendChild(draggedElement);
+
+          if (dropzone.children.length > 0) {
+            placeholder.style.display = "none";
+          } else {
+            placeholder.style.display = "inline";
+          }  
         }
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -279,12 +283,14 @@
                 card.id = "iface-" + index;
                 card.draggable = true;
                 card.ondragstart = drag;
+                card.ondragend = dragend;
 
                 card.innerHTML = `
                   <div class="grid-header">${net.description || "Interface " + index}</div>
                   <div class="grid-key">IP:</div><div class="grid-value">${net.ipadress}</div>
                   <div class="grid-key">Subnet:</div><div class="grid-value">${net.subnetmask}</div>
                   <div class="grid-key">Gateway:</div><div class="grid-value">${net.gateway}</div>
+                  <div class="grid-key">Internet:</div><div class="grid-value">${net.internet_access}</div>
                 `;
 
                 container.appendChild(card);
@@ -325,23 +331,23 @@
 
     <div style="display: flex; gap: 50px;">
       <!-- Colonne gauche : interfaces -->
-      <div id="left-column" style="flex: 1;">
+      <div id="left-column" style="flex: 1 1 40%; min-width: 300px;">
         <h2>Available Interfaces</h2>
         <div id="networks-container">
           <div id="interface-list" class="slot" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"></div>
         </div>
       </div>
       <!-- Colonne droite : slot Modbus -->
-      <div id="right-column" style="flex: 1;">
-        <h2>Modbus TCP</h2>
-        <div id="modbus-slot" class="slot" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
-          <p id="modbus-placeholder">Drop the interface that should be used for Modbus</p>
+      <div id="right-column" style="flex: 1 1 40%; min-width: 300px;">
+        <h2>Used for Modbus TCP</h2>
+        <div id="networks-container">
+          <div id="modbus-slot" class="slot" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)">
+            <p id="modbus-placeholder">Drop the interface that should be used for Modbus</p>
+          </div>
         </div>
       </div>
     </div>
 
-    
-    
   </div>
 
       <div style="height: 20px;"></div>

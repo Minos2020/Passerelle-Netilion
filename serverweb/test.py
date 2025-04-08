@@ -1,7 +1,7 @@
 import psutil
 import socket
 import subprocess
-from model import Network, PasserelleNetilion, getNetworkSettings
+from model import Network, getNetworkSettings
 
 
 # Tester la fonction
