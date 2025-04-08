@@ -1,8 +1,8 @@
 from services.netilion_utils import*
 from services.netilion_client import*
 # from services.config_utils import getNetworkSettings
-from services.encryption_utils import encrypt_data_into_file
-import requests, json, time, os
+# from services.encryption_utils import encrypt_data_into_file
+import requests, json, time, os, psutil, subprocess, socket, platform, re
 
 
 class PasserelleNetilion:
@@ -77,54 +77,79 @@ class Network:
             usage=data["usage"]
         )
 
-def getNetworkSettings():
-    """
-    Récupère les configurations réseau de l'ordinateur.
-    Ne retourne que les interfaces Ethernet et Wi-Fi.
-    """
-    network_settings = []
-    valid_interfaces = ["eno1", "enp4s0", "wlp2s0"]  # Liste des préfixes des interfaces Ethernet et Wi-Fi
+def getNetworkSettings() -> list:
+    networks = []
+    system = platform.system()
 
-    # Récupère toutes les interfaces réseau disponibles
-    for interface, addrs in psutil.net_if_addrs().items():
-        # Filtre les interfaces Ethernet (eth, en) et Wi-Fi (wlan)
-        if any(interface.startswith(prefix) for prefix in valid_interfaces):
-            # Initialiser les champs pour cette interface
-            ip_address = None
-            subnet_mask = None
-            gateway = None
+    # Interfaces actives uniquement
+    for interface, stats in psutil.net_if_stats().items():
+        if not stats.isup:
+            continue  # interface inactive
 
-            for addr in addrs:
-                try:
-                    # On vérifie si l'adresse est de type IPv4 (pas IPv6)
-                    if addr.family == socket.AF_INET:  # Utilisation de socket.AF_INET
-                        ip_address = addr.address
-                        subnet_mask = addr.netmask
-                except AttributeError as e:
-                    print(f"Erreur lors de l'accès à addr.family : {e}")
+        addrs = psutil.net_if_addrs().get(interface, [])
+        ip_address = None
+        subnet_mask = None
+        gateway = None
 
-            # Maintenant, obtenons la passerelle et DHCP
-            if ip_address:
-                # Utilisation de "ip route" pour obtenir la passerelle par défaut
-                try:
-                    route_output = subprocess.check_output(["ip", "route"]).decode("utf-8")
-                    for line in route_output.splitlines():
-                        if "default via" in line:
-                            # Vérifie si la ligne correspond à l'interface actuelle
-                            if interface in line:
-                                gateway = line.split()[2]  # La passerelle par défaut est après "default via"
-                except subprocess.CalledProcessError as e:
-                    print(f"Erreur lors de la récupération de la passerelle : {e}")
-                    gateway = 'N/A'
+        for addr in addrs:
+            if addr.family == socket.AF_INET:
+                ip = addr.address
+                if ip.startswith("169.254") or ip.startswith("127."):
+                    continue  # ignore APIPA et loopback
+                ip_address = ip
+                subnet_mask = addr.netmask
 
-                # Création de l'objet Network et ajout à la liste
-                network_settings.append(Network(
-                    ipadress=ip_address,
-                    subnetmask=subnet_mask,
-                    gateway=gateway if gateway else 'N/A',
-                ))
+        if not ip_address:
+            continue  # rien d'intéressant
 
-    return network_settings
+        # Récupérer la gateway
+        if system == "Linux":
+            try:
+                route_output = subprocess.check_output(["ip", "route"], encoding="utf-8")
+                for line in route_output.splitlines():
+                    if "default via" in line and interface in line:
+                        gateway = line.split()[2]
+                        break
+            except subprocess.CalledProcessError:
+                pass
+
+        elif system == "Windows":
+            try:
+                route_output = subprocess.check_output(
+                    ["route", "print", "-4"],
+                    encoding="cp1252"
+                )
+                capture = False
+                for line in route_output.splitlines():
+                    line = line.strip()
+                    if line.startswith("IPv4 Route Table"):
+                        capture = True
+                        continue
+                    if capture and line == "":
+                        break  # fin de table
+
+                    # Cherche la ligne avec 0.0.0.0 comme destination (passerelle par défaut)
+                    if line.startswith("0.0.0.0"):
+                        parts = re.split(r"\s+", line)
+                        if len(parts) >= 5:
+                            gw_candidate = parts[2]
+                            iface_ip = parts[3]
+                            if iface_ip == ip_address:
+                                gateway = gw_candidate
+                                break
+            except subprocess.CalledProcessError:
+                pass
+
+
+        # Créer et ajouter l'objet
+        networks.append(Network(
+            ipadress=ip_address,
+            subnetmask=subnet_mask,
+            gateway=gateway or 'N/A',
+            description=interface
+        ))
+
+    return networks
 
 if __name__ == '__main__':
 

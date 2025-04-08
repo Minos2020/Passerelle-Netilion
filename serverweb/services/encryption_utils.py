@@ -61,10 +61,11 @@ def decrypt_data(data, key: str) -> str:
 
 def encrypt_data_into_file(data: json, file_name: str, key: str, encrypted=True):
     try:
-        fernet = Fernet(key)
-        encrypted_data = fernet.encrypt(data)
+        if encrypted:
+            fernet = Fernet(key)
+            encrypted_data = fernet.encrypt(data)
         with open(file_name, "wb") as f:
-            f.write(encrypted_data) if encrypted else f.write(data)
+            f.write(data) if not encrypted else f.write(encrypted_data)
     except Exception as e:
             print(f'Erreur lors du chiffrement des données : {e}')
             traceback.print_exc()

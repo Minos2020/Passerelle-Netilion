@@ -5,7 +5,7 @@ from services.config_utils import*
 from services.encryption_utils import*
 from services.netilion_utils import NetilionAccount, getAccountByID
 from services.netilion_client import Binding
-from model import PasserelleNetilion
+from model import PasserelleNetilion, getNetworkSettings
 
 api_bp = Blueprint('api', __name__)
 
@@ -52,7 +52,10 @@ def get_config_as_JSON():
 @api_bp.route('/get_config_file', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_config_encrypted():
-    save_config()
+    passerelle = PasserelleNetilion()
+    # print(type(passerelle.to_dict()["encryption"]))
+    # print(passerelle.to_dict()["encryption"])
+    save_config(passerelle.to_dict()["encryption"])
     with open(CONFIG_PATH, "rb") as f:
             data = f.read()
     return data
@@ -175,8 +178,9 @@ def modbus_test():
 @api_bp.route('/get_networks_config', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_networks_config():
-    networks_config = get_config_value('networks')
-    return jsonify(networks_config)
+    networks = getNetworkSettings()
+    networks_dict = [net.to_dict() for net in networks]
+    return jsonify(networks_dict)
 
 @api_bp.route('/save_networks_config', methods=['POST'])
 @login_required  # 🔒 Protège cette route
