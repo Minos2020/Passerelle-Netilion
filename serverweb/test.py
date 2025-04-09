@@ -3,7 +3,6 @@ import socket
 import subprocess
 from dotenv import load_dotenv
 from model import PasserelleNetilion, NetilionAccount
-
 from services.config_utils import load_config
 
 # Tester la fonction
@@ -15,6 +14,6 @@ load_dotenv()  # Charge les variables d'environnement depuis .env
 load_config(False)
 
 account: NetilionAccount = PasserelleNetilion().getAccountByID(1)
-
+print(account.to_dict())
 if account.fetch_nodes():
-    print(account.nodes)
+    [print(node.to_dict()) for node in account.nodes]

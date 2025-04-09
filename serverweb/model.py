@@ -2,7 +2,6 @@ from __future__ import annotations
 from datetime import datetime
 import time, requests
 from services.network_utils import getNetworkSettings
-import services.config_utils as config_utils
 
 
 # from services.encryption_utils import encrypt_data_into_file
@@ -316,7 +315,8 @@ class NetilionAccount:
         
         if response.status_code == 200:
             data = response.json()
-            
+            print(data.get("pagination", None).get("total_count", None))
+            fetched_nodes = []
             # Ajouter chaque nœud dans la liste des nodes du compte
             for node_data in data.get('nodes', []):
                 node = Node(
@@ -325,9 +325,12 @@ class NetilionAccount:
                     description=node_data.get('description'),
                     parent_id=node_data.get('parent', {}).get('id', None)  # parent_id est optionnel
                 )
-                self.nodes.append(node)
-                config_utils.save_config()
-                return True
+                fetched_nodes.append(node)
+            self.nodes = fetched_nodes
+            if self.changes_to_save:
+                print("Sauvegarde des nouveaux nodes...")
+                self.changes_to_save()
+            return True
         else:
             print(f"Erreur lors de la récupération des nœuds: {response.status_code}")
             return False
