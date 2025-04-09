@@ -1,11 +1,11 @@
 import requests, os, time, json
-from datetime import datetime
-from services.config_utils import*
-from services.encryption_utils import*
 from model import PasserelleNetilion, NetilionAccount
 
-def refreshAccountStructure():
+def refreshAccountStructure(account_id: int):
+    account: NetilionAccount = PasserelleNetilion().getAccountByID(account_id)
+
     pass
+
 
 
 def fetch_all_units():
@@ -20,6 +20,8 @@ def fetch_all_units():
     while True:
         endpoint = f"units?page={page}&per_page={per_page}"
         
+        # Utilise le premier compte enregistré pour faire la requête
+        # (si ce compte n'est pas valide cela ne fonctionnera pas)
         response = PasserelleNetilion().to_dict()["accounts"]["1"].send_request("GET", endpoint)
         # print(response)
 
@@ -53,7 +55,9 @@ def fetch_all_units():
 if __name__ == '__main__':
     
     load_dotenv()
-    
+
+    from services.config_utils import load_config
+    load_config(False)
     
 
     # save_accounts_to_file()

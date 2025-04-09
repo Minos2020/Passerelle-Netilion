@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()  # Charge les variables d'environnement depuis .env
 
 from flask import Flask
-import json, threading
+import threading
 from services.config_utils import load_config, save_periodically
 from routes.web import web_bp
 from routes.api import api_bp

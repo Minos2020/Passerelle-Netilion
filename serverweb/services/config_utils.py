@@ -1,6 +1,5 @@
 import json, time, os, psutil, socket, subprocess
 from services.encryption_utils import decrypt_data_from_file, encrypt_data_into_file
-from services.netilion_utils import*
 from model import PasserelleNetilion
 
 # Chemin du fichier de configuration
@@ -21,9 +20,17 @@ def set_config(new_config: dict):
     global GLOBAL_CONFIG
     GLOBAL_CONFIG = new_config
 
+def attach_callbacks(passerelle: PasserelleNetilion):
+    for account in passerelle.accounts:
+        account.changes_to_save = lambda: save_config(False)
+
 # Chargement de la config en mémoire depuis le fichier de sauvegarde
 def load_config(encrypted=True):
-    """Charge la configuration depuis un fichier JSON chiffré."""
+    """
+    Charge la configuration depuis un fichier JSON;
+    False = fichier non chiffré
+    True = fichier chiffré
+    """
     global GLOBAL_CONFIG
     global accounts
     print(f"💾 Chargement de la configuration {"CHIFFREE" if encrypted else "EN CLAIR"}")
@@ -32,6 +39,7 @@ def load_config(encrypted=True):
         dataconf = json.loads(decrypted_conf)
 
         passerelle = PasserelleNetilion.from_dict(dataconf)
+        attach_callbacks(passerelle)
         # print(passerelle.to_dict())
 
         print("✅ Configuration chargée en mémoire !")

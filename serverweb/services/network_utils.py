@@ -1,4 +1,3 @@
-from model import Network
 import psutil, subprocess, platform, socket, re
 
 def getNetworkSettings() -> list:
@@ -63,7 +62,8 @@ def getNetworkSettings() -> list:
                                 break
             except subprocess.CalledProcessError:
                 pass
-
+        
+        from model import Network
         # Créer et ajouter l'objet
         networks.append(Network(
             ipadress=ip_address,

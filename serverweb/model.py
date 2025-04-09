@@ -1,7 +1,10 @@
 from __future__ import annotations
-from services.netilion_utils import*
+from datetime import datetime
+import time, requests
+from services.network_utils import getNetworkSettings
+import services.config_utils as config_utils
 
-# from services.config_utils import getNetworkSettings
+
 # from services.encryption_utils import encrypt_data_into_file
 import psutil, subprocess, socket, platform, re
 
@@ -17,7 +20,7 @@ class PasserelleNetilion:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(PasserelleNetilion, cls).__new__(cls)
-            cls._instance.accounts = {} # Dictionnaire {account_id: NetilionAccount}
+            cls._instance.accounts = [] # Dictionnaire {account_id: NetilionAccount}
             cls._instance.bindings = []
             cls._instance.networks = []
             cls._instance.modbus_rate = 60
@@ -29,7 +32,7 @@ class PasserelleNetilion:
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour la sauvegarde JSON."""
         return {
-            "accounts": [acc.to_dict() for acc in self.accounts.values()],
+            "accounts": [acc.to_dict() for acc in self.accounts],
             "bindings": [binding.to_dict() for binding in self.bindings],  # Si Binding a une méthode to_dict()
             "networks": [network.to_dict() for network in self.networks],  # Si Network a une méthode to_dict()
             "modbus_rate": self.modbus_rate,
@@ -42,10 +45,7 @@ class PasserelleNetilion:
     def from_dict(cls, data):
         """Charge un objet PasserelleNetilion à partir d'un dictionnaire."""
         instance = cls()
-        instance.accounts = {
-            acc_data["account_id"]: NetilionAccount.from_dict(acc_data)
-            for acc_data in data["accounts"]
-        }
+        instance.accounts = [NetilionAccount.from_dict(b) for b in data["accounts"]]
         instance.bindings = [Binding.from_dict(b) for b in data["bindings"]]  # Si Binding a une méthode from_dict()
         instance.networks = [Network.from_dict(n) for n in data["networks"]]  # Si Network a une méthode from_dict()
         instance.modbus_rate = data["modbus_rate"]
@@ -54,6 +54,33 @@ class PasserelleNetilion:
         instance.encryption = data["encryption"]
 
         return instance
+    
+    def get_accounts(self) -> list[NetilionAccount]:
+        """Retourne le dictionnaire des comptes Netilion."""
+        return self.to_dict()["accounts"]
+
+    def set_accounts(self, new_accounts: list[NetilionAccount]):
+        """Met à jour le dictionnaire des comtpes Netilion. (OVERRIDE)"""
+        self.accounts = new_accounts
+
+    def add_account(self, new_account: NetilionAccount):
+        """
+        Ajoute un compte Netilion à la passerelle en lui attribuant un `account_id` unique.
+        """
+        # Récupère tous les IDs déjà utilisés
+        used_ids = {account.account_id for account in self.accounts if account.account_id is not None}
+
+        # Trouve le plus petit entier non utilisé (commençant à 1)
+        new_id = 1
+        while new_id in used_ids:
+            new_id += 1
+
+        new_account.account_id = new_id  # Attribue l'ID
+        self.accounts.append(new_account)
+
+    def getAccountByID(self, account_id: int) -> NetilionAccount:
+        """Retourne l'objet NetilionAccount correspondant à l'ID donné, ou None si introuvable."""
+        return next((account for account in self.accounts if account.account_id == account_id), None)
 
 class Network:
     def __init__(self, ipadress: str, subnetmask: str, gateway: str, description: str = None, internet_access: str = None):
@@ -81,7 +108,7 @@ class Network:
         )
 
 class NetilionAccount:
-    def __init__(self, identification: str, account_id: int, client_id: str, client_secret: str, username: str, password: str):
+    def __init__(self, identification: str, client_id: str, client_secret: str, username: str, password: str, account_id: int=None, changes_to_save=None):
         self.identification: str = identification
         self.account_id: int = account_id
         self.client_id: str = client_id
@@ -95,6 +122,7 @@ class NetilionAccount:
         self.assets = []
         self.nodes = []
         self.instrumentations = []
+        self.changes_to_save = changes_to_save
 
     def __str__(self):
         """Permet de faire un print(str(instance)) pour voir les informations voulues"""
@@ -131,7 +159,7 @@ class NetilionAccount:
     def from_dict(cls, data):
         """Crée une instance NetilionAuth à partir d'un dictionnaire"""
         instance = cls(
-            data["identification"], data["account_id"], data["client_id"], data["client_secret"], data["username"], data["password"]
+            data["identification"], data["client_id"], data["client_secret"], data["username"], data["password"], data["account_id"]
         )
         instance.access_token = data.get("access_token", None)
         instance.refresh_token = data.get("refresh_token", None)
@@ -176,7 +204,7 @@ class NetilionAccount:
         if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
             self.update_last_connection()
         
-        print(self.get_last_connection())
+        # print(self.get_last_connection())
         
         if response.status_code == 200:
             print(
@@ -187,6 +215,9 @@ class NetilionAccount:
             self.refresh_token = response_data.get('refresh_token', self.refresh_token)
             self.token_expiry = time.time() + response_data.get("expires_in", 660) - 10
             self.update_last_connection()
+            if self.changes_to_save:
+                print("Sauvegarde des nouveaux token...")
+                self.changes_to_save()
         else:
             raise Exception(f"Failed to obtain access token: {response_data}")
         return response
@@ -229,7 +260,7 @@ class NetilionAccount:
     
     def get_asset_by_id(self, asset_id: int) -> Asset | None:
         """Recherche un Node par son ID dans cet account"""
-        return next((asset for asset in self.nodes if asset.id == asset_id), None)
+        return next((asset for asset in self.assets if asset.id == asset_id), None)
     
     def get_instrumentation_by_id(self, instrumentation_id: int) -> Instrumentation | None:
         """Recherche un Node par son ID dans cet account"""
@@ -246,9 +277,14 @@ class NetilionAccount:
         # print(headers)
 
         url = f"{BASE_URL}/{endpoint}"
-        # print(url)
+        print(url)
 
         response = requests.request(method, url, json=data, params=params, headers=headers)
+        
+        
+        # print("send_request response : "+ str(response.json()))
+        
+        
         if response.status_code == 401:  # Token expiré
             self.refresh_access_token()
             headers["Authorization"] = f"Bearer {self.access_token}"
@@ -259,21 +295,8 @@ class NetilionAccount:
 
         if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
             self.update_last_connection()
-        
-        print(self.get_last_connection())
+            print(self.get_last_connection())
         return response
-    
-    def get_accounts(self) -> dict[int, NetilionAccount]:
-        """Retourne le dictionnaire des comptes Netilion."""
-        return self.to_dict()["accounts"]
-
-    def set_accounts(self, new_accounts: dict[int, NetilionAccount]):
-        """Met à jour le dictionnaire des comtpes Netilion. (OVERRIDE)"""
-        self.to_dict()["accounts"] = new_accounts
-
-    def getAccountByID(self, account_id):
-        """Récupère l'instance NetilionAuth associée à un compte donné."""
-        return self.to_dict()["accounts"].get(account_id)
 
     def get_headers(self, account_id):
         """Récupère les headers d'un compte spécifique."""
@@ -282,6 +305,32 @@ class NetilionAccount:
             return account.get_headersForAuth()
         else:
             raise ValueError(f"Aucun compte trouvé pour l'ID {account_id}")
+        
+    def fetch_nodes(self):
+        """Récupère les nœuds associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
+        # Endpoint pour récupérer les nœuds
+        endpoint = "nodes?include=parent.id"
+        
+        # Utiliser la méthode send_request pour envoyer la requête
+        response = self.send_request("GET", endpoint)
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Ajouter chaque nœud dans la liste des nodes du compte
+            for node_data in data.get('nodes', []):
+                node = Node(
+                    id=node_data['id'],
+                    name=node_data['name'],
+                    description=node_data.get('description'),
+                    parent_id=node_data.get('parent', {}).get('id', None)  # parent_id est optionnel
+                )
+                self.nodes.append(node)
+                config_utils.save_config()
+                return True
+        else:
+            print(f"Erreur lors de la récupération des nœuds: {response.status_code}")
+            return False
 
 
 class Asset:
@@ -315,16 +364,18 @@ class Asset:
         )
     
 class Node:
-    def __init__(self, id: int, name: str, product_code: str):
+    def __init__(self, id: int, name: str, description: str = None, parent_id:int = None):
         self.id: int = id
         self.name: str = name
-        self.product_code: str = product_code
+        self.description = description
+        self.parent_id: int = parent_id
     
     def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,
-            "product_code": self.product_code
+            "description": self.description,
+            "parent_id": self.parent_id
         }
 
     @classmethod
@@ -332,7 +383,8 @@ class Node:
         return cls(
             id=data["id"],
             name=data["name"],
-            product_code=data["product_code"]
+            description=data.get("description"),
+            parent_id=data.get("parent_id")  # .get() permet d'éviter une KeyError si absent
         )
 
 class Instrumentation:

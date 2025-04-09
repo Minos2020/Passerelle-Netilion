@@ -103,9 +103,7 @@
       }
 
       let newAccount = {
-        id: newId.toString(), // Utilise l'ID trouvé
         identification: "Nouveau Compte",
-        account_id: newId.toString(), // copie pour l'instant, A MODIFIER
         client_id: "",
         client_secret: "",
         username: "",
@@ -134,6 +132,7 @@
       .then(data => {
               if (data.status === "success") {
                 alert("✅ Configuration netilion enregistrée !");
+                location.reload();  // ⬅️ Recharge la page
               } else {
                 alert("❌ Erreur lors de l'enregistrement !");
               }

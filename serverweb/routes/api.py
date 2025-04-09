@@ -3,8 +3,9 @@ from functools import wraps
 from services.modbus_utils import*
 from services.config_utils import*
 from services.encryption_utils import*
-from services.network_utils import getNetworkSettings
-from model import PasserelleNetilion, NetilionAccount
+import services.network_utils as network_utils
+from model import PasserelleNetilion, Binding, NetilionAccount
+
 
 api_bp = Blueprint('api', __name__)
 
@@ -42,11 +43,13 @@ def login_required(f):
 
 # -------------  GESTION CONFIG  ------------
 
+# Renvoie la config dans un JSON
 @api_bp.route('/get_config', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_config_as_JSON():
     return jsonify(PasserelleNetilion().to_dict())
 
+# Récupère la config pour générer un fichier téléchargeable depuis l'interface web
 @api_bp.route('/get_config_file', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_config_encrypted():
@@ -57,6 +60,7 @@ def get_config_encrypted():
             data = f.read()
     return data
 
+# Charge un fichier de configuration depuis l'interface web
 @api_bp.route('/load_config_file', methods=['POST'])
 @login_required  # 🔒 Protège cette route
 def load_config_encrypted():
@@ -171,7 +175,7 @@ def modbus_test():
 @api_bp.route('/get_networks_config', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_networks_config():
-    networks = getNetworkSettings()
+    networks = network_utils.getNetworkSettings()
     networks_dict = [net.to_dict() for net in networks]
     return jsonify(networks_dict)
 
@@ -200,18 +204,37 @@ def get_accounts():
 def save_netilion_config():
     try:
         passerelle = PasserelleNetilion()
-        passerelle.accounts = {
-            acc_data["account_id"]: NetilionAccount.from_dict(acc_data)
-            for acc_data in request.json
-        }
+        updated_accounts = []  # Contiendra les comptes à conserver après mise à jour
 
-
-        save_config(False) # A ENLEVER
-
+        for acc_dict in request.json:
+            if 'account_id' in acc_dict and acc_dict['account_id'] is not None:
+                # Compte existant → on récupère le compte et on met à jour les infos
+                account: NetilionAccount = passerelle.getAccountByID(acc_dict["account_id"])
+                account.identification=acc_dict["identification"]
+                account.client_id=acc_dict["client_id"]
+                account.client_secret=acc_dict["client_secret"]
+                account.username=acc_dict["username"]
+                account.password=acc_dict["password"]
+            else:
+                # Nouveau compte → crée l'objet sans ID, puis utilise add_account
+                account = NetilionAccount(
+                    identification=acc_dict["identification"],
+                    client_id=acc_dict["client_id"],
+                    client_secret=acc_dict["client_secret"],
+                    username=acc_dict["username"],
+                    password=acc_dict["password"],
+                    changes_to_save=lambda: save_config()
+                )
+                passerelle.add_account(account)
+            updated_accounts.append(account)
+        
+        # Ne conserver que les comptes mis à jour ou ajoutés
+        passerelle.accounts = updated_accounts
+        save_config(False)
 
         return jsonify({"status": "success"})
     except Exception as e:
-        print("❌ Erreur dans save_general_config:", e)
+        print("❌ Erreur dans save_accounts:", e)
         return jsonify({"status": "error", "message": str(e)})
     
 
@@ -220,19 +243,18 @@ def save_netilion_config():
 def test_account_connection():
     try:
         data = request.json
-        tested_account = NetilionAccount(
-            "tested_account",
-            data["account_id"],
-            data["client_id"],
-            data["client_secret"],
-            data["username"],
-            data["password"]
-        )
+        if data.get("account_id"):
+            tested_account = PasserelleNetilion().getAccountByID(data["account_id"])
+        else:
+            tested_account = NetilionAccount(
+                "tested_account",
+                data["client_id"],
+                data["client_secret"],
+                data["username"],
+                data["password"]
+            )
         tested_account._request_token("password", {"username": tested_account.username, "password": tested_account.password})
-        passerelle = PasserelleNetilion()
-
-        passerelle.accounts[tested_account.account_id].last_connection = tested_account.last_connection
-        save_config(False)
+        
         return jsonify({"success": True, "last_connection": tested_account.get_last_connection()})
     
     except Exception as e:
