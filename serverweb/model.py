@@ -153,9 +153,9 @@ class NetilionAccount:
             "refresh_token": self.refresh_token,
             "token_expiry": self.token_expiry,
             "last_connection": self.last_connection.isoformat() if self.last_connection else None,  # Conversion ISO 8601
-            "assets": [asset.__dict__ for asset in self.assets],  # Sérialisation des assets
-            "nodes": [node.__dict__ for node in self.nodes],  # Sérialisation des nodes
-            "instrumentations": [inst.__dict__ for inst in self.instrumentations],  # Sérialisation des instrumentations
+            "assets": [asset.to_dict() for asset in self.assets],  # Sérialisation des assets
+            "nodes": [node.to_dict() for node in self.nodes],  # Sérialisation des nodes
+            "instrumentations": [inst.to_dict() for inst in self.instrumentations],  # Sérialisation des instrumentations
             "storage_quota": self.storage_quota,
             "storage_used": self.storage_used,
             "api_call_quota": self.api_call_quota,
@@ -318,7 +318,7 @@ class NetilionAccount:
         else:
             raise ValueError(f"Aucun compte trouvé pour l'ID {account_id}")
         
-    def fetch_nodes(self):
+    def update_nodes(self):
         """Récupère les nœuds associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
         # Endpoint pour récupérer les nœuds
         endpoint = "nodes?include=parent.id"
@@ -348,10 +348,10 @@ class NetilionAccount:
             print(f"Erreur lors de la récupération des nœuds: {response.status_code}")
             return False
         
-    def fetch_assets(self):
+    def update_assets(self):
         """Récupère les assets associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
         # Endpoint pour récupérer les nœuds
-        endpoint = "assets?include=product"
+        endpoint = "assets?include=instrumentations%2C%20nodes%2C%20product"
         
         # Utiliser la méthode send_request pour envoyer la requête
         response = self.send_request("GET", endpoint)
@@ -360,7 +360,7 @@ class NetilionAccount:
             data = response.json()
             print(data.get("pagination", None).get("total_count", None))
             fetched_assets = []
-            # Ajouter chaque nœud dans la liste des nodes du compte
+            # Ajouter chaque asset dans la liste des assets du compte
             for asset_data in data.get('assets', []):
                 asset = Asset(
                     id=asset_data["id"],
@@ -369,6 +369,11 @@ class NetilionAccount:
                     product_name=asset_data.get('product').get('name'),
                     parent_id=asset_data.get('parent', {}).get('id', None)
                 )
+                # Ajouter à chaque asset la liste de ses tags et de ses nodes
+                for instrum in asset_data.get('instrumentations', {}).get('items', []):
+                    asset.instrumentations.add(instrum["id"])
+                for node in asset_data.get('nodes', {}).get('items', []):
+                    asset.nodes.add(node["id"])
                 fetched_assets.append(asset)
             self.assets = fetched_assets
             if self.changes_to_save:
@@ -379,10 +384,10 @@ class NetilionAccount:
             print(f"Erreur lors de la récupération des assets: {response.status_code}")
             return False
     
-    def fetch_instrum(self):
+    def update_instrum(self):
         """Récupère les tags associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
-        # Endpoint pour récupérer les nœuds
-        endpoint = "instrumentations?include=parent%2C%20assets"
+        # Endpoint pour récupérer les tags
+        endpoint = "instrumentations?include=parent%2C%20assets%2C%20nodes"
         
         # Utiliser la méthode send_request pour envoyer la requête
         response = self.send_request("GET", endpoint)
@@ -399,8 +404,12 @@ class NetilionAccount:
                     description=instrum_data.get('description'),
                     parent_id=instrum_data.get('parent', {}).get('id', None)
                 )
+                # Ajouter à chaque tag la liste de ses assets et de ses nodes
+
                 for asset in instrum_data.get('assets', {}).get('items', []):
-                    instrum.assets.append(asset["id"])
+                    instrum.assets.add(asset["id"])
+                for node in instrum_data.get('nodes', {}).get('items', []):
+                    instrum.nodes.add(node["id"])
                 fetched_instrum.append(instrum)
             self.instrumentations = fetched_instrum
             if self.changes_to_save:
@@ -411,14 +420,45 @@ class NetilionAccount:
             print(f"Erreur lors de la récupération des tags: {response.status_code}")
             return False
 
+    def update_quotas(self):
+        """Récupère les quotas et limites associées au compte Netilion et les ajoute à l'instance NetilionAccount concernée."""
+        # Endpoint pour récupérer les tags
+        endpoint1 = "api_subscriptions"
+        endpoint2 = "subscriptions" # à rajouter plus tard
+        
+        # Utiliser la méthode send_request pour envoyer la requête
+        response1 = self.send_request("GET", endpoint1)
+        # response2 = self.send_request("GET", endpoint2)
+        
+        if response1.status_code == 200:
+            data = response1.json()
+            print(data.get("pagination", None).get("total_count", None))
+            
+            # Récupérer les limites et les quotas de la subcription API
+            self.api_call_quota = data.get("api_subscriptions")[0].get("api_call_quota")
+            self.api_calls_used = data.get("api_subscriptions")[0].get("api_calls_used")
+            
+            # # Récupérer les limites et les quotas de la subcription API
+            # self.storage_quota = data.get(".......")[0].get("storage_quota")
+            # self.storage_used = data.get("........")[0].get("storage_used")
+            
+
+            
+            if self.changes_to_save:
+                print("Sauvegarde des quotas mis à jour...")
+                self.changes_to_save()
+            return True
+        else:
+            print(f"Erreur lors de la récupération des quotas: {response1.status_code}")
+            return False
 
 class Asset:
-    def __init__(self, id: int, serial_number: str, description: str, nodes: list[int]=[], instrumentations: list[int]=[], product_name: int = None, parent_id: int = None):
+    def __init__(self, id: int, serial_number: str, description: str, nodes: set[int]=None, instrumentations: set[int]=None, product_name: int = None, parent_id: int = None):
         self.id: int = id
         self.serial_number: str = serial_number
         self.description: str = description
-        self.nodes: list[int] = nodes
-        self.instrumentations: list[int] = instrumentations
+        self.nodes: set[int] = set(nodes) if nodes else set()
+        self.instrumentations: set[int] = set(instrumentations) if instrumentations else set()
         self.product_name: int = product_name
         self.parent_id: int = parent_id
     
@@ -428,8 +468,8 @@ class Asset:
             "serial_number": self.serial_number,
             "description": self.description,
             "product_name": self.product_name,
-            "nodes": self.nodes,
-            "instrumentations": self.instrumentations,
+            "nodes": list(self.nodes),
+            "instrumentations": list(self.instrumentations),
             "parent_id": self.parent_id,
         }
 
@@ -441,8 +481,8 @@ class Asset:
             description=data["description"],
             product_name=data.get("product_name", None),
             parent_id=data.get("parent_id", None),
-            nodes=data.get("nodes", []),
-            instrumentation=data.get("instrumentation", [])
+            nodes=set(data.get("nodes", [])),
+            instrumentation=set(data.get("instrumentation", []))
         )
     
 class Node:
@@ -466,16 +506,17 @@ class Node:
             id=data["id"],
             name=data["name"],
             description=data.get("description"),
-            parent_id=data.get("parent_id")  # .get() permet d'éviter une KeyError si absent
+            parent_id=data.get("parent_id")
         )
 
 class Instrumentation:
-    def __init__(self, id: int, tag: str, parent_id: int, description: str = None, assets: list[int]=[]):
+    def __init__(self, id: int, tag: str, parent_id: int, description: str = None, assets: set[int] = None, nodes: set[int] = None):
         self.id: int = id
         self.tag: str = tag
         self.description: str = description
         self.parent_id: int = parent_id
-        self.assets: set[int] = assets
+        self.assets: set[int] = set(assets) if assets else set()
+        self.nodes: set[int] = set(nodes) if nodes else set()
 
     def to_dict(self):
         return {
@@ -483,7 +524,8 @@ class Instrumentation:
             "tag": self.tag,
             "description": self.description,
             "parent_id": self.parent_id,
-            "assets": self.assets,
+            "assets": list(self.assets),  # pour rester compatible avec JSON
+            "nodes": list(self.nodes), 
         }
 
     @classmethod
@@ -493,7 +535,8 @@ class Instrumentation:
             tag=data["tag"],
             description=data.get("description", None),
             parent_id=data.get("parent_id", None),
-            assets=data.get("assets", [])
+            assets=set(data.get("assets", [])),
+            nodes=set(data.get("nodes", [])) 
         )
 
 class Value:
