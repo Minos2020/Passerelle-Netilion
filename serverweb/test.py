@@ -13,7 +13,14 @@ load_dotenv()  # Charge les variables d'environnement depuis .env
 
 load_config(False)
 
+
 account: NetilionAccount = PasserelleNetilion().getAccountByID(1)
-print(account.to_dict())
+
+# print(account.to_dict())
 if account.fetch_nodes():
     [print(node.to_dict()) for node in account.nodes]
+
+# print(account.to_dict())
+if account.fetch_assets():
+    [print(asset.to_dict()) for asset in account.assets]
+    

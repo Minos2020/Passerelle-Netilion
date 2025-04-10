@@ -122,6 +122,10 @@ class NetilionAccount:
         self.nodes = []
         self.instrumentations = []
         self.changes_to_save = changes_to_save
+        self.storage_quota: int = None
+        self.storage_used: int = None
+        self.api_call_quota: int = None
+        self.api_calls_used: int = None
 
     def __str__(self):
         """Permet de faire un print(str(instance)) pour voir les informations voulues"""
@@ -151,7 +155,11 @@ class NetilionAccount:
             "last_connection": self.last_connection.isoformat() if self.last_connection else None,  # Conversion ISO 8601
             "assets": [asset.__dict__ for asset in self.assets],  # Sérialisation des assets
             "nodes": [node.__dict__ for node in self.nodes],  # Sérialisation des nodes
-            "instrumentations": [inst.__dict__ for inst in self.instrumentations]  # Sérialisation des instrumentations
+            "instrumentations": [inst.__dict__ for inst in self.instrumentations],  # Sérialisation des instrumentations
+            "storage_quota": self.storage_quota,
+            "storage_used": self.storage_used,
+            "api_call_quota": self.api_call_quota,
+            "api_calls_used": self.api_calls_used
         }
 
     @classmethod
@@ -163,6 +171,11 @@ class NetilionAccount:
         instance.access_token = data.get("access_token", None)
         instance.refresh_token = data.get("refresh_token", None)
         instance.token_expiry = data.get("token_expiry", 0)
+
+        instance.storage_quota = data.get("storage_quota", 0)
+        instance.storage_used = data.get("storage_used", 0)
+        instance.api_call_quota = data.get("api_call_quota", 0)
+        instance.api_calls_used = data.get("api_calls_used", 0)
 
         # Désérialisation de la date de dernière connexion
         instance.last_connection = datetime.fromisoformat(data.get("last_connection")) if data.get("last_connection") else None
@@ -334,25 +347,90 @@ class NetilionAccount:
         else:
             print(f"Erreur lors de la récupération des nœuds: {response.status_code}")
             return False
+        
+    def fetch_assets(self):
+        """Récupère les assets associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
+        # Endpoint pour récupérer les nœuds
+        endpoint = "assets?include=product"
+        
+        # Utiliser la méthode send_request pour envoyer la requête
+        response = self.send_request("GET", endpoint)
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(data.get("pagination", None).get("total_count", None))
+            fetched_assets = []
+            # Ajouter chaque nœud dans la liste des nodes du compte
+            for asset_data in data.get('assets', []):
+                asset = Asset(
+                    id=asset_data["id"],
+                    serial_number=asset_data["serial_number"],
+                    description=asset_data.get('description'),
+                    product_name=asset_data.get('product').get('name'),
+                    parent_id=asset_data.get('parent', {}).get('id', None)
+                )
+                fetched_assets.append(asset)
+            self.assets = fetched_assets
+            if self.changes_to_save:
+                print("Sauvegarde des nouveaux assets...")
+                self.changes_to_save()
+            return True
+        else:
+            print(f"Erreur lors de la récupération des assets: {response.status_code}")
+            return False
+    
+    def fetch_instrum(self):
+        """Récupère les tags associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
+        # Endpoint pour récupérer les nœuds
+        endpoint = "instrumentations?include=parent%2C%20assets"
+        
+        # Utiliser la méthode send_request pour envoyer la requête
+        response = self.send_request("GET", endpoint)
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(data.get("pagination", None).get("total_count", None))
+            fetched_instrum = []
+            # Ajouter chaque nœud dans la liste des nodes du compte
+            for instrum_data in data.get('instrumentations', []):
+                instrum = Instrumentation(
+                    id=instrum_data["id"],
+                    tag=instrum_data["tag"],
+                    description=instrum_data.get('description'),
+                    parent_id=instrum_data.get('parent', {}).get('id', None)
+                )
+                for asset in instrum_data.get('assets', {}).get('items', []):
+                    instrum.assets.append(asset["id"])
+                fetched_instrum.append(instrum)
+            self.instrumentations = fetched_instrum
+            if self.changes_to_save:
+                print("Sauvegarde des nouveaux tags...")
+                self.changes_to_save()
+            return True
+        else:
+            print(f"Erreur lors de la récupération des tags: {response.status_code}")
+            return False
 
 
 class Asset:
-    def __init__(self, id: int, serial_number: str, description: str, product_id: int, nodes: list[int], instrumentation: list[int]):
+    def __init__(self, id: int, serial_number: str, description: str, nodes: list[int]=[], instrumentations: list[int]=[], product_name: int = None, parent_id: int = None):
         self.id: int = id
         self.serial_number: str = serial_number
         self.description: str = description
-        self.product_id: int = product_id
         self.nodes: list[int] = nodes
-        self.instrumentation: list[int] = instrumentation
+        self.instrumentations: list[int] = instrumentations
+        self.product_name: int = product_name
+        self.parent_id: int = parent_id
     
     def to_dict(self):
         return {
             "id": self.id,
             "serial_number": self.serial_number,
             "description": self.description,
-            "product_id": self.product_id,
+            "product_name": self.product_name,
             "nodes": self.nodes,
-            "instrumentation": self.instrumentation
+            "instrumentations": self.instrumentations,
+            "parent_id": self.parent_id,
         }
 
     @classmethod
@@ -361,9 +439,10 @@ class Asset:
             id=data["id"],
             serial_number=data["serial_number"],
             description=data["description"],
-            product_id=data["product_id"],
-            nodes=data["nodes"],
-            instrumentation=data["instrumentation"]
+            product_name=data.get("product_name", None),
+            parent_id=data.get("parent_id", None),
+            nodes=data.get("nodes", []),
+            instrumentation=data.get("instrumentation", [])
         )
     
 class Node:
@@ -391,51 +470,54 @@ class Node:
         )
 
 class Instrumentation:
-    def __init__(self, id: int, name: str, description: str, parent_id: int):
+    def __init__(self, id: int, tag: str, parent_id: int, description: str = None, assets: list[int]=[]):
         self.id: int = id
-        self.name: str = name
+        self.tag: str = tag
         self.description: str = description
         self.parent_id: int = parent_id
+        self.assets: set[int] = assets
 
     def to_dict(self):
         return {
             "id": self.id,
-            "name": self.name,
+            "tag": self.tag,
             "description": self.description,
-            "parent_id": self.parent_id
+            "parent_id": self.parent_id,
+            "assets": self.assets,
         }
 
     @classmethod
     def from_dict(cls, data):
         return cls(
             id=data["id"],
-            name=data["name"],
-            description=data["description"],
-            parent_id=data["parent_id"]
+            tag=data["tag"],
+            description=data.get("description", None),
+            parent_id=data.get("parent_id", None),
+            assets=data.get("assets", [])
         )
 
 class Value:
-    def __init__(self, id: int, name: str, description: str, parent_id: int):
-        self.id: int = id
-        self.name: str = name
-        self.description: str = description
-        self.parent_id: int = parent_id
+    def __init__(self, unit_id: int, timestamp: str, value, status: str):
+        self.unit_id: int = unit_id
+        self.timestamp: str = timestamp
+        self.value= value
+        self.status: int = status
 
     def to_dict(self):
         return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "parent_id": self.parent_id
+            "unit_id": self.unit_id,
+            "timestamp": self.timestamp,
+            "value": self.value,
+            "status": self.status
         }
 
     @classmethod
     def from_dict(cls, data):
         return cls(
-            id=data["id"],
-            name=data["name"],
-            description=data["description"],
-            parent_id=data["parent_id"]
+            unit_id=data["unit_id"],
+            timestamp=data["timestamp"],
+            value=data["value"],
+            status=data["status"]
         )
 
 class Binding:
@@ -492,10 +574,10 @@ if __name__ == '__main__':
     # binding4 = Binding(identification="Math 11", protocol="TCP", slaveadress="192.168.200.23", registeradress="4220", datatype="FLOAT_B", unit_id=2, netilion_account_id=2, netilion_binding_id=2163151)
 
     # # Création des objets Asset
-    # asset1 = Asset(id=1999331, serial_number="020202020202", description="Blabla", product_id=1, nodes=[1], instrumentation=[1])
-    # asset2 = Asset(id=2159190, serial_number="3022228005", description="Concentrateur de signaux HART", product_id=2, nodes=[2], instrumentation=[2])
-    # asset3 = Asset(id=2163151, serial_number="MC042B04484", description="", product_id=3, nodes=[3], instrumentation=[3])
-    # asset4 = Asset(id=2163177, serial_number="N7044904428", description="", product_id=4, nodes=[4], instrumentation=[4])
+    # asset1 = Asset(id=1999331, serial_number="020202020202", description="Blabla", product_name=1, nodes=[1], instrumentation=[1])
+    # asset2 = Asset(id=2159190, serial_number="3022228005", description="Concentrateur de signaux HART", product_name=2, nodes=[2], instrumentation=[2])
+    # asset3 = Asset(id=2163151, serial_number="MC042B04484", description="", product_name=3, nodes=[3], instrumentation=[3])
+    # asset4 = Asset(id=2163177, serial_number="N7044904428", description="", product_name=4, nodes=[4], instrumentation=[4])
 
     # # Création des objets Node
     # node1 = Node(id=1, name="Node 1", product_code="Code1")
