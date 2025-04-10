@@ -7,9 +7,29 @@
     .container { width: auto; flex: 1; text-align: center ; align-items: center; padding: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; }
     h1 { font-size: 1.8em; color: #1971c2; margin-bottom: 50px; padding: 10px 50px;}
     h2 { font-size: 1.5em; color: #333; margin: 10px 20px 20px; }
-		.nav-bar { text-align: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; width: 90%; }
-		.nav-bar a { justify-content: space-around; color: #1971c2; text-decoration: none; padding: 5px 30px; font-weight: bold; }
-		.nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
+		.nav-bar {
+			text-align: center;
+			padding: 20px;
+			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+			background: white;
+			border-radius: 8px;
+			margin: 10px;
+			width: 90%;
+			max-width: 100%;
+			display: flex;
+			flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
+			justify-content: center; /* Centrer les éléments */
+		}.nav-bar > a {
+			color: #1971c2;
+			text-decoration: none;
+			padding: 5px 20px;
+			font-weight: bold;
+			overflow: hidden;
+			max-width: 100%;  /* Limite la largeur des éléments à la largeur du parent */
+			min-width: 100px;  /* Définit une largeur minimale pour éviter que le texte soit trop petit */
+			box-sizing: border-box; /* Inclut les paddings dans la largeur totale */
+		}
+    .nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
     .nav-bar .a-logout {color: #000000;}
     .nav-bar .a-logout:hover {background: #f8a6a6;}
     p { font-size: 1.1em; margin: 10px 0; }
@@ -82,10 +102,9 @@
     <div class="nav-bar">
       <a href="{{ url_for('web.overview') }}">Overview</a>
       <a href="{{ url_for('web.networks') }}">Networks</a>
-      <a href="{{ url_for('web.modbus') }}">Modbus</a>
+      <a href="{{ url_for('web.modbus') }}">General</a>
       <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
       <a href="{{ url_for('web.bindings') }}">Bindings</a>
-      <a href="{{ url_for('web.misc') }}">Miscellaneous</a>
       <a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
     </div>
   
