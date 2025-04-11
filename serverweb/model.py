@@ -292,11 +292,7 @@ class NetilionAccount:
         print(url)
 
         response = requests.request(method, url, json=data, params=params, headers=headers)
-        
-        
-        # print("send_request response : "+ str(response.json()))
-        
-        
+
         if response.status_code == 401:  # Token expiré
             self.refresh_access_token()
             headers["Authorization"] = f"Bearer {self.access_token}"
@@ -319,8 +315,8 @@ class NetilionAccount:
             raise ValueError(f"Aucun compte trouvé pour l'ID {account_id}")
         
     def update_nodes(self):
-        """Récupère les nœuds associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
-        # Endpoint pour récupérer les nœuds
+        """Récupère les nodes associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
+        # Endpoint pour récupérer les nodes
         endpoint = "nodes?include=parent.id"
         
         # Utiliser la méthode send_request pour envoyer la requête
@@ -328,7 +324,10 @@ class NetilionAccount:
         
         if response.status_code == 200:
             data = response.json()
-            print(data.get("pagination", None).get("total_count", None))
+            # pagination = data.get("pagination")
+            # if pagination:
+            #     print(pagination.get("total_count"))
+
             fetched_nodes = []
             # Ajouter chaque nœud dans la liste des nodes du compte
             for node_data in data.get('nodes', []):
@@ -345,12 +344,12 @@ class NetilionAccount:
                 self.changes_to_save()
             return True
         else:
-            print(f"Erreur lors de la récupération des nœuds: {response.status_code}")
-            return False
+            print(f"Erreur lors de la récupération des nodes: {response.status_code}")
+            raise Exception(f"Erreur lors de la récupération des nodes: {response.status_code}")
         
     def update_assets(self):
         """Récupère les assets associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
-        # Endpoint pour récupérer les nœuds
+        # Endpoint pour récupérer les nodes
         endpoint = "assets?include=instrumentations%2C%20nodes%2C%20product"
         
         # Utiliser la méthode send_request pour envoyer la requête
@@ -358,7 +357,10 @@ class NetilionAccount:
         
         if response.status_code == 200:
             data = response.json()
-            print(data.get("pagination", None).get("total_count", None))
+            # pagination = data.get("pagination")
+            # if pagination:
+            #     print(pagination.get("total_count"))
+
             fetched_assets = []
             # Ajouter chaque asset dans la liste des assets du compte
             for asset_data in data.get('assets', []):
@@ -382,7 +384,7 @@ class NetilionAccount:
             return True
         else:
             print(f"Erreur lors de la récupération des assets: {response.status_code}")
-            return False
+            raise Exception(f"Erreur lors de la récupération des assets: {response.status_code}")
     
     def update_instrum(self):
         """Récupère les tags associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
@@ -394,7 +396,9 @@ class NetilionAccount:
         
         if response.status_code == 200:
             data = response.json()
-            print(data.get("pagination", None).get("total_count", None))
+            # pagination = data.get("pagination")
+            # if pagination:
+            #     print(pagination.get("total_count"))
             fetched_instrum = []
             # Ajouter chaque nœud dans la liste des nodes du compte
             for instrum_data in data.get('instrumentations', []):
@@ -418,11 +422,11 @@ class NetilionAccount:
             return True
         else:
             print(f"Erreur lors de la récupération des tags: {response.status_code}")
-            return False
+            raise Exception(f"Erreur lors de la récupération des tags: {response.status_code}")
 
     def update_quotas(self):
         """Récupère les quotas et limites associées au compte Netilion et les ajoute à l'instance NetilionAccount concernée."""
-        # Endpoint pour récupérer les tags
+       
         endpoint1 = "api_subscriptions"
         endpoint2 = "subscriptions" # à rajouter plus tard
         
@@ -432,7 +436,10 @@ class NetilionAccount:
         
         if response1.status_code == 200:
             data = response1.json()
-            print(data.get("pagination", None).get("total_count", None))
+            # pagination = data.get("pagination")
+            # if pagination:
+            #     print(pagination.get("total_count"))
+
             
             # Récupérer les limites et les quotas de la subcription API
             self.api_call_quota = data.get("api_subscriptions")[0].get("api_call_quota")
@@ -450,7 +457,14 @@ class NetilionAccount:
             return True
         else:
             print(f"Erreur lors de la récupération des quotas: {response1.status_code}")
-            return False
+            raise Exception(f"Erreur lors de la récupération des quotas: {response1.status_code}")
+    
+    def refresh_all_data(self):
+        self.update_nodes()
+        self.update_assets()
+        self.update_instrum()
+        self.update_quotas()
+        
 
 class Asset:
     def __init__(self, id: int, serial_number: str, description: str, nodes: set[int]=None, instrumentations: set[int]=None, product_name: int = None, parent_id: int = None):

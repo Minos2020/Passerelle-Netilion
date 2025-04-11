@@ -329,15 +329,16 @@
     <a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
   </div>
 
-  <div class="main-container">
-    <p style="color: red; font-style: italic; font-weight: bold;">
-      ⚠️ Cette page n'a lieu d'être car les requêtes mobdus sont gérées individuellement
+  <div class="main-container" style="flex: 1 1 40%; align-items: center; flex-direction: column ;display: flex;">
+    <p style="color: red; font-style: italic; font-weight: bold; max-width: 70%; text-justify: distribute;">
+      ⚠️ Cette page n'a plus lieu d'être car Python dirige les requêtes automatiquement vers la bonne interface réseau en fonction de l'adresse IP 
     </p>
+
     <h1>Networks Settings</h1>
 
     <div style="display: flex; gap: 50px; flex-wrap: wrap;">
       <!-- Colonne gauche : interfaces -->
-      <div id="left-column" style="flex: 1 1 40%; align-items: center; flex-direction: column ;display: flex;">
+      <div id="left-column" style="flex: 1 1 40%; align-items: center; flex-direction: column; display: flex;">
         <h2>Available Interfaces</h2>
         <p style="color: rgb(0, 89, 255); font-style: italic; font-weight: bold; font-size: small; max-width: 50%;">
           If an interface does not appear, make sure it is well configured in the system parameters.

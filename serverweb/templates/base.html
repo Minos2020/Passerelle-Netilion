@@ -1,0 +1,144 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Passerelle Netilion{% endblock %}</title>
+
+    <!-- Lien vers la feuille de style commune -->
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> -->
+    
+    <!-- Styles communs -->
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; flex-direction: column; margin: 0; background-color: #f4f4f9; color: #333; }
+		.container { display: flex; flex-direction: column; width: 90%; text-align: center; align-items: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; }
+		.container-internal {display: flex; flex-direction: column; width: max-content; max-width: 90%; text-align: center; align-items: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px;}
+        .cards-container { place-content: center; max-width: 100%; display: flex; flex-wrap: wrap; gap: 20px; margin: 20px 0px 10px; }
+        h1 { color: #1971c2; }
+		.nav-bar {
+			text-align: center;
+			padding: 20px;
+			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+			background: white;
+			border-radius: 8px;
+			margin: 10px;
+			width: 90%;
+			max-width: 100%;
+			display: flex;
+			flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
+			justify-content: center; /* Centrer les éléments */
+		}.nav-bar > a {
+			color: #1971c2;
+			text-decoration: none;
+			padding: 5px 20px;
+			font-weight: bold;
+			overflow: hidden;
+			max-width: 100%;  /* Limite la largeur des éléments à la largeur du parent */
+			min-width: 100px;  /* Définit une largeur minimale pour éviter que le texte soit trop petit */
+			box-sizing: border-box; /* Inclut les paddings dans la largeur totale */
+		}
+        .nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
+        .nav-bar .a-logout {color: #000000;}
+        .nav-bar .a-logout:hover {background: #f8a6a6;}
+
+        /* Style pour les notifications */
+        .notification {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 250px;
+        padding: 15px;
+        border-radius: 8px;
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out, bottom 0.5s ease-in-out;
+        }
+
+        .notification.show {
+        opacity: 1;
+        bottom: 30px;
+        }
+
+        .notification.success {
+        background-color: #2ecc71; /* Vert */
+        }
+
+        .notification.error {
+        background-color: #e74c3c; /* Rouge */
+        }
+
+        .notification.info {
+        background-color: #3498db; /* Bleu */
+        }
+
+        .notification.warning {
+        background-color: #f39c12; /* Jaune */
+        }
+
+
+        /* Autres styles globaux... */
+        
+    </style>
+    
+    <!-- Bloc pour les scripts spécifiques à chaque page -->
+    {% block extra_styles %}
+    {% endblock %}
+
+    <script>
+        // Script global (par exemple, pour la gestion des erreurs)
+        
+        // Fonction pour afficher une notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+
+            // Créer un élément de notification
+            const notification = document.createElement('div');
+            notification.classList.add('notification', type);
+            notification.textContent = message;
+
+            // Ajouter la notification au conteneur
+            container.appendChild(notification);
+
+            // Supprimer la notification après 5 secondes
+            setTimeout(() => {
+                notification.style.opacity = 0;
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 500); // attendre que l'animation de disparition soit terminée
+            }, 5000); // délai avant disparition (en ms)
+        }
+
+        // Exemple d'utilisation (affiche une notification de succès)
+        showNotification('Action réussie !', 'success');
+    </script>
+    
+    <!-- Bloc pour les scripts spécifiques à chaque page -->
+    {% block extra_scripts %}{% endblock %}
+
+</head>
+<body>
+    <!-- Conteneur pour les notifications -->
+    <div id="notification-container" class="notification-container"></div>
+    
+    <!-- Bandeau de navigation -->
+    <div class="nav-bar">
+        <a href="{{ url_for('web.overview') }}">Overview</a>
+        <a href="{{ url_for('web.networks') }}">Networks</a>
+        <a href="{{ url_for('web.modbus') }}">General</a>
+        <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
+        <a href="{{ url_for('web.bindings') }}">Bindings</a>
+        <a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
+    </div>
+    
+    <!-- Contenu injecté depuis les pages spécifiques -->
+    {% block content %}
+    {% endblock %}
+
+    <!-- JS commun pour notifications ou autres -->
+    <!-- <script src="{{ url_for('static', filename='notifications.js') }}"></script> -->
+</body>
+</html>

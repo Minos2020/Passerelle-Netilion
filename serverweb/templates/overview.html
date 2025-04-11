@@ -1,102 +1,109 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-  <title>Overview</title>
-  <style>
-		body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; flex-direction: column; margin: 0; background-color: #f4f4f9; color: #333; }
-		.container { display: flex; flex-direction: column; width: 90%; text-align: center; align-items: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; }
-		.container-internal {display: flex; flex-direction: column; width: 60%; text-align: center; align-items: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px;}
-    .cards-container { place-content: center; max-width: 100%; display: flex; flex-wrap: wrap; gap: 20px; margin: 20px 0px 10px; }
-    h1 { color: #1971c2; }
-		.nav-bar {
-			text-align: center;
-			padding: 20px;
-			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-			background: white;
-			border-radius: 8px;
-			margin: 10px;
-			width: 90%;
-			max-width: 100%;
-			display: flex;
-			flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
-			justify-content: center; /* Centrer les éléments */
-		}.nav-bar > a {
-			color: #1971c2;
-			text-decoration: none;
-			padding: 5px 20px;
-			font-weight: bold;
-			overflow: hidden;
-			max-width: 100%;  /* Limite la largeur des éléments à la largeur du parent */
-			min-width: 100px;  /* Définit une largeur minimale pour éviter que le texte soit trop petit */
-			box-sizing: border-box; /* Inclut les paddings dans la largeur totale */
-		}
-    .nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
-    .nav-bar .a-logout {color: #000000;}
-    .nav-bar .a-logout:hover {background: #f8a6a6;}
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
 
-		.box { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background: #fff; text-align: center; width: 80%; }
-		.box h2 { margin: 10px 0px 20px; color: #1971c2; }
-		.info { font-size: 14px; margin: 5px 0; }
-		.button-container { display: flex; justify-content: center; margin-top: 20px; gap: 10px; }
-    
-    label.file-label { padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; margin-top: 10px; width: 50; font-size: 14px; background-color: #28a745; color: white;}
-		input[type="file"] { display: none; }
-		
-    .btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 50; font-size: 14px; }
-    .btn-danger { background: #c21d1d; width: auto; align-self: center; padding: 5px 10px; }
-    .btn:hover { background-color: #0e5a91; }
-    .btn-danger:hover { background-color: #a91d1d; }
+{% block extra_styles %}
+<style>
+  .box { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background: #fff; text-align: center; width: 80%; }
+  .box h2 { margin: 10px 0px 20px; color: #1971c2; }
+  .info { font-size: 14px; margin: 5px 0; }
+  .button-container { display: flex; justify-content: center; margin-top: 20px; gap: 10px; }
+  
+  label.file-label { padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; margin-top: 10px; width: 50; font-size: 14px; background-color: #28a745; color: white;}
+  input[type="file"] { display: none; }
+  
+  .btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 50; font-size: 14px; }
+  .btn-danger { background: #c21d1d; width: auto; align-self: center; padding: 5px 10px; }
+  .btn:hover { background-color: #0e5a91; }
+  .btn-danger:hover { background-color: #a91d1d; }
 
-    .grid-container {
-        display: grid;
-        grid-template-columns: 1fr 2fr; /* Deux colonnes : une pour les clés, l'autre pour les valeurs */
-        grid-gap: 5px;
-        width:min-content;
-        max-width: 300px;
-        background: #fff;
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-        margin-bottom: 10px;
-    }
-    
-    .grid-header {
-        grid-column: span 2; /* Étend le titre sur les 2 colonnes */
-        background: #cae5fd;
-        text-align: center;
-        justify-content: center;
-        font-weight: bold;
-        padding: 8px;
-        border-radius: 8px;
-        margin-bottom: 5px;
-    }
-    .grid-key {
-      padding: 0 10px 0;
-      font-weight: bold;
-      text-align: left;
-      align-content: center;
-      white-space: nowrap;
-    }
-
-    .grid-value {
-      text-align: right;
-      align-content: center;
+  .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 2fr; /* Deux colonnes : une pour les clés, l'autre pour les valeurs */
+      grid-gap: 5px;
+      width:min-content;
+      max-width:max-content;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+      margin-bottom: 10px;
+  }
+  
+  .grid-header {
+      grid-column: span 2; /* Étend le titre sur les 2 colonnes */
+      background: #cae5fd;
+      text-align: center;
       justify-content: center;
-      white-space: nowrap;
-      width: auto;
-      padding: 0 10px 0;
-    }
-    .grid-singleH { background: #cae5fd; text-align: center; font-weight: bold; padding: 8px;  ; border-radius: 8px; align-content: center; justify-content: center;white-space: nowrap;}
-    .grid-singleV {  padding: 5px 40px 5px; font-weight: bold; font-size:xx-large ; text-align: center; align-content: center; justify-content: center; white-space: nowrap;}
-    .summary-icon img {
-        width: 30px;  /* Taille de l'icône */
-        height: 30px;
-        margin: 15px 5px 5px;
-    }
-</style>
+      font-weight: bold;
+      padding: 8px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+  }
+  .grid-key {
+    padding: 0 10px 0;
+    font-weight: bold;
+    text-align: left;
+    align-content: center;
+    white-space: nowrap;
+  }
+
+  .grid-value {
+    text-align: right;
+    align-content: center;
+    justify-content: center;
+    white-space: nowrap;
+    width: auto;
+    padding: 2px 10px 2px;
+  }
+  .grid-value small {
+    
+    font-size: 0.8em;
+  }
+  .separator {
+    border-top: 1px solid #ddd;
+    margin: 6px 0;
+    grid-column: span 2;
+  }
+  .grid-singleH { background: #cae5fd; text-align: center; font-weight: bold; padding: 8px;  ; border-radius: 8px; align-content: center; justify-content: center;white-space: nowrap;}
+  .grid-singleV {  padding: 5px 40px 5px; font-weight: bold; font-size:xx-large ; text-align: center; align-content: center; justify-content: center; white-space: nowrap;}
+  .summary-icon img {
+      width: 30px;  /* Taille de l'icône */
+      height: 30px;
+      margin: 15px 5px 5px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 12px;
+    background-color: #eee;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background-color: #4caf50;
+  }
+  .refresh-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.6em;
+    width: min-content;
+  }
+  .refresh-button:hover {
+    color: #3498db;
+  } 
+  </style>
+  {% endblock %}
+  
+  {% block extra_scripts %}
   <script>
+    let accounts = [];
+    let bindings = [];
+
     document.addEventListener("DOMContentLoaded", function () {
-    fetch("/api/get_config")
+      fetch("/api/get_config")
         .then(response => response.json())
         .then(data => {
 
@@ -107,8 +114,11 @@
             let divSummary = document.createElement("div");
             divSummary.classList.add("grid-container");
 
-            let numNetilionAccounts = data.accounts.length;
-            let numBindings = data.bindings.length;
+            accounts = data.accounts;
+            bindings = data.bindings;
+
+            let numNetilionAccounts = accounts.length;
+            let numBindings = bindings.length;
 
             divSummary.innerHTML = `
                   <div class="grid-singleH">Netilion accounts<div class="summary-icon"><img src="/static/icons/netilion_accounts.svg"></div></div>
@@ -153,30 +163,129 @@
                 <div class="grid-key">Rate</div><div class="grid-value">${data.modbus_rate}</div>
             `;
 
-            modbusContainer.appendChild(divModbus);
+          modbusContainer.appendChild(divModbus);
+          
+          renderAccounts();
 
-            // Netilion accounts
-            let netilionContainer = document.getElementById("netilion-accounts");
-            netilionContainer.innerHTML = ""; // Clear before rendering
+            
+        });
+    });
 
-            data.accounts.forEach((account, index) => {
-              let div = document.createElement("div");
-              let bindingCount = data.bindings.filter(obj => obj.netilion_account_id === account.account_id).length;
-              div.classList.add("grid-container");
-              div.innerHTML = `
+    async function renderAccounts() {
+      // Netilion accounts
+      let netilionContainer = document.getElementById("netilion-accounts");
+      netilionContainer.innerHTML = ""; // Clear before rendering
+
+      accounts.forEach((account, index) => {
+        let div = document.createElement("div");
+        let bindingCount = bindings.filter(obj => obj.netilion_account_id === account.account_id).length;
+        let nodeCount = account.nodes.length;
+        let instrumCount = account.instrumentations.length;
+        let assetCount = account.assets.length;
+        let apiUsage = 0;
+        if (account.api_calls_used && account.api_call_quota) {
+          apiUsage = (account.api_calls_used / account.api_call_quota) * 100;
+          if (apiUsage > 100) apiUsage = 100;
+          apiUsage = apiUsage.toFixed(1);
+        }
+        let storageUsage = 0;
+        if (account.storage_used && account.storage_quota) {
+          storageUsage = (account.storage_used / account.storage_quota) * 100;
+          if (storageUsage > 100) storageUsage = 100;
+          storageUsage = storageUsage.toFixed(1);
+        }
+        div.classList.add("grid-container");
+        div.innerHTML = `
                 <div class="grid-header">${account.identification}</div>
                 <div class="grid-key">Bindings</div><div class="grid-value">${bindingCount}</div>
                 <div class="grid-key">Last connection</div>
                 <div class="grid-value">
                   ${account.last_connection ? account.last_connection.split('T')[0] + '<br>' + account.last_connection.split('T')[1].split('.')[0] : '—'}
                 </div>
-                `;
-              
+                <div class="separator"></div>
+                <div class="grid-key">API usage</div>
+                <div class="grid-value">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${apiUsage}%; background-color: ${apiUsage >= 80 ? '#e74c3c' : apiUsage >= 60 ? '#f39c12' : '#2ecc71'};">
+                    </div>
+                  </div>
+                  <small>
+                    ${account.api_calls_used}/${account.api_call_quota} calls (${apiUsage}%)
+                  </small>
+                </div>
+                
+                <div class="grid-key">Storage</div>
+                <div class="grid-value">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${storageUsage}%;"></div>
+                  </div>
+                  <small>
+                    ${account.storage_used}/${account.storage_quota} bytes (${storageUsage}%)
+                  </small>
+                </div>
+                <div class="separator"></div>
+                <div class="grid-key">Nodes</div><div class="grid-value">${nodeCount}</div>
+                <div class="grid-key">Tags</div><div class="grid-value">${instrumCount}</div>
+                <div class="grid-key">Assets</div><div class="grid-value">${assetCount}</div>
+                <div class="separator"></div>
+                <button class="refresh-button" style="grid-column: span 2;" data-account-id="${account.account_id}" title="Re-fetch data from Netilion">↺</button>
 
-              netilionContainer.appendChild(div);
-            });
-          });
-    });
+                `;
+
+
+        netilionContainer.appendChild(div);
+      });
+
+      // Après l'ajout du contenu, attacher les événements au bouton
+      document.querySelectorAll(".refresh-button").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          // Récupère l'ID du compte depuis le paramètre data-account-id du bouton
+          const accountId = this.dataset.accountId;
+          refreshNetilionData(accountId);
+        });
+      });
+    }
+  
+    function refreshNetilionData(accountId) {
+      console.log("Rafraîchissement des données pour le compte ID :", accountId);
+
+      fetch("/api/refresh_netilion_account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ account_id: Number(accountId) })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log("Réponse du backend :", data);
+        if (data.success){
+          // Mets à jour l'interface avec les nouvelles données
+          updateAccountData(accountId, data.account);
+        } else {
+          console.error("Erreur backend :", data.error);
+        }
+        
+      })
+      .catch(error => console.error("Erreur de rafraîchissement des données :", error));
+    }
+
+    function updateAccountData(accountId, data) {
+      // Trouver l'index du compte avec l'ID correspondant dans le tableau accounts
+      const accountIndex = accounts.findIndex(account => account.account_id === Number(accountId));
+      console.log(accounts)
+      console.log(accountIndex)
+      // Si un compte avec cet ID est trouvé
+      if (accountIndex !== -1) {
+        // Remplacer les données du compte par celles renvoyées par le backend
+        accounts[accountIndex] = data;
+        console.log(accounts)
+
+        // Appeler renderAccounts pour mettre à jour l'affichage
+        renderAccounts();
+      } else {
+        console.log("Compte non trouvé dans le tableau accounts.");
+      }
+    }
+
 
     // Fonction pour télécharger la configuration
     function saveConfig() {
@@ -220,22 +329,10 @@
         };
         reader.readAsText(file);
     }
-
   </script>
-</head>
-<body>
-  <!-- Bandeau de navigation -->
-  <div class="nav-bar">
-      <a href="{{ url_for('web.overview') }}">Overview</a>
-      <a href="{{ url_for('web.networks') }}">Networks</a>
-      <a href="{{ url_for('web.modbus') }}">General</a>
-      <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
-      <a href="{{ url_for('web.bindings') }}">Bindings</a>
-      <a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
-  </div>
-
+  {% endblock %}
   
-
+  {% block content %}
   <div class="container-internal">
     <h1>Overview</h1>
 
@@ -261,12 +358,11 @@
 
     <!-- Boutons pour enregistrer et charger la config -->
     <div class="button-container">
-      <button class="btn" onclick="saveConfig()">Enregistrer la configuration</button>
+      <button class="btn" onclick="saveConfig()">Télécharger la configuration</button>
       <label for="file-input" class="file-label">Charger une configuration</label>
       <input type="file" id="file-input" accept=".conf" onchange="loadConfig(event)">
 	  </div>
 
 
   </div>
-</body>
-</html>
+  {% endblock %}

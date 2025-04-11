@@ -282,3 +282,16 @@ def get_units():
         units = []  # Retourne une liste vide si le fichier est corrompu ou absent
 
     return jsonify(units)
+
+@api_bp.route('/refresh_netilion_account',  methods=['POST'])
+@login_required  # 🔒 Protège cette route
+def refresh_netilion_account():
+    data = request.json
+    account = PasserelleNetilion().getAccountByID(data["account_id"])
+    if not account:    
+            return jsonify({"success": False, "error": "no account found"}), 404
+    try:
+        account.refresh_all_data()
+        return jsonify({"success": True, "account": account.to_dict()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
