@@ -6,7 +6,7 @@
 	.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
 	.table-header,
 	.table-row { display: grid; grid-template-columns: repeat(12, 1fr);  align-items: center; gap: 20px; padding: 8px; border-bottom: 1px solid #ddd; }
-	.table-header { background: #e0e0e0; }
+	.table-header { background: #e0e0e0; border-radius: 6px; }
 
 	.table-header > div { font-weight: bold; overflow: hidden; }
 	.table-double {grid-column: span 2;}
@@ -26,7 +26,7 @@
 		let units = []; // Contiendra toutes les unités Netilion
 		let unitsLoaded = false;
 
-		// Fonction pour charger les unités depuis le fichier
+		// Fonction pour charger les unités depuis le fichier units.json
 		async function loadUnits() {
 			try {
 				let response = await fetch("/api/get_units"); // Mets le bon chemin ici
@@ -71,7 +71,14 @@
 				// Récupérer les bindable_objects du compte Netilion lié à ce binding
 				let netilionAccount = accounts.find(acc => acc.account_id === binding.netilion_account_id);
 				let bindableOptions = netilionAccount ? netilionAccount.assets : [];
-				
+				let unitDisplay = "";
+				if (binding.unit_id) {
+					const found = units.find(unit => unit.id === binding.unit_id);
+					if (found) {
+						unitDisplay = `${found.name} (${found.symbol})`;
+					}
+				}
+
 				row.innerHTML = `
 					<div><input type="text" value="${binding.identification}" onchange="updateBinding(${index}, 'identification', this.value)"></div>
 					<div>
@@ -97,14 +104,14 @@
 						</select>
 					</div>
 					<div class= "table-double">
-						<input type="text" list="units-list-${index}" value="${binding.unit || ''}" 
-							oninput="updateBinding(${index}, 'unit', this.value)">
+						<input type="text" list="units-list-${index}" value="${unitDisplay}" 
+							onchange="updateBinding(${index}, 'unit', this.value)">
 						<datalist id="units-list-${index}">
 							${units.map(unit => `<option value="${unit.name} (${unit.symbol})" label="${unit.name} (${unit.symbol})"></option>`).join("")}
 						</datalist>
 					</div>
 					<div>
-						<button id="test-btn-${index}" class="btn btn-test" onclick="testBinding(${index})">Test</button>
+						<button id="test-btn-${index}" class="btn btn-test" style="margin-top: 0px;" onclick="testBinding(${index})">Test</button>
 					</div>
 					<div>
 						<div id="test-result-${index}"></div>
@@ -120,7 +127,7 @@
 						</select>
 					</div>
 					
-					<button class="btn btn-danger" onclick="deleteBinding(${index})">Supprimer</button>
+					<button class="btn btn-danger" style="margin-top: 0px;" onclick="deleteBinding(${index})">Supprimer</button>
 					
 				`;
 
@@ -133,7 +140,16 @@
 			if (field === "netilion_account_id") {
 				bindings[index][field] = parseInt(value);  // <- ici
 				bindings[index].netilion_binding_id = null;
-			} else {
+			} 
+			if (field === "unit") {
+				const selectedUnit = units.find(u => `${u.name} (${u.symbol})` === value);
+				if (selectedUnit) {
+					bindings[index].unit_id = selectedUnit.id;
+				} else {
+					showNotification("Unité non reconnue", "warning")
+				}
+			}
+			else {
 				bindings[index][field] = value;
 			}
 
@@ -150,7 +166,7 @@
 				slaveadress: "",
 				registeradress: "",
 				datatype: "INT16",
-				unit_id: "",
+				unit_id: 1,
 				netilion_account_id: accounts.length > 0 ? accounts[0].id : "",
 				netilion_binding_id: "",
 			};
@@ -242,7 +258,7 @@
 		<div class= "table-double">Unit</div>
 		<div></div>
 		<div></div>
-		<div>Compte Netilion</div>
+		<div>Compte</div>
 		<div>Objet lié</div>
 		<div></div>
 	</div>
