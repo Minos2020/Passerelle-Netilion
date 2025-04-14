@@ -6,7 +6,9 @@
     <title>{% block title %}Passerelle Netilion{% endblock %}</title>
 
     <!-- Lien vers la feuille de style commune -->
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+
     
     <!-- Styles communs -->
     <style>
@@ -40,44 +42,23 @@
         .nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
         .nav-bar .a-logout {color: #000000;}
         .nav-bar .a-logout:hover {background: #f8a6a6;}
-
-        /* Style pour les notifications */
-        .notification {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        min-width: 250px;
-        padding: 15px;
-        border-radius: 8px;
-        color: white;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        z-index: 9999;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out, bottom 0.5s ease-in-out;
+        
+        .grid-key {padding: 5px 10px 5px;font-weight: bold;text-align: left; align-content: center; white-space: nowrap;}
+        .grid-value {
+            text-align: right;
+            align-content: center;
+            justify-content: center;
+            white-space: nowrap;
+            width: auto;
+            padding: 2px 10px 2px;
         }
 
-        .notification.show {
-        opacity: 1;
-        bottom: 30px;
-        }
-
-        .notification.success {
-        background-color: #2ecc71; /* Vert */
-        }
-
-        .notification.error {
-        background-color: #e74c3c; /* Rouge */
-        }
-
-        .notification.info {
-        background-color: #3498db; /* Bleu */
-        }
-
-        .notification.warning {
-        background-color: #f39c12; /* Jaune */
-        }
+        .btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;  font-size: 14px; }
+        .btn-danger { background: #c21d1d; width: auto; align-self: center; padding: 5px 10px; }
+        .btn:hover { background-color: #0e5a91; }
+        .btn-danger:hover { background-color: #a91d1d; }
+        .btn-test { white-space: nowrap; background: #818181; width: auto; align-self: center; padding: 5px 10px; }
+		.btn-test:hover { background-color: #585858; }
 
 
         /* Autres styles globaux... */
@@ -92,25 +73,34 @@
         // Script global (par exemple, pour la gestion des erreurs)
         
         // Fonction pour afficher une notification
-        function showNotification(message, type = 'info') {
-            const container = document.getElementById('notification-container');
+        function showNotification(message, type = "info", duration = 3000) {
+            const container = document.getElementById("notification-container");
+            if (!container) return;
 
-            // Créer un élément de notification
-            const notification = document.createElement('div');
-            notification.classList.add('notification', type);
-            notification.textContent = message;
+            const notification = document.createElement("div");
+            // Ajoute la classe de base "notification", et la classe dynamique selon le type voulu
+            notification.classList.add("notification", type);
 
-            // Ajouter la notification au conteneur
+            const closeButton = document.createElement("span");
+            closeButton.classList.add("close-btn");
+            closeButton.innerHTML = "&times;";
+            closeButton.onclick = () => container.removeChild(notification);
+
+            const messageSpan = document.createElement("span");
+            messageSpan.textContent = message;
+
+            notification.appendChild(messageSpan);
+            notification.appendChild(closeButton);
             container.appendChild(notification);
 
-            // Supprimer la notification après 5 secondes
             setTimeout(() => {
-                notification.style.opacity = 0;
-                setTimeout(() => {
-                    container.removeChild(notification);
-                }, 500); // attendre que l'animation de disparition soit terminée
-            }, 5000); // délai avant disparition (en ms)
+                if (container.contains(notification)) {
+                container.removeChild(notification);
+                }
+            }, duration);
         }
+
+
 
         // Exemple d'utilisation (affiche une notification de succès)
         showNotification('Action réussie !', 'success');
@@ -126,12 +116,12 @@
     
     <!-- Bandeau de navigation -->
     <div class="nav-bar">
-        <a href="{{ url_for('web.overview') }}">Overview</a>
-        <a href="{{ url_for('web.networks') }}">Networks</a>
-        <a href="{{ url_for('web.modbus') }}">General</a>
-        <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
+        <a href="{{ url_for('web.overview') }}">Résumé</a>
+        <a href="{{ url_for('web.networks') }}">Réseaux</a>
+        <a href="{{ url_for('web.modbus') }}">Divers</a>
+        <a href="{{ url_for('web.netilion') }}">Comptes Netilion</a>
         <a href="{{ url_for('web.bindings') }}">Bindings</a>
-        <a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
+        <a class="a-logout" href="{{ url_for('web.logout') }}">Déconnexion</a>
     </div>
     
     <!-- Contenu injecté depuis les pages spécifiques -->

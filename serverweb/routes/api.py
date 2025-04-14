@@ -31,9 +31,9 @@ def login_required(f):
                 </head>
                 <body>
                     <div class="container">
-                        <h2>⛔ Access denied</h2>
-                        <p style="margin-bottom: 50px;">You must be authenticated to access this ressource.</p>
-                        <a href='/login'><button>Login page</button></a>
+                        <h2>⛔ Accès refusé</h2>
+                        <p style="margin-bottom: 50px;">Vous devez être authentifié pour accéder à cette ressource.</p>
+                        <a href='/login'><button>Page de connexion</button></a>
                     </div>
                 </body>
             </html>

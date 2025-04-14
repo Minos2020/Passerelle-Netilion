@@ -2,6 +2,7 @@
 {% block title %}Overview{% endblock %}
 
 {% block extra_styles %}
+
 <style>
   .box { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background: #fff; text-align: center; width: 80%; }
   .box h2 { margin: 10px 0px 20px; color: #1971c2; }
@@ -9,6 +10,7 @@
   .button-container { display: flex; justify-content: center; margin-top: 20px; gap: 10px; }
   
   label.file-label { padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; margin-top: 10px; width: 50; font-size: 14px; background-color: #28a745; color: white;}
+  label.file-label:hover { background-color: #1f7c35;}
   input[type="file"] { display: none; }
   
   .btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 50; font-size: 14px; }
@@ -47,14 +49,6 @@
     white-space: nowrap;
   }
 
-  .grid-value {
-    text-align: right;
-    align-content: center;
-    justify-content: center;
-    white-space: nowrap;
-    width: auto;
-    padding: 2px 10px 2px;
-  }
   .grid-value small {
     
     font-size: 0.8em;
@@ -95,9 +89,12 @@
     color: #3498db;
   } 
   </style>
-  {% endblock %}
+
+{% endblock %}
   
-  {% block extra_scripts %}
+
+{% block extra_scripts %}
+
   <script>
     let accounts = [];
     let bindings = [];
@@ -121,7 +118,7 @@
             let numBindings = bindings.length;
 
             divSummary.innerHTML = `
-                  <div class="grid-singleH">Netilion accounts<div class="summary-icon"><img src="/static/icons/netilion_accounts.svg"></div></div>
+                  <div class="grid-singleH">Comptes Netilion<div class="summary-icon"><img src="/static/icons/netilion_accounts.svg"></div></div>
                   <div class="grid-singleV">${numNetilionAccounts}</div>            
             `;
             summaryContainer.appendChild(divSummary);
@@ -172,7 +169,7 @@
     });
 
     async function renderAccounts() {
-      // Netilion accounts
+      // Comptes Netilion
       let netilionContainer = document.getElementById("netilion-accounts");
       netilionContainer.innerHTML = ""; // Clear before rendering
 
@@ -228,7 +225,7 @@
                 <div class="grid-key">Tags</div><div class="grid-value">${instrumCount}</div>
                 <div class="grid-key">Assets</div><div class="grid-value">${assetCount}</div>
                 <div class="separator"></div>
-                <button class="refresh-button" style="grid-column: span 2;" data-account-id="${account.account_id}" title="Re-fetch data from Netilion">↺</button>
+                <button class="refresh-button" id="refresh-btn-${account.account_id}" style="grid-column: span 2;" data-account-id="${account.account_id}" title="Re-fetch data from Netilion">↺</button>
 
                 `;
 
@@ -247,7 +244,10 @@
     }
   
     function refreshNetilionData(accountId) {
-      console.log("Rafraîchissement des données pour le compte ID :", accountId);
+      // console.log("Rafraîchissement des données pour le compte ID :", accountId);
+      // On récupère le bouton et on le remplace par une animation le temps de la requête
+      let refresh_button = document.getElementById(`refresh-btn-${accountId}`)
+      refresh_button.innerHTML = '<div class="spinner"></div>';
 
       fetch("/api/refresh_netilion_account", {
         method: "POST",
@@ -260,29 +260,40 @@
         if (data.success){
           // Mets à jour l'interface avec les nouvelles données
           updateAccountData(accountId, data.account);
+          refresh_button.innerHTML = '↺';
         } else {
           console.error("Erreur backend :", data.error);
+          showNotification("Erreur lors du rafraîchissement des données :" + data.error, "error", 6000);
+          refresh_button.innerHTML = '↺';
         }
         
       })
-      .catch(error => console.error("Erreur de rafraîchissement des données :", error));
+      .catch(error => {
+        console.error("Erreur lors du rafraîchissement des données :", error);
+        showNotification("Erreur lors du rafraîchissement des données :" + error.message, "error");
+        refresh_button.innerHTML = '↺';
+      });
+        
+      
     }
 
     function updateAccountData(accountId, data) {
       // Trouver l'index du compte avec l'ID correspondant dans le tableau accounts
       const accountIndex = accounts.findIndex(account => account.account_id === Number(accountId));
-      console.log(accounts)
-      console.log(accountIndex)
+      // console.log(accounts)
+      // console.log(accountIndex)
       // Si un compte avec cet ID est trouvé
       if (accountIndex !== -1) {
         // Remplacer les données du compte par celles renvoyées par le backend
         accounts[accountIndex] = data;
-        console.log(accounts)
+        // console.log(accounts)
 
         // Appeler renderAccounts pour mettre à jour l'affichage
         renderAccounts();
+        showNotification("Infos du compte Netilion mises à jour avec succès !", "success");
       } else {
         console.log("Compte non trouvé dans le tableau accounts.");
+        showNotification("Index du compte non trouvé : problème d'affichage.", "error");
       }
     }
 
@@ -298,8 +309,12 @@
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
+                showNotification("Configuration téléchargée", "success");
             })
-          .catch(error => console.error("❌ Erreur lors du téléchargement du fichier :", error));
+          .catch(error => {
+            console.error("❌ Erreur lors du téléchargement du fichier :", error);
+            showNotification("Erreur lors du téléchargement du fichier :" + error.message, "error", 6000);
+          });
     }
 
     // Fonction pour charger une configuration depuis un fichier
@@ -317,52 +332,57 @@
                 }).then(response => response.json())
                   .then(data => {
               if (data.status === "success") {
-                alert("✅ Configuration chargée !");
+                showNotification("Configuration chargée avec succès !", "success");
+                // Afficher une notification de succès
                 window.location.reload(); // 🔄 Rechargement immédiat de la page
               } else {
-                alert("❌ Erreur lors de l'enregistrement !");
+                showNotification("La configuration n'a pas pu être chargée : " + data.message, "error", 6000);
               }
             })
             } catch (error) {
-                alert("Erreur : fichier de configuration invalide.");
+              showNotification("La configuration n'a pas pu être chargée : " + error.message, "error", 6000);
             }
         };
         reader.readAsText(file);
     }
   </script>
-  {% endblock %}
   
-  {% block content %}
-  <div class="container-internal">
-    <h1>Overview</h1>
-
-    <!-- Résumé global condensé -->
-    <div class="box">
-      <div class="cards-container" id="summary"></div>
-    </div>
-
-    <div class="box">
-      <h2>Networks</h2>
-      <div class="cards-container" id="networks"></div>
-    </div>
-    
-    <div class="box">
-      <h2>Modbus settings</h2>
-      <div class="cards-container" id="modbus"></div>
-    </div>
-
-    <div class="box">
-      <h2>Netilion accounts</h2>
-      <div class="cards-container" id="netilion-accounts"></div>
-    </div>
-
-    <!-- Boutons pour enregistrer et charger la config -->
-    <div class="button-container">
-      <button class="btn" onclick="saveConfig()">Télécharger la configuration</button>
-      <label for="file-input" class="file-label">Charger une configuration</label>
-      <input type="file" id="file-input" accept=".conf" onchange="loadConfig(event)">
-	  </div>
+{% endblock %}
 
 
+{% block content %}
+
+<div class="container-internal">
+  <h1>Résumé global</h1>
+
+  <!-- Résumé global condensé -->
+  <div class="box">
+    <div class="cards-container" id="summary"></div>
   </div>
-  {% endblock %}
+
+  <div class="box">
+    <h2>Réseaux disponibles</h2>
+    <div class="cards-container" id="networks"></div>
+  </div>
+  
+  <div class="box">
+    <h2>Général</h2>
+    <div class="cards-container" id="modbus"></div>
+  </div>
+
+  <div class="box">
+    <h2>Comptes Netilion</h2>
+    <div class="cards-container" id="netilion-accounts"></div>
+  </div>
+
+  <!-- Boutons pour enregistrer et charger la config -->
+  <div class="button-container">
+    <button class="btn" onclick="saveConfig()" title="Télécharger la configuration en .txt (non chiffré) ou .conf (chiffré)">Télécharger la configuration</button>
+    <label for="file-input" class="file-label" title="Charger depuis un fichier .conf (chiffré)">Charger une configuration</label>
+    <input type="file" id="file-input" accept=".conf" onchange="loadConfig(event)">
+  </div>
+
+
+</div>
+
+{% endblock %}

@@ -1,42 +1,15 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-  <title>Netilion Gateway</title>
+{% extends "base.html" %}
+{% block title %}Divers{% endblock %}
+
+{% block extra_styles %}
+
   <style>
-    body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; flex-direction: column; margin: 0; background-color: #f4f4f9; color: #333; }
-    .container { width: max-content; max-width: 90%;flex: 1; text-align: center ; align-items: center; padding: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; }
-    h1 { font-size: 1.8em; color: #1971c2; margin-bottom: 50px; padding: 10px 50px;}
-    h2 { font-size: 1.5em; color: #333; margin: 10px 20px 20px; }
-		.nav-bar {
-			text-align: center;
-			padding: 20px;
-			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-			background: white;
-			border-radius: 8px;
-			margin: 10px;
-			width: 90%;
-			max-width: 90%;
-			display: flex;
-			flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
-			justify-content: center; /* Centrer les éléments */
-		}.nav-bar > a {
-			color: #1971c2;
-			text-decoration: none;
-			padding: 5px 20px;
-			font-weight: bold;
-			overflow: hidden;
-			max-width: 100%;  /* Limite la largeur des éléments à la largeur du parent */
-			min-width: 100px;  /* Définit une largeur minimale pour éviter que le texte soit trop petit */
-			box-sizing: border-box; /* Inclut les paddings dans la largeur totale */
-		}
-    .nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
-    .nav-bar .a-logout {color: #000000;}
-    .nav-bar .a-logout:hover {background: #f8a6a6;}
+    
+    .container { width: max-content; max-width: 90%;}
+      
+		
     p { font-size: 1.1em; margin: 10px 0; }
-    .btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 50; font-size: 14px; }
-    .btn-danger { background: #c21d1d; width: auto; align-self: center; padding: 5px 10px; }
-    .btn:hover { background-color: #0e5a91; }
-    .btn-danger:hover { background-color: #a91d1d; }
+    
     input, select { padding: 8px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; }
     .flex-container { display: flex; align-items: center; }
     .parameter-container { padding: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 30px 20px 10px; }
@@ -66,6 +39,12 @@
         margin-bottom: 5px;
     }
   </style>
+
+{% endblock %}
+  
+
+{% block extra_scripts %}
+
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       fetch("/api/get_general_config")
@@ -86,69 +65,61 @@
           body: JSON.stringify(configData)
         }).then(response => response.json())
           .then(data => {
-            if (data.status === "success") {
-              alert("✅ Configuration modbus enregistrée !");
+            if (data.status) {
+              showNotification("Enregistrement réussi", "success");
             } else {
-              alert(`❌ Erreur lors de l'enregistrement : ${data.message || "Erreur inconnue"}`);
+              showNotification("Erreur lors du téléchargement du fichier :" + data.message, "error", 6000);
             }
           })
       });
     });
   </script>
-  </head>
   
-  <body>
-    <!-- Bandeau de navigation -->
-    <div class="nav-bar">
-      <a href="{{ url_for('web.overview') }}">Overview</a>
-      <a href="{{ url_for('web.networks') }}">Networks</a>
-      <a href="{{ url_for('web.modbus') }}">General</a>
-      <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
-      <a href="{{ url_for('web.bindings') }}">Bindings</a>
-      <a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
+  {% endblock %}
+
+
+{% block content %}
+
+<div class="container">
+  <h1>Réglages divers</h1>
+  <form id="modbus-form">
+    <div id="modbus-container">
+      <div class="modbus-box">
+
+        <div class="grid-key">Rate (s)</div>
+        <input class="grid-value" type="number" id="rate" name="rate" min="1" max="600" value="1">
+        <div class="grid-key">Wait Delay (s)</div>
+        <input class="grid-value" type="number" id="waitdelay" name="waitdelay" min="1" max="60" value="1">
+      </div>
+
+    <div class="modbus-box">
+      <div class="grid-header">Modbus RTU</div>
+      <div class="grid-key">Baudrate</div>
+      <select id="baudrate" name="baudrate">
+        <option value="9600">9600</option>
+        <option value="19200">19200</option>
+        <option value="38400">38400</option>
+        <option value="57600">57600</option>
+        <option value="115200">115200</option>
+      </select>
+
+      <div class="grid-key">Parity</div>
+      <select id="parity" name="parity">
+        <option value="0">None</option>
+        <option value="1">Odd</option>
+        <option value="2">Even</option>
+      </select>
+
+      <div class="grid-key">Stop Bits</div>
+      <select id="stopbits" name="stopbits">
+        <option value="1">1</option>
+        <option value="2">2</option>
+      </select>
     </div>
-  
-    <div class="container">
-      <h1>Modbus Settings</h1>
-      <form id="modbus-form">
-        <div id="modbus-container">
-          <div class="modbus-box">
-  
-            <div class="grid-key">Rate (s)</div>
-            <input class="grid-value" type="number" id="rate" name="rate" min="1" max="600" value="1">
-            <div class="grid-key">Wait Delay (s)</div>
-            <input class="grid-value" type="number" id="waitdelay" name="waitdelay" min="1" max="60" value="1">
-          </div>
-  
-        <div class="modbus-box">
-          <div class="grid-header">Modbus RTU</div>
-          <div class="grid-key">Baudrate</div>
-          <select id="baudrate" name="baudrate">
-            <option value="9600">9600</option>
-            <option value="19200">19200</option>
-            <option value="38400">38400</option>
-            <option value="57600">57600</option>
-            <option value="115200">115200</option>
-          </select>
-  
-          <div class="grid-key">Parity</div>
-          <select id="parity" name="parity">
-            <option value="0">None</option>
-            <option value="1">Odd</option>
-            <option value="2">Even</option>
-          </select>
-  
-          <div class="grid-key">Stop Bits</div>
-          <select id="stopbits" name="stopbits">
-            <option value="1">1</option>
-            <option value="2">2</option>
-          </select>
-        </div>
-    </div>
-    <div style="height: 20px;"></div>
-    <button class="btn" type="submit">Save Configuration</button>
-    </form>
-    </div>
-  </body>
-  
-  </html>
+</div>
+<div style="height: 20px;"></div>
+<button class="btn" type="submit">Save Configuration</button>
+</form>
+</div>
+
+{% endblock %}

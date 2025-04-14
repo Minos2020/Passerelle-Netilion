@@ -1,55 +1,24 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-	<title>Netilion Accounts</title>
-	<style>
-		body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; flex-direction: column; margin: 0; background-color: #f4f4f9; color: #333; }
-		.container { width: 90%; text-align: center; align-items: center; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 10px; }
-		h1 { font-size: 1.8em; color: #1971c2; margin-bottom: 20px; padding: 10px 50px; }
-		.nav-bar {
-			text-align: center;
-			padding: 20px;
-			box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-			background: white;
-			border-radius: 8px;
-			margin: 10px;
-			width: 90%;
-			max-width: 100%;
-			display: flex;
-			flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
-			justify-content: center; /* Centrer les éléments */
-		}.nav-bar > a {
-			color: #1971c2;
-			text-decoration: none;
-			padding: 5px 20px;
-			font-weight: bold;
-			overflow: hidden;
-			max-width: 100%;  /* Limite la largeur des éléments à la largeur du parent */
-			min-width: 100px;  /* Définit une largeur minimale pour éviter que le texte soit trop petit */
-			box-sizing: border-box; /* Inclut les paddings dans la largeur totale */
-		}
-		.nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
-		.nav-bar .a-logout {color: #000000;}
-		.nav-bar .a-logout:hover {background: #f8a6a6;}
-		.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-		.table-header,
-		.table-row { display: grid; grid-template-columns: repeat(12, 1fr);  align-items: center; gap: 20px; padding: 8px; border-bottom: 1px solid #ddd; }
-		.table-header { background: #e0e0e0; }
+{% extends "base.html" %}
+{% block title %}Bindings{% endblock %}
 
-		.table-header > div { font-weight: bold; overflow: hidden; }
-		.table-double {grid-column: span 2;}
-		/* .table-header > div, */
+{% block extra_styles %}
+<style>
+	.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+	.table-header,
+	.table-row { display: grid; grid-template-columns: repeat(12, 1fr);  align-items: center; gap: 20px; padding: 8px; border-bottom: 1px solid #ddd; }
+	.table-header { background: #e0e0e0; }
 
-		.table-row input { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-		.table-row select { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-		.btn { padding: 10px 20px; background: #1971c2; color: white; border: none; border-radius: 5px; cursor: pointer;  font-size: 14px; }
-		.btn-danger { background: #c21d1d; align-self: center; padding: 5px 10px; overflow:hidden; max-width: 100%;}
-		.btn:hover { background-color: #0e5a91; }
-		.btn-test { background: #a3a3a3; width: auto; align-self: center; padding: 5px 10px; }
-		.btn-test:hover { background-color: #585858; }
-		.btn-danger:hover { background-color: #a91d1d; }
+	.table-header > div { font-weight: bold; overflow: hidden; }
+	.table-double {grid-column: span 2;}
 
-	</style>
+	.table-row input { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+	.table-row select { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+</style>
+
+{% endblock %}
+  
+
+{% block extra_scripts %}
 
 	<script>
 		let bindings = [];
@@ -138,7 +107,7 @@
 						<button id="test-btn-${index}" class="btn btn-test" onclick="testBinding(${index})">Test</button>
 					</div>
 					<div>
-						<span id="test-result-${index}" style=" align-self: center;"></span>
+						<div id="test-result-${index}"></div>
 					</div>
 					<div>
 						<select onchange="updateBinding(${index}, 'netilion_account_id', this.value, true)">
@@ -203,9 +172,9 @@
 				.then(response => response.json())  // Convertit la réponse en JSON
 				.then(data => {
 					if (data.status === "success") {
-						alert("✅ Bindings enregistrés !");
+						showNotification("Configuration Bindings enregistrée.", "success");
 					} else {
-						alert(`❌ Erreur lors de l'enregistrement : ${data.message || "Erreur inconnue"}`);
+						showNotification("Problème lors de l'enregistrement : " + data.message, "error", 6000)
 					}
 				})
 				.catch(error => console.error("Erreur lors de l'enregistrement:", error));
@@ -216,12 +185,11 @@
 		async function testBinding(index) {
 			let binding = bindings[index];
 			let button = document.getElementById(`test-btn-${index}`);
-			let resultSpan = document.getElementById(`test-result-${index}`);
+			let resultDiv = document.getElementById(`test-result-${index}`);
 
 			// Reset visuel avant de tester
 			button.style.backgroundColor = "#1971c2";
-			resultSpan.innerText = "Test en cours...";
-			resultSpan.style.color = "#333";
+			resultDiv.innerHTML = '<div class="spinner"></div>';
 
 			try {
 				let response = await fetch("/api/modbus_test", {
@@ -239,57 +207,54 @@
 				let data = await response.json();
 				if (response.ok && data.status === "success") {
 					button.style.backgroundColor = "#28a745"; // Vert
-					resultSpan.innerText = `${data.value}`;
-					resultSpan.style.color = "#28a745";
+					resultDiv.innerText = `${data.value}`;
+					resultDiv.style.color = "#28a745";
 				} else if (response.ok && data.status === "error") {
 					button.style.backgroundColor = "#dc3545"; // Rouge
-					resultSpan.innerText = `Échec : ${data.type}`;
-					resultSpan.style.color = "#dc3545";
+					resultDiv.innerText = `Échec : ${data.type}`;
+					resultDiv.style.color = "#dc3545";
 				}
 			} catch (error) {
 				button.style.backgroundColor = "#dc3545"; // Rouge
-				resultSpan.innerText = "Erreur";
-				resultSpan.style.color = "#dc3545";
+				resultDiv.innerText = "Erreur";
+				resultDiv.style.color = "#dc3545";
 			}
 		}
 
 	</script>
-</head>
-<body>
-    <!-- Bandeau de navigation -->
-    <div class="nav-bar">
-        <a href="{{ url_for('web.overview') }}">Overview</a>
-        <a href="{{ url_for('web.networks') }}">Networks</a>
-        <a href="{{ url_for('web.modbus') }}">General</a>
-        <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
-        <a href="{{ url_for('web.bindings') }}">Bindings</a>
-		<a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
-    </div>
 
-    <div class="container">
-        <h1>Bindings</h1>
+{% endblock %}
 
-        <!-- En-tête des colonnes -->
-        <div class="table-header">
-            <div>Identification</div>
-            <div>Protocole</div>
-            <div>Slave Address</div>
-            <div>Register Address</div>
-            <div>Data Type</div>
-			<div class= "table-double">Unit</div>
-			<div></div>
-			<div></div>
-            <div>Compte Netilion</div>
-            <div>Objet Bindable</div>
-            <div></div>
-        </div>
 
-        <!-- Conteneur des bindings -->
-        <div id="bindings-list"></div>
+{% block content %}
 
-        <!-- Bouton pour ajouter un binding -->
-        <button class="btn" style="margin-top: 20px;" onclick="addBinding()">Ajouter un binding</button>
+
+<div class="container">
+	<h1>Bindings</h1>
+
+	<!-- En-tête des colonnes -->
+	<div class="table-header">
+		<div>Nom</div>
+		<div>Protocole</div>
+		<div>Addr. esclave</div>
+		<div>Addr. registre</div>
+		<div>Type</div>
+		<div class= "table-double">Unit</div>
+		<div></div>
+		<div></div>
+		<div>Compte Netilion</div>
+		<div>Objet lié</div>
+		<div></div>
+	</div>
+
+	<!-- Conteneur des bindings -->
+	<div id="bindings-list"></div>
+
+	<!-- Bouton pour ajouter un binding -->
+	<div>
+		<button class="btn" style="margin-top: 20px;" onclick="addBinding()">Ajouter un binding</button>
 		<button class="btn" style="margin-top: 20px;" onclick="saveBindings()">Enregistrer</button>
-    </div>
-</body>
-</html>
+	</div>
+</div>
+
+{% endblock %}
