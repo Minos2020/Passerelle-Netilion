@@ -6,7 +6,7 @@
 	.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
 	.table-header,
 	.table-row { display: grid; grid-template-columns: repeat(12, 1fr);  align-items: center; gap: 20px; padding: 8px; border-bottom: 1px solid #ddd; }
-	.table-header { background: #e0e0e0; border-radius: 6px; }
+	.table-header { background: #e0e0e0; border-radius: 6px; width: 100%; }
 
 	.table-header > div { font-weight: bold; overflow: hidden; }
 	.table-double {grid-column: span 2;}
@@ -138,7 +138,11 @@
 
 		function updateBinding(index, field, value, render) {
 			if (field === "netilion_account_id") {
-				bindings[index][field] = parseInt(value);  // <- ici
+				// console.log(index);
+				// console.log(field);
+				// console.log(value);
+				// console.log(bindings);
+				bindings[index].netilion_account_id = parseInt(value, 10);
 				bindings[index].netilion_binding_id = null;
 			} 
 			if (field === "unit") {
@@ -149,10 +153,10 @@
 					showNotification("Unité non reconnue", "warning")
 				}
 			}
-			else {
-				bindings[index][field] = value;
-			}
-
+			if (field === "netilion_binding_id") {
+				bindings[index].netilion_binding_id = parseInt(value, 10);
+			} 
+			
 			if (render){
 				renderBindings(); // Pour rafraîchir les objets Netilion associés
 			}
@@ -167,8 +171,8 @@
 				registeradress: "",
 				datatype: "INT16",
 				unit_id: 1,
-				netilion_account_id: accounts.length > 0 ? accounts[0].id : "",
-				netilion_binding_id: "",
+				netilion_account_id: accounts.length > 0 ? accounts[0].id : null,
+				netilion_binding_id: null,
 			};
 			bindings.push(newBinding);
 			renderBindings();
