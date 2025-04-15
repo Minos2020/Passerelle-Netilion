@@ -2,6 +2,8 @@
 {% block title %}Bindings{% endblock %}
 
 {% block extra_styles %}
+
+
 <style>
 	.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
 	.table-header,
@@ -13,12 +15,92 @@
 
 	.table-row input { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
 	.table-row select { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+
+	.btn-choice { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px;}
+	
+	.close-btn {
+		color: #ffffff;
+		background-color: #f3c2c2;
+		padding: 0 5px;
+		border-radius: 6px;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		cursor: pointer;
+	}
+	.close-btn:hover {
+		color: #000000;
+		background-color: #be3c3c;
+	}
+
+
+	.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+
+	.modal-content { background: white; padding: 20px; border-radius: 8px; max-height: 80vh; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+	.hidden { display: none; }
+
+	#treeview-container {
+		max-width: 600px;
+		background: white;
+		/* border: 1px solid #ccc; */
+		padding: 1rem;
+		border-radius: 6px;
+		/* box-shadow: 0 2px 4px rgba(0,0,0,0.1); */
+	}
+
+	.tree-node {
+		cursor: pointer;
+		margin: 0.2em 0;
+		user-select: none;
+	}
+
+	.tree-node .label {
+		display: inline-block;
+		padding: 0.2em 0.5em;
+		border-radius: 4px;
+	}
+
+	.tree-node .label:hover {
+		background: #e0e0e0;
+	}
+
+	.tree-node.selected .label {
+		background: #1976d2;
+		color: white;
+	}
+
+	.children {
+		margin-left: 1em;
+		display: none;
+	}
+
+	.tree-node.open > .children {
+		display: block;
+	}
+
+	.tree-node.open > .label {
+		background: #e3f2fd; /* bleu clair */
+	}
+
+	.tree-node.file::before {
+		content: "📄 ";
+	}
+
+	.tree-node.asset::before {
+		content: "🧩 ";
+	}
+
+	.tree-node.folder > .label {
+		font-weight: bold;
+	}
+
 </style>
 
 {% endblock %}
   
 
 {% block extra_scripts %}
+
+<script src="{{ url_for('static', filename='scripts/treeview.js') }}"></script>
 
 	<script>
 		let bindings = [];
@@ -78,6 +160,11 @@
 						unitDisplay = `${found.name} (${found.symbol})`;
 					}
 				}
+				let bindingObject = bindableOptions.find(obj => obj.id === binding.netilion_binding_id);
+				let bindingLabel = "";
+				if(bindingObject){
+					`${bindingObject.description} | ${bindingObject.serial_number} | ${bindingObject.tag}`;
+				}
 
 				row.innerHTML = `
 					<div><input type="text" value="${binding.identification}" onchange="updateBinding(${index}, 'identification', this.value)"></div>
@@ -122,9 +209,8 @@
 						</select>
 					</div>
 					<div>
-						<select onchange="updateBinding(${index}, 'netilion_binding_id', this.value, true)">
-							${bindableOptions.map(obj => `<option value="${obj.id}" ${obj.id === binding.netilion_binding_id ? "selected" : ""}>${obj.description || obj.serial_number || obj.tag}</option>`).join("")}
-						</select>
+						<button class="btn-choice" onclick="openBindingSelector(${index})">Choisir...</button>
+						<span id="binding-label-${index}">${bindingLabel}</span>
 					</div>
 					
 					<button class="btn btn-danger" style="margin-top: 0px;" onclick="deleteBinding(${index})">Supprimer</button>
@@ -134,7 +220,30 @@
 				container.appendChild(row);
 			});
 		}
+
+		function openBindingSelector(index) {
+			const accountId = bindings[index].netilion_account_id;
+			const account = accounts.find(a => a.account_id === accountId);
+
+			if (!account) return;
+
+
+			//const container = document.getElementById("treeview-container");
+			
+			
+			createTree(account);
+
+			document.getElementById("binding-modal").classList.remove("hidden");
+		}
+
 		
+
+		function closeModal() {
+    		document.getElementById("binding-modal").classList.add("hidden");
+		}
+  
+
+
 
 		function updateBinding(index, field, value, render) {
 			if (field === "netilion_account_id") {
@@ -248,6 +357,13 @@
 
 {% block content %}
 
+<div id="binding-modal" class="modal hidden">
+	<div class="modal-content">
+		<span class="close-btn" onclick="closeModal()">&times;</span>
+		<div id="treeview-container"></div>
+	</div>
+</div>
+  
 
 <div class="container">
 	<h1>Bindings</h1>
