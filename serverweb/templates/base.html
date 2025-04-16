@@ -27,12 +27,26 @@
 			width: 90%;
 			max-width: 100%;
 			display: flex;
-			flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
-			justify-content: center; /* Centrer les éléments */
-		}.nav-bar > a {
+		}
+        .logo-container {
+            flex: 0 0 auto;
+        }
+
+        .nav-logo {
+            height: 32px;
+            width: auto;
+        }
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
+            flex: 1;
+            justify-content: center;
+            gap: 1em;
+        }
+        .nav-links > a {
 			color: #1971c2;
 			text-decoration: none;
-			padding: 5px 20px;
+			padding: 5px;
 			font-weight: bold;
 			overflow: hidden;
 			max-width: 100%;  /* Limite la largeur des éléments à la largeur du parent */
@@ -116,12 +130,17 @@
     
     <!-- Bandeau de navigation -->
     <div class="nav-bar">
-        <a href="{{ url_for('web.overview') }}">Résumé</a>
-        <a href="{{ url_for('web.networks') }}">Réseaux</a>
-        <a href="{{ url_for('web.modbus') }}">Divers</a>
-        <a href="{{ url_for('web.netilion') }}">Comptes Netilion</a>
-        <a href="{{ url_for('web.bindings') }}">Bindings</a>
-        <a class="a-logout" href="{{ url_for('web.logout') }}">Déconnexion</a>
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='icons/endress_logo.svg') }}" alt="Logo" class="nav-logo">
+        </div>
+            <div class="nav-links">
+            <a href="{{ url_for('web.overview') }}">Résumé</a>
+            <a href="{{ url_for('web.networks') }}">Réseaux</a>
+            <a href="{{ url_for('web.modbus') }}">Divers</a>
+            <a href="{{ url_for('web.netilion') }}">Comptes Netilion</a>
+            <a href="{{ url_for('web.bindings') }}">Bindings</a>
+            <a class="a-logout" href="{{ url_for('web.logout') }}">Déconnexion</a>
+        </div>
     </div>
     
     <!-- Contenu injecté depuis les pages spécifiques -->

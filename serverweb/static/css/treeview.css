@@ -1,0 +1,80 @@
+#treeview-container {
+    min-width: 100px;
+    max-width: 600px;
+    background: white;
+    /* border: 1px solid #ccc; */
+    padding: 1rem;
+    border-radius: 6px;
+    /* box-shadow: 0 2px 4px rgba(0,0,0,0.1); */
+    height: 90%;
+    overflow-y: auto;
+    
+}
+
+.tree-node {
+    cursor: pointer;
+    margin: 0.2em 0;
+    user-select: none;
+}
+
+.tree-node .label {
+    display: inline-block;
+    padding: 0.2em 0.5em;
+    border-radius: 4px;
+}
+
+.tree-node .label:hover {
+    background: #e0e0e0;
+}
+
+/* .tree-node.selected .label {
+    background: #1976d2;
+    color: white;
+} */
+
+.children {
+    margin-left: 1em;
+    display: none;
+}
+
+.tree-node.open > .children {
+    display: block;
+}
+
+.tree-node.folder::before {
+    content: "📁";
+}
+
+.tree-node.folder.open::before {
+    content: "📂";
+}
+
+.tree-node.folder.selected > .label {
+    background: #e3f2fd;
+}
+
+.tree-node.folder > .label {
+    font-weight: bold;
+}
+
+/* ">" permet de cibler uniquement les enfants directs de l'élément */
+
+
+.tree-node.tag::before {
+    content: "🏷️";
+}
+
+.tree-node.asset::before {
+    content: "📍";
+}
+
+.tree-node.asset.selected > .label {
+    background: #1976d2;
+    color: white;
+}
+
+.tree-node.tag.selected > .label {
+    background: #1976d2;
+    color: white;
+}
+

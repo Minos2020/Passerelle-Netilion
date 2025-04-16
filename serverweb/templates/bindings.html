@@ -3,97 +3,108 @@
 
 {% block extra_styles %}
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/treeview.css') }}">
 
 <style>
-	.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-	.table-header,
-	.table-row { display: grid; grid-template-columns: repeat(12, 1fr);  align-items: center; gap: 20px; padding: 8px; border-bottom: 1px solid #ddd; }
-	.table-header { background: #e0e0e0; border-radius: 6px; width: 100%; }
+	.table { width: 100%; margin-top: 20px; }
+	.table-header, .table-row { 
+		display: grid;
+		grid-template-columns: repeat(12, 1fr);
+		align-items: center;
+		justify-content: space-between;
+		gap: 20px;
+		padding: 8px;
+		border-bottom: 1px solid #ddd;
+		width: 100%; 
+		overflow: hidden;
+	}
+	.table-header { background: #e0e0e0; border-radius: 6px; }
 
-	.table-header > div { font-weight: bold; overflow: hidden; }
-	.table-double {grid-column: span 2;}
+	.table-header > div {
+		font-weight: bold;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	
 
 	.table-row input { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
 	.table-row select { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-
-	.btn-choice { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px;}
 	
-	.close-btn {
-		color: #ffffff;
-		background-color: #f3c2c2;
-		padding: 0 5px;
+	.table-double {grid-column: span 2;}
+
+	.btn-choice { max-width: 90%; height: min-content;}
+	
+	.btn.btn-select {
+		padding: 2px 10px;
 		border-radius: 6px;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		margin: 0 1em 10px 0;
+		height: min-content;
+		width: min-content;
+	}
+
+	.close-tree-btn {
+		color: #ffffff;
+		background-color: #dd4040;
+		padding: 2px 7px;
+		border-radius: 6px;
 		cursor: pointer;
+		height: min-content;
+
+		margin: 0 0 10px 1em;
 	}
-	.close-btn:hover {
-		color: #000000;
-		background-color: #be3c3c;
+	.close-tree-btn:hover {
+		/* color: #000000; */
+		background-color: #d39595;
 	}
+	.btn-danger { width: max-content; max-width: 90%; overflow-x: scroll; justify-self: center; }
 
 
-	.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+	.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;}
 
-	.modal-content { background: white; padding: 20px; border-radius: 8px; max-height: 80vh; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+	.modal-content { background: white; padding: 20px; border-radius: 8px; max-height: 80vh; overflow-y: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
 	.hidden { display: none; }
 
-	#treeview-container {
-		max-width: 600px;
-		background: white;
-		/* border: 1px solid #ccc; */
-		padding: 1rem;
-		border-radius: 6px;
-		/* box-shadow: 0 2px 4px rgba(0,0,0,0.1); */
-	}
-
-	.tree-node {
-		cursor: pointer;
-		margin: 0.2em 0;
-		user-select: none;
-	}
-
-	.tree-node .label {
-		display: inline-block;
-		padding: 0.2em 0.5em;
-		border-radius: 4px;
-	}
-
-	.tree-node .label:hover {
-		background: #e0e0e0;
-	}
-
-	.tree-node.selected .label {
-		background: #1976d2;
-		color: white;
-	}
-
-	.children {
-		margin-left: 1em;
-		display: none;
-	}
-
-	.tree-node.open > .children {
-		display: block;
-	}
-
-	.tree-node.open > .label {
-		background: #e3f2fd; /* bleu clair */
-	}
-
-	.tree-node.file::before {
-		content: "📄 ";
-	}
-
-	.tree-node.asset::before {
-		content: "🧩 ";
-	}
-
-	.tree-node.folder > .label {
+	.grid-container {
+      display: grid;
+      grid-template-columns: 1fr 2fr; /* Deux colonnes : une pour les clés, l'autre pour les valeurs */
+      grid-gap: 5px;
+      width:min-content;
+      max-width: 100%;
+	  max-height: 100%;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+      margin-bottom: 10px;
+  	}
+  
+	.grid-header {
+		grid-column: span 2; /* Étend le titre sur les 2 colonnes */
+		background: #cae5fd;
+		text-align: center;
+		justify-content: center;
 		font-weight: bold;
+		padding: 8px;
+		border-radius: 8px;
+		margin-bottom: 5px;
+	}
+	.grid-key {
+		padding: 0 10px 0;
+		font-weight: bold;
+		text-align: left;
+		align-content: center;
+		white-space: nowrap;
+	}
+
+	.grid-value small {
+		
+		font-size: 0.8em;
 	}
 
 </style>
+
 
 {% endblock %}
   
@@ -162,9 +173,6 @@
 				}
 				let bindingObject = bindableOptions.find(obj => obj.id === binding.netilion_binding_id);
 				let bindingLabel = "";
-				if(bindingObject){
-					`${bindingObject.description} | ${bindingObject.serial_number} | ${bindingObject.tag}`;
-				}
 
 				row.innerHTML = `
 					<div><input type="text" value="${binding.identification}" onchange="updateBinding(${index}, 'identification', this.value)"></div>
@@ -190,7 +198,7 @@
 							<option value="DOUBLE_L" ${binding.datatype === "DOUBLE_L" ? "selected" : ""}>DOUBLE_L</option>
 						</select>
 					</div>
-					<div class= "table-double">
+					<div>
 						<input type="text" list="units-list-${index}" value="${unitDisplay}" 
 							onchange="updateBinding(${index}, 'unit', this.value)">
 						<datalist id="units-list-${index}">
@@ -208,15 +216,22 @@
 							${accounts.map(acc => `<option value="${acc.account_id}" ${acc.account_id === binding.netilion_account_id ? "selected" : ""}>${acc.identification}</option>`).join("")}
 						</select>
 					</div>
-					<div>
-						<button class="btn-choice" onclick="openBindingSelector(${index})">Choisir...</button>
-						<span id="binding-label-${index}">${bindingLabel}</span>
+					<div  class= "table-double" style="display: flex; flex-direction: row; justify-content: center; align-content: center; gap: 15px;">
+						<div class="grid-container" id="binding-label-${index}">--</div>
+						<button class="btn-choice" onclick="openBindingSelector(${index})">🔎</button>
 					</div>
 					
-					<button class="btn btn-danger" style="margin-top: 0px;" onclick="deleteBinding(${index})">Supprimer</button>
+					<button class="btn btn-danger" style="margin-top: 0px;" onclick="deleteBinding(${index})">&times;</button>
 					
 				`;
-
+				if(bindingObject){
+					row.querySelector(`#binding-label-${index}`).innerHTML = `
+					<div class="grid-header">${'🏷️'+bindingObject.tag || '📍'+bindingObject.product_name}</div>
+                    <div class="grid-key">IP:</div><div class="grid-value">yes</div>
+                    <div class="grid-key">Subnet:</div><div class="grid-value">yas</div>
+                    <div class="grid-key">Gateway:</div><div class="grid-value">yos</div>
+					`
+				};
 				container.appendChild(row);
 			});
 		}
@@ -224,14 +239,14 @@
 		function openBindingSelector(index) {
 			const accountId = bindings[index].netilion_account_id;
 			const account = accounts.find(a => a.account_id === accountId);
-
+			// const binding = bindings[index];
 			if (!account) return;
 
 
 			//const container = document.getElementById("treeview-container");
 			
 			
-			createTree(account);
+			createTree(account, index);
 
 			document.getElementById("binding-modal").classList.remove("hidden");
 		}
@@ -253,18 +268,18 @@
 				// console.log(bindings);
 				bindings[index].netilion_account_id = parseInt(value, 10);
 				bindings[index].netilion_binding_id = null;
-			} 
-			if (field === "unit") {
+			} else if (field === "unit") {
 				const selectedUnit = units.find(u => `${u.name} (${u.symbol})` === value);
 				if (selectedUnit) {
 					bindings[index].unit_id = selectedUnit.id;
 				} else {
-					showNotification("Unité non reconnue", "warning")
+					showNotification("Unité non reconnue", "warning");
 				}
-			}
-			if (field === "netilion_binding_id") {
+			} else if (field === "netilion_binding_id") {
 				bindings[index].netilion_binding_id = parseInt(value, 10);
-			} 
+			} else {
+				bindings[index][field] = value;
+			}
 			
 			if (render){
 				renderBindings(); // Pour rafraîchir les objets Netilion associés
@@ -359,7 +374,10 @@
 
 <div id="binding-modal" class="modal hidden">
 	<div class="modal-content">
-		<span class="close-btn" onclick="closeModal()">&times;</span>
+		<div style="display: flex; flex-direction: row; justify-content: space-between; align-content: center; border-bottom: 1px solid #ddd;">
+			<div class="close-tree-btn" onclick="closeModal()">&times;</div>
+			<button id="select-button" class="btn btn-select" onclick="selectObject()">Choisir</button>
+		</div>
 		<div id="treeview-container"></div>
 	</div>
 </div>
@@ -375,11 +393,11 @@
 		<div>Addr. esclave</div>
 		<div>Addr. registre</div>
 		<div>Type</div>
-		<div class= "table-double">Unit</div>
+		<div>Unit</div>
 		<div></div>
 		<div></div>
 		<div>Compte</div>
-		<div>Objet lié</div>
+		<div class= "table-double">Objet lié</div>
 		<div></div>
 	</div>
 
