@@ -2,7 +2,7 @@
 
 let selectedElementUI = null;
 let selectedElementObj = null;
-let selectedFolder = null;
+let selectedParent = null;
 
 function createTree(account, bindingIndex) {
   
@@ -16,16 +16,26 @@ function createTree(account, bindingIndex) {
       selectObject(bindingIndex);
   };
 
-  // Construire une map des assets et tags
-  const assetsById = Object.fromEntries(account.assets.map(a => [a.id, a]));
-  const tagsByAsset = {};
-  account.instrumentations.forEach(tag => {
-    tag.assets.forEach(assetId => {
-      if (!tagsByAsset[assetId]) tagsByAsset[assetId] = [];
-      tagsByAsset[assetId].push(tag);
+  // Construire des map d'assets, de tags
+  const assetsByTag = {};
+  account.assets.forEach(asset => {
+    asset.instrumentations.forEach(tagId => {
+      if (!assetsByTag[tagId]) assetsByTag[tagId] = [];
+      assetsByTag[tagId].push(asset);
     });
   });
+  // console.log(assetsByTag)
 
+  // const assetsByTag2 = {};
+  // account.instrumentations.forEach(tag => {
+  //   tag.assets.forEach(assetID => {
+  //     if (!assetsByTag2[assetID]) assetsByTag2[assetID] = [];
+  //     assetsByTag2[assetID].push(tag);
+  //   });
+  // });
+  // console.log(assetsByTag2)
+
+  // tags par Noeud
   const tagsByNode = {};
   account.instrumentations.forEach(tag => {
     tag.nodes.forEach(nodeId => {
@@ -51,6 +61,20 @@ function createTree(account, bindingIndex) {
     });
   });
 
+  // tags hors d'un node
+  const tagsWithoutNode = [];
+  account.instrumentations.forEach(tag => {
+    if (!tag.nodes.length > 0) tagsWithoutNode.push(tag);
+  });
+  console.log(tagsWithoutNode)
+  // assets hors d'un node
+  const assetsWithoutNode = [];
+  account.assets.forEach(asset => {
+    if (!asset.nodes.length > 0) assetsWithoutNode.push(asset);
+  });
+  console.log(assetsWithoutNode)
+
+
   function buildNode(node) {
     const el = document.createElement('div');
     el.className = 'tree-node folder';
@@ -60,9 +84,19 @@ function createTree(account, bindingIndex) {
     label.textContent = node.name;
     label.onclick = () => {
       
-      if (selectedFolder) selectedFolder.classList.remove('selected');
+      if (el.className.includes('selected open') || el.className.includes('open')){
+        if (selectedParent) selectedParent.classList.remove('selected'); selectedParent = null;
+      } 
+      else if (selectedParent) {
+        selectedParent.classList.remove('selected');
         el.classList.add('selected');
-        selectedFolder = el;
+        selectedParent = el;
+      }
+      else {
+        el.classList.add('selected');
+        selectedParent = el;
+        el.get
+      }
         // console.log('Selected folder :', node);
       el.classList.toggle('open');
     };
@@ -84,6 +118,7 @@ function createTree(account, bindingIndex) {
     (tagsByNode[node.id] || []).forEach(tag => {
       children.appendChild(buildTag(tag));
     });
+    
   
     // // Tags rattachés directement à ce node sans asset
     // data.instrumentations.forEach(tag => {
@@ -105,7 +140,8 @@ function createTree(account, bindingIndex) {
   
     const label = document.createElement('span');
     label.className = 'label';
-    label.textContent = asset.product_name + (asset.description ? ` (${asset.description})` : '');
+    label.style.fontSize = '1em';
+    label.innerHTML = `${asset.product_name} <i>${asset.description ? '('+asset.description+')' : ""}</i>`;
   
     // if (hasTags) {
     //   label.onclick = () => el.classList.toggle('open');
@@ -117,16 +153,7 @@ function createTree(account, bindingIndex) {
         selectedElementObj = asset;
         // console.log('Selected object (asset) :', asset);
       };
-    // }
-  
-    // const children = document.createElement('div');
-    // children.className = 'children';
-  
-    // (tagsByAsset[asset.id] || []).forEach(tag => {
-    //   const tagEl = buildTag(tag);
-    //   children.appendChild(tagEl);
-    // });
-  
+
     el.appendChild(label);
     // if (hasTags) el.appendChild(children);
     return el;
@@ -139,17 +166,38 @@ function createTree(account, bindingIndex) {
 
     const label = document.createElement('span');
     label.className = 'label';
-    label.textContent = tag.tag;
+    label.style.fontSize = '1em';
+    label.innerHTML = `${tag.tag} <i>${tag.description ? '('+tag.description+')' : ""}</i>`;
 
     label.onclick = () => {
-      if (selectedElementUI) selectedElementUI.classList.remove('selected');
-      el.classList.add('selected');
-      selectedElementUI = el;
-      selectedElementObj = tag;
+      if (el.className.includes('selected open') || el.className.includes('open')){
+        if (selectedParent) selectedParent.classList.remove('selected'); selectedParent = null;
+      } 
+      else if (selectedParent) {
+        selectedParent.classList.remove('selected');
+        el.classList.add('selected');
+        selectedParent = el;
+      }
+      else {
+        el.classList.add('selected');
+        selectedParent = el;
+        el.get
+      }
+      
+      el.classList.toggle('open');
       // console.log('Selected object (tag) :', tag); // ici tu peux faire un callback
     };
 
+    const children = document.createElement('div');
+    children.className = 'children';
+
+    // Assets dans ce node
+    (assetsByTag[tag.id] || []).forEach(asset => {
+      children.appendChild(buildAsset(asset));
+    });
+
     el.appendChild(label);
+    el.appendChild(children);
     return el;
   }
 
@@ -158,17 +206,42 @@ function createTree(account, bindingIndex) {
     root.appendChild(buildNode(rootNode));
   });
 
+  tagsWithoutNode.forEach(tag => {
+    root.appendChild(buildTag(tag));
+  });
+
+  assetsWithoutNode.forEach(asset => {
+    root.appendChild(buildAsset(asset));
+  });
+
   container.appendChild(root);
 }
 
 function selectObject (bindingIndex) {
   if (selectedElementUI && selectedElementObj){
     bindings[bindingIndex].netilion_binding_id = selectedElementObj.id;
-    console.log(bindings);
-    // console.log(selectedElementObj)
-    console.log(selectedElementObj.product_name || selectedElementObj.tag)
+    
+    if(selectedElementObj.tag){
+      document.getElementById(`binding-label-${bindingIndex}`).innerHTML = `
+        <div class="asset-tag-header">${'🏷️'+selectedElementObj.tag}</div>
+        <div class="asset-tag-info"><i>${'<b>SN : </b> \n'+selectedElementObj.description, selectedElementObj.description != null ? selectedElementObj.description : "No description"}</i></div>
+        `;
+    } else if (selectedElementObj.product_name) {
+      document.getElementById(`binding-label-${bindingIndex}`).innerHTML = `
+        <div class="asset-tag-header">${'📍'+selectedElementObj.product_name}</div>
+        <div class="asset-tag-info">${'<b>SN : </b> \n'+selectedElementObj.serial_number}</div>
+        <div class="asset-tag-info"><i>${selectedElementObj.description, selectedElementObj.description != null ? selectedElementObj.description : "No description"}</i></div>
+        `;
+    }
+    // Désactive l'affichage de la fenêtre de choix et réinitialise les variables
+    selectedElementUI = null;
+    selectedElementObj = null;
+    selectedParent = null;
     closeModal();
-    document.getElementById(`binding-label-${bindingIndex}`).innerHTML = ""
   }
-  else showNotification("Aucun objet sélectionné", "warning");
+  else showNotification("Aucun asset sélectionné", "warning");
+}
+
+function createAsset () {
+  showNotification("Cette fonctionnalité n'est pas encore développée", "error");
 }

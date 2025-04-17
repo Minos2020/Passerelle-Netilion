@@ -253,6 +253,7 @@ class NetilionAccount:
             print("🔄 Token expiré ou absent, rafraîchissement en cours...")
             # Si le refresh_token existe, on rafraîchit le token sans redemander les credentials.
             if self.refresh_token:
+                print(self.to_dict())
                 self._request_token("refresh_token", {"refresh_token": self.refresh_token})
             else:
                 self.authenticate()  # Sinon, on réauthentifie avec les identifiants
@@ -294,7 +295,7 @@ class NetilionAccount:
         response = requests.request(method, url, json=data, params=params, headers=headers)
 
         if response.status_code == 401:  # Token expiré
-            self.refresh_access_token()
+            self.refresh_token_if_needed()
             headers["Authorization"] = f"Bearer {self.access_token}"
             headers['accept'] = "application/json"
             response = requests.request(method, url, json=data, params=params, headers=headers)

@@ -243,16 +243,17 @@ def save_netilion_config():
 def test_account_connection():
     try:
         data = request.json
-        if data.get("account_id"):
-            tested_account = PasserelleNetilion().getAccountByID(data["account_id"])
-        else:
-            tested_account = NetilionAccount(
-                "tested_account",
-                data["client_id"],
-                data["client_secret"],
-                data["username"],
-                data["password"]
-            )
+        
+        tested_account = NetilionAccount(
+            "tested_account",
+            data["client_id"],
+            data["client_secret"],
+            data["username"],
+            data["password"]
+        )
+        print("Compte temporairement créé :")
+        print(tested_account.to_dict())
+        
         tested_account._request_token("password", {"username": tested_account.username, "password": tested_account.password})
         
         return jsonify({"success": True, "last_connection": tested_account.get_last_connection()})
@@ -294,4 +295,5 @@ def refresh_netilion_account():
         account.refresh_all_data()
         return jsonify({"success": True, "account": account.to_dict()})
     except Exception as e:
+        account.authenticate()
         return jsonify({"success": False, "error": str(e)})

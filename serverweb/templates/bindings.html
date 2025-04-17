@@ -9,7 +9,7 @@
 	.table { width: 100%; margin-top: 20px; }
 	.table-header, .table-row { 
 		display: grid;
-		grid-template-columns: repeat(12, 1fr);
+		grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr 2fr 0.8fr 1fr 1.5fr 4fr 0.8fr;
 		align-items: center;
 		justify-content: space-between;
 		gap: 20px;
@@ -24,16 +24,15 @@
 		font-weight: bold;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		white-space: nowrap;
+		/* white-space: nowrap; */
 	}
 	
 
 	.table-row input { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
 	.table-row select { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
 	
-	.table-double {grid-column: span 2;}
 
-	.btn-choice { max-width: 90%; height: min-content;}
+	.btn-choice { max-width: 90%; height: min-content; align-self: center;}
 	
 	.btn.btn-select {
 		padding: 2px 10px;
@@ -55,7 +54,7 @@
 	}
 	.close-tree-btn:hover {
 		/* color: #000000; */
-		background-color: #d39595;
+		background-color: #d39595; 
 	}
 	.btn-danger { width: max-content; max-width: 90%; overflow-x: scroll; justify-self: center; }
 
@@ -66,41 +65,36 @@
 
 	.hidden { display: none; }
 
-	.grid-container {
-      display: grid;
-      grid-template-columns: 1fr 2fr; /* Deux colonnes : une pour les clés, l'autre pour les valeurs */
-      grid-gap: 5px;
-      width:min-content;
+	.asset-tag-container {
+      display: flex;
+      flex-direction: column;
+	  overflow-x: scroll;
+      /* grid-gap: 5px; */
+      /* width: min-content; */
       max-width: 100%;
 	  max-height: 100%;
       background: #fff;
-      padding: 10px;
-      border-radius: 8px;
+      padding: 5px;
+      border-radius: 6px;
       box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-      margin-bottom: 10px;
+      /* margin-bottom: 10px; */
   	}
   
-	.grid-header {
-		grid-column: span 2; /* Étend le titre sur les 2 colonnes */
+	.asset-tag-header {
 		background: #cae5fd;
 		text-align: center;
 		justify-content: center;
 		font-weight: bold;
-		padding: 8px;
+		font-size: 1em;
+		padding: 5px;
 		border-radius: 8px;
 		margin-bottom: 5px;
 	}
-	.grid-key {
+	.asset-tag-info {
 		padding: 0 10px 0;
-		font-weight: bold;
+		font-size: 0.8em;
 		text-align: left;
 		align-content: center;
-		white-space: nowrap;
-	}
-
-	.grid-value small {
-		
-		font-size: 0.8em;
 	}
 
 </style>
@@ -206,7 +200,7 @@
 						</datalist>
 					</div>
 					<div>
-						<button id="test-btn-${index}" class="btn btn-test" style="margin-top: 0px;" onclick="testBinding(${index})">Test</button>
+						<button id="test-btn-${index}" title="Envoyer une requête modbus" class="btn btn-test" style="margin-top: 0px;" onclick="testBinding(${index})">Test</button>
 					</div>
 					<div>
 						<div id="test-result-${index}"></div>
@@ -216,21 +210,28 @@
 							${accounts.map(acc => `<option value="${acc.account_id}" ${acc.account_id === binding.netilion_account_id ? "selected" : ""}>${acc.identification}</option>`).join("")}
 						</select>
 					</div>
-					<div  class= "table-double" style="display: flex; flex-direction: row; justify-content: center; align-content: center; gap: 15px;">
-						<div class="grid-container" id="binding-label-${index}">--</div>
-						<button class="btn-choice" onclick="openBindingSelector(${index})">🔎</button>
+					<div style="display: flex; flex-direction: row; justify-content: center; align-content: center; gap: 8px;">
+						<div class="asset-tag-container" id="binding-label-${index}">--</div>
+						<button class="btn-choice" title="Sélectionner un asset" onclick="openBindingSelector(${index})">🔎</button>
 					</div>
 					
-					<button class="btn btn-danger" style="margin-top: 0px;" onclick="deleteBinding(${index})">&times;</button>
+					<button class="btn btn-danger" title="Supprimer le binding" style="margin-top: 0px;" onclick="deleteBinding(${index})">&times;</button>
 					
 				`;
 				if(bindingObject){
-					row.querySelector(`#binding-label-${index}`).innerHTML = `
-					<div class="grid-header">${'🏷️'+bindingObject.tag || '📍'+bindingObject.product_name}</div>
-                    <div class="grid-key">IP:</div><div class="grid-value">yes</div>
-                    <div class="grid-key">Subnet:</div><div class="grid-value">yas</div>
-                    <div class="grid-key">Gateway:</div><div class="grid-value">yos</div>
-					`
+					if(bindingObject.tag){
+						row.querySelector(`#binding-label-${index}`).innerHTML = `
+						<div class="asset-tag-header">${'🏷️'+bindingObject.tag || '📍'+bindingObject.product_name}</div>
+						<div class="asset-tag-info"><i>${'<b>SN : </b> \n'+bindingObject.description, bindingObject.description != null ? bindingObject.description : "No description"}</i></div>
+						`;
+					} else if (bindingObject.product_name) {
+						row.querySelector(`#binding-label-${index}`).innerHTML = `
+						<div class="asset-tag-header">${'📍'+bindingObject.product_name}</div>
+						<div class="asset-tag-info">${'<b>SN : </b> \n'+bindingObject.serial_number}</div>
+						<div class="asset-tag-info"><i>${bindingObject.description, bindingObject.description != null ? bindingObject.description : "No description"}</i></div>
+						`;
+					}
+					
 				};
 				container.appendChild(row);
 			});
@@ -374,9 +375,12 @@
 
 <div id="binding-modal" class="modal hidden">
 	<div class="modal-content">
-		<div style="display: flex; flex-direction: row; justify-content: space-between; align-content: center; border-bottom: 1px solid #ddd;">
+		<div style="display: flex; flex-direction: row; justify-content: space-between; align-content: center; border-bottom: 1px solid #ddd; gap: 10px;">
 			<div class="close-tree-btn" onclick="closeModal()">&times;</div>
-			<button id="select-button" class="btn btn-select" onclick="selectObject()">Choisir</button>
+			<div>
+				<button id="create-button" class="btn btn-select" onclick="createAsset()">Créer</button>
+				<button id="select-button" class="btn btn-select" onclick="selectObject()">Sélectionner</button>
+			</div>
 		</div>
 		<div id="treeview-container"></div>
 	</div>
@@ -397,7 +401,7 @@
 		<div></div>
 		<div></div>
 		<div>Compte</div>
-		<div class= "table-double">Objet lié</div>
+		<div>Objet lié</div>
 		<div></div>
 	</div>
 
