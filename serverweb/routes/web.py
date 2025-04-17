@@ -20,8 +20,8 @@ def login():
         
         # Vérification des identifiants (ici tu peux les valider contre un fichier JSON, base de données, etc.)
         passerelle = PasserelleNetilion()
-        stored_username = passerelle.to_dict()["username"]
-        stored_password = passerelle.to_dict()["password"]
+        stored_username = passerelle.username
+        stored_password = passerelle.password
         
         if username == stored_username and password == stored_password:
             session['authenticated'] = True  # Enregistrer dans la session que l'utilisateur est authentifié

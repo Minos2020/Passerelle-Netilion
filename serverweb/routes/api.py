@@ -47,7 +47,9 @@ def login_required(f):
 @api_bp.route('/get_config', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_config_as_JSON():
-    return jsonify(PasserelleNetilion().to_dict())
+    ans = PasserelleNetilion().to_dict_secured()
+
+    return jsonify(ans)
 
 # Récupère la config pour générer un fichier téléchargeable depuis l'interface web
 @api_bp.route('/get_config_file', methods=['GET'])
@@ -55,7 +57,7 @@ def get_config_as_JSON():
 def get_config_encrypted():
     # print(type(passerelle.to_dict()["encryption"]))
     # print(passerelle.to_dict()["encryption"])
-    save_config(PasserelleNetilion().to_dict()["encryption"])
+    save_config(PasserelleNetilion().encryption)
     with open(CONFIG_PATH, "rb") as f:
             data = f.read()
     return data
@@ -103,7 +105,7 @@ def save_bindings():
         PasserelleNetilion().bindings = [Binding.from_dict(b) for b in request.json]
 
 
-        save_config(False) # A ENLEVER
+        save_config(PasserelleNetilion().encryption) # A ENLEVER
 
 
         return jsonify({"status": "success"})
@@ -130,7 +132,7 @@ def save_general_config():
         PasserelleNetilion().modbus_rate = request.json["modbus_rate"]
 
 
-        save_config(False) # A ENLEVER (False pour ne pas chiffrer les données)
+        save_config(PasserelleNetilion().encryption) # A ENLEVER (False pour ne pas chiffrer les données)
 
 
         return jsonify({"status": "success"})
@@ -196,7 +198,7 @@ def save_networks_config():
 @login_required  # 🔒 Protège cette route
 def get_accounts():
     passerelle = PasserelleNetilion()
-    accounts = passerelle.to_dict()["accounts"]
+    accounts = passerelle.to_dict_secured()["accounts"]
     return jsonify(accounts)
 
 @api_bp.route('/save_accounts', methods=['POST'])
@@ -207,15 +209,7 @@ def save_netilion_config():
         updated_accounts = []  # Contiendra les comptes à conserver après mise à jour
 
         for acc_dict in request.json:
-            if 'account_id' in acc_dict and acc_dict['account_id'] is not None:
-                # Compte existant → on récupère le compte et on met à jour les infos
-                account: NetilionAccount = passerelle.getAccountByID(acc_dict["account_id"])
-                account.identification=acc_dict["identification"]
-                account.client_id=acc_dict["client_id"]
-                account.client_secret=acc_dict["client_secret"]
-                account.username=acc_dict["username"]
-                account.password=acc_dict["password"]
-            else:
+            if 'isNew' in acc_dict:
                 # Nouveau compte → crée l'objet sans ID, puis utilise add_account
                 account = NetilionAccount(
                     identification=acc_dict["identification"],
@@ -223,9 +217,24 @@ def save_netilion_config():
                     client_secret=acc_dict["client_secret"],
                     username=acc_dict["username"],
                     password=acc_dict["password"],
-                    changes_to_save=lambda: save_config()
+                    changes_to_save=lambda: save_config(PasserelleNetilion().encryption)
                 )
                 passerelle.add_account(account)
+                
+            else:
+                # Compte existant → on récupère le compte et on met à jour uniquement les infos qui ont changé
+                account = passerelle.getAccountByID(acc_dict["account_id"])
+                
+                client_id = acc_dict["client_id"] if "client_id" in acc_dict.get("hasChanged", []) else account.client_id
+                client_secret = acc_dict["client_secret"] if "client_secret" in acc_dict.get("hasChanged", []) else account.client_secret
+                username = acc_dict["username"] if "username" in acc_dict.get("hasChanged", []) else account.username
+                password = acc_dict["password"] if "password" in acc_dict.get("hasChanged", []) else account.password
+                
+                account.identification=acc_dict["identification"]
+                account.client_id=client_id
+                account.client_secret=client_secret
+                account.username=username
+                account.password=password
             updated_accounts.append(account)
         
         # Ne conserver que les comptes mis à jour ou ajoutés
@@ -244,15 +253,31 @@ def test_account_connection():
     try:
         data = request.json
         
-        tested_account = NetilionAccount(
-            "tested_account",
-            data["client_id"],
-            data["client_secret"],
-            data["username"],
-            data["password"]
-        )
-        print("Compte temporairement créé :")
-        print(tested_account.to_dict())
+        if data.get('isNew'):
+            tested_account = NetilionAccount(
+                "tested_account",
+                data["client_id"],
+                data["client_secret"],
+                data["username"],
+                data["password"]
+            )
+            print("Compte temporairement créé pour le test car nouveau ou modifié.")
+            
+        else:
+            saved_account = PasserelleNetilion().getAccountByID(data["account_id"])
+            # Reconstitue un compte à partir des infos modifiées + les anciennes si pas modifiées
+            client_id = data["client_id"] if "client_id" in data.get("hasChanged", []) else saved_account.client_id
+            client_secret = data["client_secret"] if "client_secret" in data.get("hasChanged", []) else saved_account.client_secret
+            username = data["username"] if "username" in data.get("hasChanged", []) else saved_account.username
+            password = data["password"] if "password" in data.get("hasChanged", []) else saved_account.password
+            
+            tested_account = NetilionAccount(
+                "tested_account",
+                client_id,
+                client_secret,
+                username,
+                password
+            )
         
         tested_account._request_token("password", {"username": tested_account.username, "password": tested_account.password})
         

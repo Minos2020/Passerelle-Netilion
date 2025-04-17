@@ -48,6 +48,7 @@
   <script>
     let accounts = [];
 
+
     function fetchAccounts() {
       fetch("/api/get_accounts")
         .then(response => response.json())
@@ -93,6 +94,15 @@
     function updateAccount(index, field, value) {
       if (["client_id", "client_secret", "username", "password"].includes(field)) {
         accounts[index][field] = value;
+
+        // On marque quels champs ont été modifiés au fur et à mesure
+        if (!accounts[index].hasChanged) {
+          accounts[index].hasChanged = [];
+        }    
+        if (!accounts[index]['hasChanged'].includes(field)) {
+          accounts[index]['hasChanged'].push(field);
+        }
+
       } else {
         accounts[index][field] = value;
       }
@@ -117,7 +127,8 @@
         access_token: "",
         refresh_token: "",
         token_expiry: 0,
-        bindable_objects: []
+        bindable_objects: [],
+        isNew: true
       };
       accounts.push(newAccount);
       renderAccounts();
@@ -149,6 +160,7 @@
 
     function testConnection(index) {
       let account = accounts[index];
+      // account["hasChanged"] = hasChanged[index];
       let button = document.getElementById(`test-btn-${index}`);
       let resultDiv = document.getElementById(`test-result-${index}`);
       

@@ -39,6 +39,16 @@ class PasserelleNetilion:
             "password": self.password,
             "encryption": self.encryption,
         }
+    
+    def to_dict_secured(self):
+        """Convertit l'objet en dictionnaire en retirant les informations sensibles."""
+        return {
+            "accounts": [acc.to_dict_secured() for acc in self.accounts],
+            "bindings": [binding.to_dict() for binding in self.bindings],  # Si Binding a une méthode to_dict()
+            "networks": [network.to_dict() for network in self.networks],  # Si Network a une méthode to_dict()
+            "modbus_rate": self.modbus_rate,
+            "encryption": self.encryption,
+        }
 
     @classmethod
     def from_dict(cls, data):
@@ -152,6 +162,28 @@ class NetilionAccount:
             "access_token": self.access_token,
             "refresh_token": self.refresh_token,
             "token_expiry": self.token_expiry,
+            "last_connection": self.last_connection.isoformat() if self.last_connection else None,  # Conversion ISO 8601
+            "assets": [asset.to_dict() for asset in self.assets],  # Sérialisation des assets
+            "nodes": [node.to_dict() for node in self.nodes],  # Sérialisation des nodes
+            "instrumentations": [inst.to_dict() for inst in self.instrumentations],  # Sérialisation des instrumentations
+            "storage_quota": self.storage_quota,
+            "storage_used": self.storage_used,
+            "api_call_quota": self.api_call_quota,
+            "api_calls_used": self.api_calls_used
+        }
+    
+    def to_dict_secured(self):
+        """Convertit l'objet en dictionnaire pour la sérialisation"""
+        return {
+            "identification": self.identification,
+            "account_id": self.account_id,
+            "client_id": self.client_id,
+            # "client_secret": self.client_secret,
+            "username": self.username,
+            # "password": self.password,
+            # "access_token": self.access_token,
+            # "refresh_token": self.refresh_token,
+            # "token_expiry": self.token_expiry,
             "last_connection": self.last_connection.isoformat() if self.last_connection else None,  # Conversion ISO 8601
             "assets": [asset.to_dict() for asset in self.assets],  # Sérialisation des assets
             "nodes": [node.to_dict() for node in self.nodes],  # Sérialisation des nodes
@@ -446,6 +478,7 @@ class NetilionAccount:
             self.api_call_quota = data.get("api_subscriptions")[0].get("api_call_quota")
             self.api_calls_used = data.get("api_subscriptions")[0].get("api_calls_used")
             
+            print(data)
             # # Récupérer les limites et les quotas de la subcription API
             # self.storage_quota = data.get(".......")[0].get("storage_quota")
             # self.storage_used = data.get("........")[0].get("storage_used")

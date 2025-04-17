@@ -27,10 +27,6 @@
     background: #e0e0e0;
 }
 
-/* .tree-node.selected .label {
-    background: #1976d2;
-    color: white;
-} */
 
 .children {
     margin-left: 1em;
@@ -38,7 +34,9 @@
 }
 
 .tree-node.open > .children {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
 }
 
 .tree-node.folder::before {
@@ -65,6 +63,12 @@
 
 .tree-node.tag.selected > .label {
     background: #e3f2fd;
+}
+
+.tree-node.asset {
+    display: flex;
+    align-items: center;
+
 }
 
 .tree-node.asset::before {

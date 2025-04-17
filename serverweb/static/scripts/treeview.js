@@ -138,10 +138,17 @@ function createTree(account, bindingIndex) {
     const el = document.createElement('div');
     el.className = `tree-node asset`;
   
-    const label = document.createElement('span');
+    const label = document.createElement('div');
     label.className = 'label';
     label.style.fontSize = '1em';
-    label.innerHTML = `${asset.product_name} <i>${asset.description ? '('+asset.description+')' : ""}</i>`;
+    label.innerHTML = `
+    <div>
+      ${asset.product_name} - ${asset.serial_number ? '['+asset.serial_number+']' : ""}
+    </div>
+    <div>
+    <i>${asset.description ? '('+asset.description+')' : ""}</i>
+    </div>
+    `;
   
     // if (hasTags) {
     //   label.onclick = () => el.classList.toggle('open');

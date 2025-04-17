@@ -9,7 +9,7 @@
 	.table { width: 100%; margin-top: 20px; }
 	.table-header, .table-row { 
 		display: grid;
-		grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr 2fr 0.8fr 1fr 1.5fr 4fr 0.8fr;
+		grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr 2fr 0.8fr 1fr 2.5fr 4fr 0.8fr 0.8fr;
 		align-items: center;
 		justify-content: space-between;
 		gap: 20px;
@@ -28,8 +28,8 @@
 	}
 	
 
-	.table-row input { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-	.table-row select { width: 95%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+	.table-row input { width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+	.table-row select { width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
 	
 
 	.btn-choice { max-width: 90%; height: min-content; align-self: center;}
@@ -68,7 +68,6 @@
 	.asset-tag-container {
       display: flex;
       flex-direction: column;
-	  overflow-x: scroll;
       /* grid-gap: 5px; */
       /* width: min-content; */
       max-width: 100%;
@@ -212,9 +211,8 @@
 					</div>
 					<div style="display: flex; flex-direction: row; justify-content: center; align-content: center; gap: 8px;">
 						<div class="asset-tag-container" id="binding-label-${index}">--</div>
-						<button class="btn-choice" title="Sélectionner un asset" onclick="openBindingSelector(${index})">🔎</button>
 					</div>
-					
+					<button class="btn-choice" title="Sélectionner un asset" onclick="openBindingSelector(${index})">🔎</button>
 					<button class="btn btn-danger" title="Supprimer le binding" style="margin-top: 0px;" onclick="deleteBinding(${index})">&times;</button>
 					
 				`;
@@ -364,6 +362,23 @@
 				resultDiv.innerText = "Erreur";
 				resultDiv.style.color = "#dc3545";
 			}
+
+			// Harmoniser les largeurs des resultDivs
+			let allResults = document.querySelectorAll("[id^='test-result-']");
+			let maxWidth = 0;
+
+			// On récupère la largeur de la plus grande case
+			allResults.forEach(div => {
+				div.style.width = "auto"; // Reset pour mesurer correctement
+				let width = div.offsetWidth;
+				if (width > maxWidth) maxWidth = width;
+			});
+
+			// On applique cette largeur à toutes les autres et au header également
+			allResults.forEach(div => {
+				div.style.width = `${maxWidth}px`;
+			});
+			document.getElementById('test-result-header').style.width = `${maxWidth}px`;
 		}
 
 	</script>
@@ -399,9 +414,9 @@
 		<div>Type</div>
 		<div>Unit</div>
 		<div></div>
-		<div></div>
+		<div id="test-result-header"></div>
 		<div>Compte</div>
-		<div>Objet lié</div>
+		<div style="grid-column: span 2;">Objet lié</div>
 		<div></div>
 	</div>
 
