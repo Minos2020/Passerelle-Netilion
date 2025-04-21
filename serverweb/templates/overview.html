@@ -186,10 +186,19 @@
           apiUsage = apiUsage.toFixed(1);
         }
         let storageUsage = 0;
+        let usedMB = 0;
+        let quotaMB = 0;
+
         if (account.storage_used && account.storage_quota) {
-          storageUsage = (account.storage_used / account.storage_quota) * 100;
+          usedMB = account.storage_used / (1024 * 1024 * 1024);
+          quotaMB = account.storage_quota / (1024 * 1024 * 1024);
+
+          let storageUsage = (usedMB / quotaMB) * 100;
           if (storageUsage > 100) storageUsage = 100;
+          
           storageUsage = storageUsage.toFixed(1);
+          usedMB = usedMB.toFixed(2);
+          quotaMB = quotaMB.toFixed(2);
         }
         div.classList.add("grid-container");
         div.innerHTML = `
@@ -207,7 +216,7 @@
                     </div>
                   </div>
                   <small>
-                    ${account.api_calls_used}/${account.api_call_quota} calls (${apiUsage}%)
+                    ${account.api_calls_used} / ${account.api_call_quota} calls (${apiUsage}%)
                   </small>
                 </div>
                 
@@ -217,7 +226,7 @@
                     <div class="progress-fill" style="width: ${storageUsage}%;"></div>
                   </div>
                   <small>
-                    ${account.storage_used}/${account.storage_quota} bytes (${storageUsage}%)
+                    ${usedMB} / ${quotaMB} Go (${storageUsage}%)
                   </small>
                 </div>
                 <div class="separator"></div>

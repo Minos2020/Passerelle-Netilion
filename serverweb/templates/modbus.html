@@ -73,6 +73,10 @@
           })
       });
     });
+
+    function notImplementedYet(){
+      showNotification("Modbus RTU non supporté actuellement", "warning")
+    }
   </script>
   
   {% endblock %}
@@ -86,13 +90,13 @@
     <div id="modbus-container">
       <div class="modbus-box">
 
-        <div class="grid-key">Rate (s)</div>
-        <input class="grid-value" type="number" id="rate" name="rate" min="1" max="600" value="1">
+        <div class="grid-key" title="Fréquence à la laquelle les registres modbus seront interrogés">Rate (s)</div>
+        <input class="grid-value" title="Fréquence à la laquelle les registres modbus seront interrogés" type="number" id="rate" name="rate" min="1" max="600" value="1">
         <div class="grid-key">Wait Delay (s)</div>
         <input class="grid-value" type="number" id="waitdelay" name="waitdelay" min="1" max="60" value="1">
       </div>
 
-    <div class="modbus-box">
+    <div class="modbus-box" onclick="notImplementedYet()">
       <div class="grid-header">Modbus RTU</div>
       <div class="grid-key">Baudrate</div>
       <select id="baudrate" name="baudrate">

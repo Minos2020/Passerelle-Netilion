@@ -318,7 +318,8 @@ def refresh_netilion_account():
             return jsonify({"success": False, "error": "no account found"}), 404
     try:
         account.refresh_all_data()
-        return jsonify({"success": True, "account": account.to_dict()})
+        # [print(asset.to_dict()["id"]) for asset in account.assets]
+        return jsonify({"success": True, "account": account.to_dict_secured()})
     except Exception as e:
-        account.authenticate()
+        print("Problème lors de la récupération des données.")
         return jsonify({"success": False, "error": str(e)})

@@ -126,7 +126,8 @@ class NetilionAccount:
         self.password: str = password
         self.access_token: str = None
         self.refresh_token: str = None
-        self.token_expiry: int = 0  # Timestamp d'expiration
+        self.token_expiry: int = 0  # Timestamp d'expiration du token d'accès
+        self.refresh_token_expiry: int = 0 # Timestamp d'expiration du refresh_token
         self.last_connection: datetime = None  # Date/heure de la dernière connexion
         self.assets = []
         self.nodes = []
@@ -147,7 +148,8 @@ class NetilionAccount:
         f"Password : {self.password}\n"
         f"Access token : {self.access_token if self.access_token is not None else 'Pas d\'access token'}\n"
         f"Refresh token : {self.refresh_token if self.refresh_token is not None else 'Pas de refresh token'}\n"
-        f"{'Expiration token dans ' + str(int(self.token_expiry - time.time())) + ' secondes' if time.time() < self.token_expiry else ('Pas d\'access token' if not self.access_token else 'Token expiré')}"
+        f"{'Expiration token d\'accès dans ' + str(int(self.token_expiry - time.time())) + ' secondes' if time.time() < self.token_expiry else ('Pas d\'access token' if not self.access_token else 'Token d\'accès expiré')}"
+        f"{'Expiration refresh token dans ' + str(int(self.refresh_token_expiry - time.time())) + ' secondes' if time.time() < self.refresh_token_expiry else ('Pas de refresh token' if not self.refresh_token else 'Token refresh expiré')}"
     )
 
     def to_dict(self):
@@ -162,6 +164,7 @@ class NetilionAccount:
             "access_token": self.access_token,
             "refresh_token": self.refresh_token,
             "token_expiry": self.token_expiry,
+            "refresh_token_expiry": self.refresh_token_expiry,
             "last_connection": self.last_connection.isoformat() if self.last_connection else None,  # Conversion ISO 8601
             "assets": [asset.to_dict() for asset in self.assets],  # Sérialisation des assets
             "nodes": [node.to_dict() for node in self.nodes],  # Sérialisation des nodes
@@ -173,7 +176,9 @@ class NetilionAccount:
         }
     
     def to_dict_secured(self):
-        """Convertit l'objet en dictionnaire pour la sérialisation"""
+        """Convertit l'objet en dictionnaire pour la sérialisation
+        Certaines données sensibles sont omises pour garantir leur
+        sécurité"""
         return {
             "identification": self.identification,
             "account_id": self.account_id,
@@ -184,6 +189,7 @@ class NetilionAccount:
             # "access_token": self.access_token,
             # "refresh_token": self.refresh_token,
             # "token_expiry": self.token_expiry,
+            # "refresh_token_expiry": self.refresh_token_expiry,
             "last_connection": self.last_connection.isoformat() if self.last_connection else None,  # Conversion ISO 8601
             "assets": [asset.to_dict() for asset in self.assets],  # Sérialisation des assets
             "nodes": [node.to_dict() for node in self.nodes],  # Sérialisation des nodes
@@ -203,6 +209,7 @@ class NetilionAccount:
         instance.access_token = data.get("access_token", None)
         instance.refresh_token = data.get("refresh_token", None)
         instance.token_expiry = data.get("token_expiry", 0)
+        instance.refresh_token_expiry = data.get("refresh_token_expiry", 0)
 
         instance.storage_quota = data.get("storage_quota", 0)
         instance.storage_used = data.get("storage_used", 0)
@@ -232,7 +239,7 @@ class NetilionAccount:
         """
         Demande un token d'accès OAuth2 (soit initial, soit via refresh).
         """
-        print(f"...requesting access token ({grant_type})...")
+        print(f"...requesting access token with ({grant_type})...")
         token_data = {
             "grant_type": grant_type,
             "client_id": self.client_id,
@@ -257,39 +264,48 @@ class NetilionAccount:
             )
             self.access_token = response_data['access_token']
             self.refresh_token = response_data.get('refresh_token', self.refresh_token)
-            self.token_expiry = time.time() + response_data.get("expires_in", 660) - 10
+            self.token_expiry = time.time() + response_data.get("expires_in") - 10
+            self.refresh_token_expiry = time.time() + 24 * 60 * 60  # 24h
             self.update_last_connection()
             if self.changes_to_save:
                 print("Sauvegarde des nouveaux token...")
                 self.changes_to_save()
+                print([self.access_token, self.refresh_token, self.token_expiry])
         else:
             raise Exception(f"Failed to obtain access token: {response_data}")
         return response
 
 
-    def authenticate(self):
-        """
-        Authentifie l'utilisateur et stocke le token.
-        """
-        response = self._request_token("password", {
-            "username": self.username,
-            "password": self.password
-        })
-        return response
+    # def authenticate(self):
+    #     """
+    #     Authentifie l'utilisateur et stocke le token.
+    #     """
+    #     response = self._request_token("password", {
+    #         "username": self.username,
+    #         "password": self.password
+    #     })
+    #     return response
 
     def refresh_token_if_needed(self):
         """
         Rafraîchit le token si nécessaire avant un appel API.
         """
-        if self.access_token is None or time.time() >= self.token_expiry:
-            print("🔄 Token expiré ou absent, rafraîchissement en cours...")
-            # Si le refresh_token existe, on rafraîchit le token sans redemander les credentials.
-            if self.refresh_token:
-                print(self.to_dict())
-                self._request_token("refresh_token", {"refresh_token": self.refresh_token})
-            else:
-                self.authenticate()  # Sinon, on réauthentifie avec les identifiants
-            return
+        current_time = time.time()
+        
+        # Si seul le token d'accès est expiré, on rafraîchit le token avec le refresh_token
+        if (current_time >= self.token_expiry and current_time < self.refresh_token_expiry):
+            print("🔄 Token d'accès expiré ou absent, rafraîchissement en cours...")
+            self._request_token("refresh_token", {"refresh_token": self.refresh_token})
+        # Sinon, (les 2 tokens sont expirés) on réauthentifie avec les identifiants
+        elif current_time >= self.refresh_token_expiry:
+            print("🔄 Token d'accès et de refresh expirés ou absents, demande de nouveaux token...")
+            self._request_token("password", {
+                "username": self.username,
+                "password": self.password
+            })
+        else:
+            print("Token d'accès toujours valide ✅")
+        return
 
     def get_headersForAuth(self):
         """
@@ -322,7 +338,7 @@ class NetilionAccount:
         # print(headers)
 
         url = f"{BASE_URL}/{endpoint}"
-        print(url)
+        # print(url)
 
         response = requests.request(method, url, json=data, params=params, headers=headers)
 
@@ -336,16 +352,8 @@ class NetilionAccount:
 
         if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
             self.update_last_connection()
-            print(self.get_last_connection())
+            # print(self.get_last_connection())
         return response
-
-    def get_headers(self, account_id):
-        """Récupère les headers d'un compte spécifique."""
-        account = self.getAccountByID(account_id)
-        if account:
-            return account.get_headersForAuth()
-        else:
-            raise ValueError(f"Aucun compte trouvé pour l'ID {account_id}")
         
     def update_nodes(self):
         """Récupère les nodes associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
@@ -373,7 +381,7 @@ class NetilionAccount:
                 fetched_nodes.append(node)
             self.nodes = fetched_nodes
             if self.changes_to_save:
-                print("Sauvegarde des nouveaux nodes...")
+                # print("Sauvegarde des nouveaux nodes...")
                 self.changes_to_save()
             return True
         else:
@@ -412,7 +420,7 @@ class NetilionAccount:
                 fetched_assets.append(asset)
             self.assets = fetched_assets
             if self.changes_to_save:
-                print("Sauvegarde des nouveaux assets...")
+                # print("Sauvegarde des nouveaux assets...")
                 self.changes_to_save()
             return True
         else:
@@ -450,7 +458,7 @@ class NetilionAccount:
                 fetched_instrum.append(instrum)
             self.instrumentations = fetched_instrum
             if self.changes_to_save:
-                print("Sauvegarde des nouveaux tags...")
+                # print("Sauvegarde des nouveaux tags...")
                 self.changes_to_save()
             return True
         else:
@@ -468,25 +476,26 @@ class NetilionAccount:
         # response2 = self.send_request("GET", endpoint2)
         
         if response1.status_code == 200:
-            data = response1.json()
+            # Normalement, ne retourne qu'une seule souscription API
+            subscription = response1.json().get("api_subscriptions")[0]
+            
             # pagination = data.get("pagination")
             # if pagination:
             #     print(pagination.get("total_count"))
 
-            
             # Récupérer les limites et les quotas de la subcription API
-            self.api_call_quota = data.get("api_subscriptions")[0].get("api_call_quota")
-            self.api_calls_used = data.get("api_subscriptions")[0].get("api_calls_used")
+            self.api_call_quota = subscription.get("api_call_quota")
+            self.api_calls_used = subscription.get("api_calls_used")
             
-            print(data)
+            
             # # Récupérer les limites et les quotas de la subcription API
-            # self.storage_quota = data.get(".......")[0].get("storage_quota")
-            # self.storage_used = data.get("........")[0].get("storage_used")
+            self.storage_quota = subscription.get("storage_quota")
+            self.storage_used = subscription.get("storage_used")
             
 
             
             if self.changes_to_save:
-                print("Sauvegarde des quotas mis à jour...")
+                # print("Sauvegarde des quotas mis à jour...")
                 self.changes_to_save()
             return True
         else:
@@ -499,6 +508,7 @@ class NetilionAccount:
         self.update_instrum()
         self.update_quotas()
         
+    # def createNewAsset(self)
 
 class Asset:
     def __init__(self, id: int, serial_number: str, description: str, nodes: set[int]=None, instrumentations: set[int]=None, product_name: int = None, parent_id: int = None):
