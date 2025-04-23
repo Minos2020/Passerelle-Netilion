@@ -32,8 +32,8 @@ if __name__ == '__main__':
     # response = account.send_request("GET", "assets/1998863/values?include=unit")
     # print(response)
     
-    # Lancer la sauvegarde automatique en arrière-plan
-    threading.Thread(target=save_periodically, daemon=True).start()
+    # # Lancer la sauvegarde automatique en arrière-plan
+    # threading.Thread(target=save_periodically, daemon=True).start()
     
     app.run(host='0.0.0.0', port=5000, debug=True)
 

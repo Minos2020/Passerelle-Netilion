@@ -121,7 +121,9 @@ def save_bindings():
 @login_required  # 🔒 Protège cette route
 def get_general_config():
     response = {
-        "modbus_rate": PasserelleNetilion().to_dict()["modbus_rate"]
+        "modbus_rate": PasserelleNetilion().to_dict_secured()["modbus_rate"],
+        "encryption": PasserelleNetilion().to_dict_secured()["encryption"],
+        "mode": PasserelleNetilion().to_dict_secured()["mode"]
     }
     return jsonify(response)
 
@@ -130,6 +132,7 @@ def get_general_config():
 def save_general_config():
     try:
         PasserelleNetilion().modbus_rate = request.json["modbus_rate"]
+        PasserelleNetilion().mode = request.json["mode"]
 
 
         save_config(PasserelleNetilion().encryption) # A ENLEVER (False pour ne pas chiffrer les données)

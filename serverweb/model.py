@@ -26,28 +26,29 @@ class PasserelleNetilion:
             cls._instance.username = ""
             cls._instance.password = ""
             cls._instance.encryption = True
+            cls._instance.mode = False
         return cls._instance
     
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour la sauvegarde JSON."""
         return {
             "accounts": [acc.to_dict() for acc in self.accounts],
-            "bindings": [binding.to_dict() for binding in self.bindings],  # Si Binding a une méthode to_dict()
-            "networks": [network.to_dict() for network in self.networks],  # Si Network a une méthode to_dict()
+            "bindings": [binding.to_dict() for binding in self.bindings],
+            "networks": [network.to_dict() for network in self.networks],
             "modbus_rate": self.modbus_rate,
-            "username": self.username,
-            "password": self.password,
             "encryption": self.encryption,
+            "mode": self.mode,
         }
     
     def to_dict_secured(self):
         """Convertit l'objet en dictionnaire en retirant les informations sensibles."""
         return {
             "accounts": [acc.to_dict_secured() for acc in self.accounts],
-            "bindings": [binding.to_dict() for binding in self.bindings],  # Si Binding a une méthode to_dict()
-            "networks": [network.to_dict() for network in self.networks],  # Si Network a une méthode to_dict()
+            "bindings": [binding.to_dict() for binding in self.bindings],
+            "networks": [network.to_dict() for network in self.networks],
             "modbus_rate": self.modbus_rate,
             "encryption": self.encryption,
+            "mode": self.mode,
         }
 
     @classmethod
@@ -55,12 +56,11 @@ class PasserelleNetilion:
         """Charge un objet PasserelleNetilion à partir d'un dictionnaire."""
         instance = cls()
         instance.accounts = [NetilionAccount.from_dict(b) for b in data["accounts"]]
-        instance.bindings = [Binding.from_dict(b) for b in data["bindings"]]  # Si Binding a une méthode from_dict()
-        instance.networks = [Network.from_dict(n) for n in data["networks"]]  # Si Network a une méthode from_dict()
+        instance.bindings = [Binding.from_dict(b) for b in data["bindings"]]
+        instance.networks = [Network.from_dict(n) for n in data["networks"]]
         instance.modbus_rate = data["modbus_rate"]
-        instance.username = data["username"]
-        instance.password = data["password"]
         instance.encryption = data["encryption"]
+        instance.mode = data["mode"]
 
         return instance
     

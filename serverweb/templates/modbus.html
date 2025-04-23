@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Divers{% endblock %}
+{% block title %}Réglages généraux{% endblock %}
 
 {% block extra_styles %}
 
@@ -14,7 +14,7 @@
     .flex-container { display: flex; align-items: center; }
     .parameter-container { padding: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); background: white; border-radius: 8px; margin: 30px 20px 10px; }
     
-    #modbus-container { place-content: center; max-width: 100%; display: flex; flex-direction:column;flex-wrap: wrap; gap: 20px; margin: 20px 40px 10px; }
+    #main-container { place-content: center; max-width: 100%; display: flex; flex-direction:column;flex-wrap: wrap; gap: 20px; margin: 20px 40px 10px; }
     .modbus-box { display: grid; grid-template-columns: 1fr 2fr; grid-gap: 5px; width:min-content; border: 1px solid #ccc; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1); }
     .modbus-box:hover { box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2); }
     .grid-key {padding: 5px 10px 5px;font-weight: bold;text-align: left; align-content: center; white-space: nowrap;}
@@ -38,6 +38,55 @@
         border-radius: 8px;
         margin-bottom: 5px;
     }
+    .switch-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 1rem;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0;
+      right: 0; bottom: 0;
+      background-color: #c42020;
+      transition: .4s;
+      border-radius: 26px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px; width: 20px;
+      left: 3px; bottom: 3px;
+      background-color: rgb(255, 255, 255);
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #28a745;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+
   </style>
 
 {% endblock %}
@@ -47,16 +96,50 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+
+      const modeToggle = document.getElementById("mode-toggle");
+      const encrToggle = document.getElementById("encryption-toggle");
+      const modeToggleLabel = document.getElementById("mode-toggle-label");
+      const encrToggleLabel = document.getElementById("encryption-toggle-label");
+
       fetch("/api/get_general_config")
         .then(response => response.json())
         .then(data => {
           document.getElementById("rate").value = data.modbus_rate;
+          
+          const isProduction = data.mode === "production";
+          modeToggle.checked = isProduction;
+          modeToggleLabel.textContent = isProduction ? "Mode production" : "Mode configuration";
+          
+          encrToggle.checked = data.encryption;
+          encrToggleLabel.textContent = data.encryption ? "Configuration chiffrée" : "Configuration en clair";
+          
+        });
+
+        modeToggle.addEventListener("change", function () {
+          if (this.checked) {
+            modeToggleLabel.textContent = "Mode production";
+            
+          } else {
+            modeToggleLabel.textContent = "Mode configuration";
+          }
+        });
+        
+        encrToggle.addEventListener("change", function () {
+          if (this.checked) {
+            encrToggleLabel.textContent = "Configuration chiffrée";
+            
+          } else {
+            encrToggleLabel.textContent = "Configuration en clair";
+          }
         });
 
       document.getElementById("modbus-form").addEventListener("submit", function (event) {
         event.preventDefault();
         const configData = {
           modbus_rate: document.getElementById("rate").value,
+          mode: document.getElementById("mode-toggle").checked ? "production" : "configuration",
+          encryption: document.getElementById("encryption-toggle").checked
         };
 
         fetch("/api/save_general_config", {
@@ -67,16 +150,19 @@
           .then(data => {
             if (data.status) {
               showNotification("Enregistrement réussi", "success");
+              if (document.getElementById("mode-toggle").checked) showNotification("Mode PRODUCTION", "info");
             } else {
               showNotification("Erreur lors du téléchargement du fichier :" + data.message, "error", 6000);
             }
           })
       });
+
     });
 
     function notImplementedYet(){
       showNotification("Modbus RTU non supporté actuellement", "warning")
     }
+
   </script>
   
   {% endblock %}
@@ -85,18 +171,35 @@
 {% block content %}
 
 <div class="container">
-  <h1>Réglages divers</h1>
+  <h1>Réglages généraux</h1>
   <form id="modbus-form">
-    <div id="modbus-container">
-      <div class="modbus-box">
+    <div id="main-container">
+      <div class="switch-container" title="En mode production les requêtes Modbus et HTTPS à Netilion sont envoyées selon les intervalles paramétrés.
+En mode configuration aucune requête n'est envoyée automatiquement.">
+          <label class="switch">
+            <input type="checkbox" id="mode-toggle">
+            <span class="slider round"></span>
+          </label>
+          <span id="mode-toggle-label" style="min-width: 175px;">...</span>
+        </div>
+        <div class="switch-container" title="Si activé, le fichier de configuration est crypté (au téléchargement, au chargement et sur la machine)
+Si désactivé il est en clair.">
+          <label class="switch">
+            <input type="checkbox" id="encryption-toggle">
+            <span class="slider round"></span>
+          </label>
+          <span id="encryption-toggle-label" style="min-width: 175px;">...</span>
+        </div>
 
-        <div class="grid-key" title="Fréquence à la laquelle les registres modbus seront interrogés">Rate (s)</div>
+      <div class="modbus-box">
+        <div class="grid-key" title="Fréquence à la laquelle les registres modbus seront interrogés.
+Commune à tous les bindings.">Fréquence d'interrogation (s)</div>
         <input class="grid-value" title="Fréquence à la laquelle les registres modbus seront interrogés" type="number" id="rate" name="rate" min="1" max="600" value="1">
         <div class="grid-key">Wait Delay (s)</div>
         <input class="grid-value" type="number" id="waitdelay" name="waitdelay" min="1" max="60" value="1">
       </div>
 
-    <div class="modbus-box" onclick="notImplementedYet()">
+    <div class="modbus-box" style="align-self: center;" onclick="notImplementedYet()">
       <div class="grid-header">Modbus RTU</div>
       <div class="grid-key">Baudrate</div>
       <select id="baudrate" name="baudrate">

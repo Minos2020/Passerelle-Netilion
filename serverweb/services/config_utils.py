@@ -39,6 +39,11 @@ def load_config(encrypted=True):
         dataconf = json.loads(decrypted_conf)
 
         passerelle = PasserelleNetilion.from_dict(dataconf)
+        
+        # Les identifiants du webserver sont chargés depuis des variables d'environnement
+        passerelle.username = os.getenv('USER_NAME')
+        passerelle.password = os.getenv('PASSWORD')
+        
         attach_callbacks(passerelle)
         # print(passerelle.to_dict())
 
