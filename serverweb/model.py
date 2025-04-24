@@ -598,15 +598,13 @@ class Instrumentation:
         )
 
 class Value:
-    def __init__(self, unit_id: int, timestamp: str, value, status: str):
-        self.unit_id: int = unit_id
+    def __init__(self, timestamp: str, value, status: str):
         self.timestamp: str = timestamp
-        self.value= value
+        self.value = value
         self.status: int = status
 
     def to_dict(self):
         return {
-            "unit_id": self.unit_id,
             "timestamp": self.timestamp,
             "value": self.value,
             "status": self.status
@@ -615,11 +613,35 @@ class Value:
     @classmethod
     def from_dict(cls, data):
         return cls(
-            unit_id=data["unit_id"],
             timestamp=data["timestamp"],
             value=data["value"],
             status=data["status"]
         )
+
+class ValueSet:
+    def __init__(self, asset: int, key: str, unit_id: int):
+        self.asset: int = asset  
+        self.key: str = key
+        self.unit_id: int = unit_id
+        self.values: list[Value] = []
+
+    def to_dict(self):
+        return {
+            "key": self.key,
+            "unit": {
+                self.unit_id,
+            },
+            "data": [value.to_dict() for value in self.values]
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        instance = cls(
+            key=data["key"],
+            unit_id=data["unit"]
+        )
+        instance.values = [Value.from_dict(v) for v in data.get("data", [])]
+        return instance
 
 class Binding:
     def __init__(self, identification: str, protocol: str, slaveadress: str, registeradress: str,

@@ -65,6 +65,15 @@
 
 	.hidden { display: none; }
 
+	.grid-value {
+      background: #fafafa;
+      text-align: center;
+      padding: 5px;
+      margin: 5px 0;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
 	.asset-tag-container {
       display: flex;
       flex-direction: column;
@@ -212,48 +221,70 @@
 					<div style="display: flex; flex-direction: row; justify-content: center; align-content: center; gap: 8px;">
 						<div class="asset-tag-container" id="binding-label-${index}">--</div>
 					</div>
-					<button class="btn-choice" title="Sélectionner un asset" onclick="openBindingSelector(${index})">🔎</button>
+					<button class="btn-choice" title="Sélectionner un asset" onclick="openSelectAssetModal(${index})">🔎</button>
 					<button class="btn btn-danger" title="Supprimer le binding" style="margin-top: 0px;" onclick="deleteBinding(${index})">&times;</button>
 					
 				`;
 				if(bindingObject){
-					if(bindingObject.tag){
-						row.querySelector(`#binding-label-${index}`).innerHTML = `
-						<div class="asset-tag-header">${'🏷️'+bindingObject.tag || '📍'+bindingObject.product_name}</div>
-						<div class="asset-tag-info"><i>${'<b>SN : </b> \n'+bindingObject.description, bindingObject.description != null ? bindingObject.description : "No description"}</i></div>
-						`;
-					} else if (bindingObject.product_name) {
-						row.querySelector(`#binding-label-${index}`).innerHTML = `
-						<div class="asset-tag-header">${'📍'+bindingObject.product_name}</div>
-						<div class="asset-tag-info">${'<b>SN : </b> \n'+bindingObject.serial_number}</div>
-						<div class="asset-tag-info"><i>${bindingObject.description, bindingObject.description != null ? bindingObject.description : "No description"}</i></div>
-						`;
-					}
-					
+					row.querySelector(`#binding-label-${index}`).innerHTML = `
+					<div class="asset-tag-header">${'📍'+bindingObject.product_name}</div>
+					<div class="asset-tag-info">${'<b>SN : </b> \n'+bindingObject.serial_number}</div>
+					<div class="asset-tag-info"><i>${bindingObject.description, bindingObject.description != null ? bindingObject.description : "No description"}</i></div>
+					`;
 				};
 				container.appendChild(row);
 			});
 		}
 
-		function openBindingSelector(index) {
+		function openSelectAssetModal(index) {
 			const accountId = bindings[index].netilion_account_id;
 			const account = accounts.find(a => a.account_id === accountId);
 			// const binding = bindings[index];
 			if (!account) return;
 
-
-			//const container = document.getElementById("treeview-container");
-			
-			
 			createTree(account, index);
 
-			document.getElementById("binding-modal").classList.remove("hidden");
+			document.getElementById("select-asset-modal").classList.remove("hidden");
 		}
+		
+		function closeSelectAssetModal() {
+    		document.getElementById("select-asset-modal").classList.add("hidden");
+		}
+
+		function openCreateAssetModal(){
+			document.getElementById('create-asset-modal').classList.remove('hidden');
+			showNotification("Cette fonctionnalité n'est pas encore développée", "error");
+
+			const endressProductToggle = document.getElementById("endress_product-toggle");
+			endressProductToggle.addEventListener("change", function () {
+				if (this.checked) {
+					document.getElementById("extra-parameters").style.display = 'none';
+				} else {
+					document.getElementById("extra-parameters").style.display = 'contents';
+				}
+			});
+		}
+
+		function closeCreateAssetModal() {
+			document.getElementById('create-asset-modal').classList.add('hidden');
+		}
+		
+
 
 		
 
-		function closeModal() {
-    		document.getElementById("binding-modal").classList.add("hidden");
+		function submitNewAsset() {
+			const name = document.getElementById('new-product-name').value;
+			const serial = document.getElementById('new-serial-number').value;
+			const desc = document.getElementById('new-description').value;
+
+			// 👉 Ici tu peux envoyer ces données à ta fonction createAsset ou à une API
+			console.log("Nouvel asset :", { name, serial, desc });
+
+			// Tu peux appeler une fonction type:
+			// createAsset({ product_name: name, serial_number: serial, description: desc });
+
+			closeCreateAssetModal();
 		}
   
 
@@ -388,17 +419,57 @@
 
 {% block content %}
 
-<div id="binding-modal" class="modal hidden">
+<div id="select-asset-modal" class="modal hidden">
 	<div class="modal-content">
-		<div style="display: flex; flex-direction: row; justify-content: space-between; align-content: center; border-bottom: 1px solid #ddd; gap: 10px;">
-			<div class="close-tree-btn" onclick="closeModal()">&times;</div>
+		<div style="display: flex; flex-direction: row; justify-content: space-between; align-content: center; border-bottom: 1px solid #ddd; gap: 30px;">
+			<div class="close-tree-btn" onclick="closeSelectAssetModal()">&times;</div>
 			<div>
-				<button id="create-button" class="btn btn-select" onclick="createAsset()">Créer</button>
+				<button id="create-button" class="btn btn-select" onclick='openCreateAssetModal()'>Créer</button>
 				<button id="select-button" class="btn btn-select" onclick="selectObject()">Sélectionner</button>
 			</div>
 		</div>
 		<div id="treeview-container"></div>
 	</div>
+</div>
+
+<div id="create-asset-modal" class="modal hidden">
+	<div class="modal-content">
+		<div
+			style="display: flex; flex-direction: row; justify-content: left; align-content: center; border-bottom: 1px solid #ddd; gap: 30px;">
+			<div class="close-tree-btn" onclick="closeCreateAssetModal()">&times;</div>
+			<strong>Créer un asset</strong>
+		</div>
+		<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+
+			<form id="modbus-form">
+				<div class="switch-container">
+					<label class="switch">
+						<input type="checkbox" id="endress_product-toggle">
+						<span class="slider round"></span>
+					</label>
+					<span style="min-width: 175px;">Produit Endress Hauser</span>
+				</div>
+
+				<div class="parameters-box">
+					<div class="grid-key">Numéro de série :</div>
+					<input class="grid-value" type="text" id="new-serial-number" >
+					<div class="grid-key">Description :</div>
+					<input class="grid-value" type="text" id="new-description" >
+
+					<div id="extra-parameters" style="display: contents;">
+						
+						<div class="grid-key">Code produit :</div>
+						<input class="grid-value" type="text" id="new-product-code" >
+						
+						<div class="grid-key">Nom du produit :</div>
+						<input class="grid-value" type="text" id="new-product-name" >
+					</div>
+				</div>
+			</form>
+			<button onclick="submitNewAsset()" class="btn btn-primary">Créer l'asset</button>
+		</div>
+	</div>
+	
 </div>
   
 

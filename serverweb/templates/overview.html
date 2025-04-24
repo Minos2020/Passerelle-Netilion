@@ -178,7 +178,10 @@
         let bindingCount = bindings.filter(obj => obj.netilion_account_id === account.account_id).length;
         let nodeCount = account.nodes.length;
         let instrumCount = account.instrumentations.length;
-        let assetCount = account.assets.length;
+
+        // on compte les assets sééparément les assets et les sous-assets (sondes, accessoires, etc)
+        let subAssetCount = account.assets.filter(obj => obj.parent_id).length;
+        let assetCount = account.assets.length - subAssetCount;
         let apiUsage = 0;
         if (account.api_calls_used && account.api_call_quota) {
           apiUsage = (account.api_calls_used / account.api_call_quota) * 100;
@@ -233,6 +236,7 @@
                 <div class="grid-key">Nodes</div><div class="grid-value">${nodeCount}</div>
                 <div class="grid-key">Tags</div><div class="grid-value">${instrumCount}</div>
                 <div class="grid-key">Assets</div><div class="grid-value">${assetCount}</div>
+                <div class="grid-key">Sous-assets</div><div class="grid-value">${subAssetCount}</div>
                 <div class="separator"></div>
                 <button class="refresh-button" id="refresh-btn-${account.account_id}" style="grid-column: span 2;" data-account-id="${account.account_id}" title="Re-fetch data from Netilion">↺</button>
 

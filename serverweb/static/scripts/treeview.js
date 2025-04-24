@@ -1,5 +1,3 @@
-
-
 let selectedElementUI = null;
 let selectedElementObj = null;
 let selectedParent = null;
@@ -13,10 +11,10 @@ function createTree(account, bindingIndex) {
   const selectButton = document.getElementById('select-button');
 
   selectButton.onclick = () => {
-      selectObject(bindingIndex);
+      selectObject(bindingIndex, account);
   };
 
-  // Construire des map d'assets, de tags
+  // Assets par tag en fonction des instrumentations associes à chaque asset
   const assetsByTag = {};
   account.assets.forEach(asset => {
     asset.instrumentations.forEach(tagId => {
@@ -24,24 +22,18 @@ function createTree(account, bindingIndex) {
       assetsByTag[tagId].push(asset);
     });
   });
-  // console.log(assetsByTag)
-
-  // const assetsByTag2 = {};
-  // account.instrumentations.forEach(tag => {
-  //   tag.assets.forEach(assetID => {
-  //     if (!assetsByTag2[assetID]) assetsByTag2[assetID] = [];
-  //     assetsByTag2[assetID].push(tag);
-  //   });
-  // });
-  // console.log(assetsByTag2)
 
   // tags par Noeud
   const tagsByNode = {};
+  const tagsWithoutNode = [];
   account.instrumentations.forEach(tag => {
-    tag.nodes.forEach(nodeId => {
-      if (!tagsByNode[nodeId]) tagsByNode[nodeId] = [];
-      tagsByNode[nodeId].push(tag);
-    });
+    if (!tag.nodes.length > 0) tagsWithoutNode.push(tag);
+    else {
+      tag.nodes.forEach(nodeId => {
+        if (!tagsByNode[nodeId]) tagsByNode[nodeId] = [];
+        tagsByNode[nodeId].push(tag);
+      });
+    }
   });
 
   // Noeuds par parent
@@ -52,27 +44,30 @@ function createTree(account, bindingIndex) {
     nodesByParent[pid].push(node);
   });
 
-  // Assets par node
-  const assetsByNode = {};
+  // Sous-assets par asset
+  const subAssetsByAsset = {};
   account.assets.forEach(asset => {
-    asset.nodes.forEach(nodeId => {
-      if (!assetsByNode[nodeId]) assetsByNode[nodeId] = [];
-      assetsByNode[nodeId].push(asset);
-    });
+    const pid = asset.parent_id || null;
+    if(!subAssetsByAsset[pid]) subAssetsByAsset[pid] = [];
+    if(pid) subAssetsByAsset[pid].push(asset);
   });
 
-  // tags hors d'un node
-  const tagsWithoutNode = [];
-  account.instrumentations.forEach(tag => {
-    if (!tag.nodes.length > 0) tagsWithoutNode.push(tag);
-  });
-  console.log(tagsWithoutNode)
-  // assets hors d'un node
+  // console.log("Sous-assets : ", subAssetsByAsset);
+
+  // Assets par node
+  const assetsByNode = {};
   const assetsWithoutNode = [];
   account.assets.forEach(asset => {
-    if (!asset.nodes.length > 0) assetsWithoutNode.push(asset);
+    if (asset.parent_id == null) { // filtre les assets sans parent
+      if (!asset.nodes.length > 0) assetsWithoutNode.push(asset);
+      else {
+        asset.nodes.forEach(nodeId => {
+          if (!assetsByNode[nodeId]) assetsByNode[nodeId] = [];
+          assetsByNode[nodeId].push(asset);
+        });
+      }
+    }
   });
-  console.log(assetsWithoutNode)
 
 
   function buildNode(node) {
@@ -95,10 +90,10 @@ function createTree(account, bindingIndex) {
       else {
         el.classList.add('selected');
         selectedParent = el;
-        el.get
       }
         // console.log('Selected folder :', node);
       el.classList.toggle('open');
+      // console.log(el.classList);
     };
   
     const children = document.createElement('div');
@@ -118,14 +113,6 @@ function createTree(account, bindingIndex) {
     (tagsByNode[node.id] || []).forEach(tag => {
       children.appendChild(buildTag(tag));
     });
-    
-  
-    // // Tags rattachés directement à ce node sans asset
-    // data.instrumentations.forEach(tag => {
-    //   if (tag.nodes.includes(node.id) && tag.assets.length === 0) {
-    //     children.appendChild(buildTag(tag));
-    //   }
-    // });
   
     el.appendChild(label);
     el.appendChild(children);
@@ -134,37 +121,51 @@ function createTree(account, bindingIndex) {
   
 
   function buildAsset(asset) {
-    // const hasTags = tagsByAsset[asset.id]?.length > 0;
     const el = document.createElement('div');
     el.className = `tree-node asset`;
   
+    // Header permettant de placer correctement le symbole à gauche
+    const header = document.createElement('div');
+    header.className = 'header';
+  
+    header.onclick = () => {
+      if (selectedElementUI) selectedElementUI.classList.remove('selected');
+      el.classList.add('selected');
+      selectedElementUI = el;
+      selectedElementObj = asset;
+      el.classList.toggle('open');
+      // console.log(el.classList);
+    };
+  
+    // Label contenant les élément de l'asset
     const label = document.createElement('div');
     label.className = 'label';
     label.style.fontSize = '1em';
     label.innerHTML = `
-    <div>
-      ${asset.product_name} - ${asset.serial_number ? '['+asset.serial_number+']' : ""}
-    </div>
-    <div>
-    <i>${asset.description ? '('+asset.description+')' : ""}</i>
-    </div>
+      <div>
+        ${asset.serial_number ? '<b>' + asset.serial_number + '</b>' : ""} - ${asset.product_name}
+      </div>
+      <div>
+        <i>${asset.description ? '(' + asset.description + ')' : ""}</i>
+      </div>
     `;
   
-    // if (hasTags) {
-    //   label.onclick = () => el.classList.toggle('open');
-    // } else {
-      label.onclick = () => {
-        if (selectedElementUI) selectedElementUI.classList.remove('selected');
-        el.classList.add('selected');
-        selectedElementUI = el;
-        selectedElementObj = asset;
-        // console.log('Selected object (asset) :', asset);
-      };
-
-    el.appendChild(label);
-    // if (hasTags) el.appendChild(children);
+    header.appendChild(label);
+  
+    const children = document.createElement('div');
+    children.className = 'children';
+  
+    // Sous-assets
+    (subAssetsByAsset[asset.id] || []).forEach(subAsset => {
+      children.appendChild(buildAsset(subAsset));
+    });
+  
+    el.appendChild(header);
+    el.appendChild(children);
+  
     return el;
   }
+  
   
 
   function buildTag(tag) {
@@ -192,13 +193,14 @@ function createTree(account, bindingIndex) {
       }
       
       el.classList.toggle('open');
+      // console.log(el.classList);
       // console.log('Selected object (tag) :', tag); // ici tu peux faire un callback
     };
 
     const children = document.createElement('div');
     children.className = 'children';
 
-    // Assets dans ce node
+    // Assets dans ce tag
     (assetsByTag[tag.id] || []).forEach(asset => {
       children.appendChild(buildAsset(asset));
     });
@@ -224,16 +226,11 @@ function createTree(account, bindingIndex) {
   container.appendChild(root);
 }
 
-function selectObject (bindingIndex) {
+function selectObject (bindingIndex, account) {
   if (selectedElementUI && selectedElementObj){
     bindings[bindingIndex].netilion_binding_id = selectedElementObj.id;
     
-    if(selectedElementObj.tag){
-      document.getElementById(`binding-label-${bindingIndex}`).innerHTML = `
-        <div class="asset-tag-header">${'🏷️'+selectedElementObj.tag}</div>
-        <div class="asset-tag-info"><i>${'<b>SN : </b> \n'+selectedElementObj.description, selectedElementObj.description != null ? selectedElementObj.description : "No description"}</i></div>
-        `;
-    } else if (selectedElementObj.product_name) {
+    if (account.assets.includes(selectedElementObj)) {
       document.getElementById(`binding-label-${bindingIndex}`).innerHTML = `
         <div class="asset-tag-header">${'📍'+selectedElementObj.product_name}</div>
         <div class="asset-tag-info">${'<b>SN : </b> \n'+selectedElementObj.serial_number}</div>
@@ -244,11 +241,7 @@ function selectObject (bindingIndex) {
     selectedElementUI = null;
     selectedElementObj = null;
     selectedParent = null;
-    closeModal();
+    closeSelectAssetModal();
   }
   else showNotification("Aucun asset sélectionné", "warning");
-}
-
-function createAsset () {
-  showNotification("Cette fonctionnalité n'est pas encore développée", "error");
 }

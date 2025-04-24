@@ -321,12 +321,12 @@
 <body>
   <!-- Bandeau de navigation -->
   <div class="nav-bar">
-    <a href="{{ url_for('web.overview') }}">Overview</a>
-    <a href="{{ url_for('web.networks') }}">Networks</a>
-    <a href="{{ url_for('web.modbus') }}">General</a>
-    <a href="{{ url_for('web.netilion') }}">Netilion Accounts</a>
+    <a href="{{ url_for('web.overview') }}">Résumé</a>
+    <a href="{{ url_for('web.networks') }}">Réseaux</a>
+    <a href="{{ url_for('web.netilion') }}">Comptes Netilion</a>
     <a href="{{ url_for('web.bindings') }}">Bindings</a>
-    <a class="a-logout" href="{{ url_for('web.logout') }}">Logout</a>
+    <a href="{{ url_for('web.modbus') }}">Général</a>
+    <a class="a-logout" href="{{ url_for('web.logout') }}">Déconnexion</a>
   </div>
 
   <div class="main-container" style="flex: 1 1 40%; align-items: center; flex-direction: column ;display: flex;">

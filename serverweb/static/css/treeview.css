@@ -65,17 +65,26 @@
     background: #e3f2fd;
 }
 
-.tree-node.asset {
+.tree-node.asset > .header {
     display: flex;
     align-items: center;
-
+    padding: 0em 0.5em;
+    border-radius: 4px;
 }
 
-.tree-node.asset::before {
+
+.tree-node.asset > .header::before {
     content: "📍";
+    margin-right: 0.3em;
 }
 
-.tree-node.asset.selected > .label {
+.tree-node.asset > .children {
+    margin-left: 1.2em;
+}
+
+
+
+.tree-node.asset.selected > .header > .label {
     background: #1976d2;
     color: white;
 }
