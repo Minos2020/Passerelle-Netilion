@@ -344,14 +344,14 @@
                     body: content
                 }).then(response => response.json())
                   .then(data => {
-              if (data.status === "success") {
-                showNotification("Configuration chargée avec succès !", "success");
-                // Afficher une notification de succès
-                window.location.reload(); // 🔄 Rechargement immédiat de la page
-              } else {
-                showNotification("La configuration n'a pas pu être chargée : " + data.message, "error", 6000);
-              }
-            })
+                if (data.status === "success") {
+                  showNotification("Configuration chargée avec succès !", "success");
+                  // Afficher une notification de succès
+                  window.location.reload(); // 🔄 Rechargement immédiat de la page
+                } else {
+                  showNotification("La configuration n'a pas pu être chargée : " + data.message, "error", 6000);
+                }
+              })
             } catch (error) {
               showNotification("La configuration n'a pas pu être chargée : " + error.message, "error", 6000);
             }

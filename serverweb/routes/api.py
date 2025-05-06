@@ -326,3 +326,37 @@ def refresh_netilion_account():
     except Exception as e:
         print("Problème lors de la récupération des données.")
         return jsonify({"success": False, "error": str(e)})
+    
+@api_bp.route('/create_new_asset',  methods=['POST'])
+@login_required  # 🔒 Protège cette route
+def create_new_asset():
+    data = request.json
+
+    # faire passer l'ID du compte, ainsi que les infos du formulaire
+    account = PasserelleNetilion().getAccountByID(data["account_id"])
+
+    if not account:    
+            return jsonify({"success": False, "error": "no account found"}), 404
+    try:
+        createdAssetID = account.createNewAsset(data)
+        return jsonify({"success": True, "account": account.to_dict_secured(), "createdAssetID": createdAssetID})
+    except Exception as e:
+        print("Problème lors de la création de l'asset :")
+        return jsonify({"success": False, "error": str(e)})
+    
+@api_bp.route('/delete_object',  methods=['POST'])
+@login_required  # 🔒 Protège cette route
+def delete_object():
+    data = request.json
+
+    # faire passer l'ID du compte, ainsi que les infos du formulaire
+    account = PasserelleNetilion().getAccountByID(data["account_id"])
+
+    if not account:    
+            return jsonify({"success": False, "error": "no account found"}), 404
+    try:
+        account.deleteObject(data)
+        return jsonify({"success": True, "account": account.to_dict_secured()})
+    except Exception as e:
+        print("Problème lors de la suppression de l'objet :")
+        return jsonify({"success": False, "error": str(e)})

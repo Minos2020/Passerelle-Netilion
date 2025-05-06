@@ -1,6 +1,9 @@
 let selectedElementUI = null;
 let selectedElementObj = null;
-let selectedParent = null;
+let selectedParentUI = null;
+let selectedParentObj = null;
+
+let lastSelectedObjectType = null;
 
 function createTree(account, bindingIndex) {
   
@@ -9,13 +12,79 @@ function createTree(account, bindingIndex) {
   const root = document.createElement('div');
 
   const selectButton = document.getElementById('select-button');
+  const createButton = document.getElementById('open-create--asset-modal-button');
 
   selectButton.onclick = () => {
       selectObject(bindingIndex, account);
   };
 
+  createButton.onclick = () => {
+    openCreateAssetModal(bindingIndex, account, selectedParentObj);
+  };
+
+  document.getElementById("delete-asset-button").onclick = () => {
+    // Afficher la fenêtre de confirmation
+
+    // Si l'objet est un asset
+    if (lastSelectedObjectType){
+      document.getElementById("delete-confirmation-text").textContent = "Êtes-vous sûr de vouloir supprimer cet élément ? ("+lastSelectedObjectType+")";
+      document.getElementById("confirmation-modal").style.display = "flex";
+    } 
+    else showNotification("Aucun élément sélectionné", "warning");
+      
+      
+  }
+
+  // Annuler la suppression
+  document.getElementById("cancel-delete-object").onclick = () => {
+    // Cacher la fenêtre de confirmation
+    document.getElementById("confirmation-modal").style.display = "none";
+  }
+
+  // Confirmer la suppression
+  document.getElementById("confirm-delete-object").onclick = async() => {
+    
+    let objectToDelete = null;
+    if (lastSelectedObjectType == "asset"){
+      objectToDelete = selectedElementObj;
+    } else objectToDelete = selectedParentObj;
+
+    try {
+      let response = await fetch("/api/delete_object", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              account_id: account.account_id,
+              object_id: objectToDelete.id,
+              object_type: lastSelectedObjectType
+            })
+        });
+        
+        let data = await response.json();
+        
+        if (response.ok && data.success) {
+          showNotification("Objet supprimé !", "success");
+          accounts[data.account.account_id] = data.account
+          console.log(accounts)
+          createTree(data.account, bindingIndex)
+        } else if (response.ok && !data.success) {
+          showNotification("Problème lors de la suppression de l'asset : " + data.error, "error", 6000);
+        } else {
+          showNotification("Erreur HTTP : " + response.status, "error", 6000);
+        }        
+    } catch (error) {
+      showNotification(error, "error", 6000);
+    }
+    lastSelectedObjectType = null;
+    console.log("Objet supprimé");
+
+    // Cacher la fenêtre de confirmation
+    document.getElementById("confirmation-modal").style.display = "none";
+  }
+
+
   // Assets par tag en fonction des instrumentations associes à chaque asset
-  const assetsByTag = {};
+  let assetsByTag = {};
   account.assets.forEach(asset => {
     asset.instrumentations.forEach(tagId => {
       if (!assetsByTag[tagId]) assetsByTag[tagId] = [];
@@ -24,8 +93,8 @@ function createTree(account, bindingIndex) {
   });
 
   // tags par Noeud
-  const tagsByNode = {};
-  const tagsWithoutNode = [];
+  let tagsByNode = {};
+  let tagsWithoutNode = [];
   account.instrumentations.forEach(tag => {
     if (!tag.nodes.length > 0) tagsWithoutNode.push(tag);
     else {
@@ -37,7 +106,7 @@ function createTree(account, bindingIndex) {
   });
 
   // Noeuds par parent
-  const nodesByParent = {};
+  let nodesByParent = {};
   account.nodes.forEach(node => {
     const pid = node.parent_id || 'root';
     if (!nodesByParent[pid]) nodesByParent[pid] = [];
@@ -45,9 +114,9 @@ function createTree(account, bindingIndex) {
   });
 
   // Sous-assets par asset
-  const subAssetsByAsset = {};
+  let subAssetsByAsset = {};
   account.assets.forEach(asset => {
-    const pid = asset.parent_id || null;
+    let pid = asset.parent_id || null;
     if(!subAssetsByAsset[pid]) subAssetsByAsset[pid] = [];
     if(pid) subAssetsByAsset[pid].push(asset);
   });
@@ -55,11 +124,11 @@ function createTree(account, bindingIndex) {
   // console.log("Sous-assets : ", subAssetsByAsset);
 
   // Assets par node
-  const assetsByNode = {};
-  const assetsWithoutNode = [];
+  let assetsByNode = {};
+  let assetsWithoutNode = [];
   account.assets.forEach(asset => {
-    if (asset.parent_id == null) { // filtre les assets sans parent
-      if (!asset.nodes.length > 0) assetsWithoutNode.push(asset);
+    if (asset.parent_id == null) { // ne prend pas en compte les sous-assets
+      if (!asset.nodes.length > 0 && !asset.instrumentations.length > 0) assetsWithoutNode.push(asset);
       else {
         asset.nodes.forEach(nodeId => {
           if (!assetsByNode[nodeId]) assetsByNode[nodeId] = [];
@@ -80,18 +149,16 @@ function createTree(account, bindingIndex) {
     label.onclick = () => {
       
       if (el.className.includes('selected open') || el.className.includes('open')){
-        if (selectedParent) selectedParent.classList.remove('selected'); selectedParent = null;
+        if (selectedParentUI) selectedParentUI.classList.remove('selected'); selectedParentUI = null;
       } 
-      else if (selectedParent) {
-        selectedParent.classList.remove('selected');
-        el.classList.add('selected');
-        selectedParent = el;
-      }
-      else {
-        el.classList.add('selected');
-        selectedParent = el;
-      }
-        // console.log('Selected folder :', node);
+      else if (selectedParentUI) selectedParentUI.classList.remove('selected');
+      
+      el.classList.add('selected');
+      selectedParentUI = el;
+      selectedParentObj = node;
+      lastSelectedObjectType = "node";
+
+      // console.log('Selected folder :', node);
       el.classList.toggle('open');
       // console.log(el.classList);
     };
@@ -133,6 +200,7 @@ function createTree(account, bindingIndex) {
       el.classList.add('selected');
       selectedElementUI = el;
       selectedElementObj = asset;
+      lastSelectedObjectType = "asset";
       el.classList.toggle('open');
       // console.log(el.classList);
     };
@@ -179,18 +247,14 @@ function createTree(account, bindingIndex) {
 
     label.onclick = () => {
       if (el.className.includes('selected open') || el.className.includes('open')){
-        if (selectedParent) selectedParent.classList.remove('selected'); selectedParent = null;
+        if (selectedParentUI) selectedParentUI.classList.remove('selected'); selectedParentUI = null;
       } 
-      else if (selectedParent) {
-        selectedParent.classList.remove('selected');
-        el.classList.add('selected');
-        selectedParent = el;
-      }
-      else {
-        el.classList.add('selected');
-        selectedParent = el;
-        el.get
-      }
+      else if (selectedParentUI) selectedParentUI.classList.remove('selected');
+      
+      el.classList.add('selected');
+      selectedParentUI = el;
+      selectedParentObj = tag;
+      lastSelectedObjectType = "instrumentation";
       
       el.classList.toggle('open');
       // console.log(el.classList);
@@ -238,10 +302,15 @@ function selectObject (bindingIndex, account) {
         `;
     }
     // Désactive l'affichage de la fenêtre de choix et réinitialise les variables
-    selectedElementUI = null;
-    selectedElementObj = null;
-    selectedParent = null;
     closeSelectAssetModal();
   }
   else showNotification("Aucun asset sélectionné", "warning");
+}
+
+function resetAllSelections() {
+  selectedElementUI = null;
+  selectedElementObj = null;
+  selectedParentUI = null;
+  selectedParentObj = null;
+  lastSelectedObjectType = null;
 }

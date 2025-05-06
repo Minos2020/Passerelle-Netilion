@@ -508,7 +508,111 @@ class NetilionAccount:
         self.update_instrum()
         self.update_quotas()
         
-    # def createNewAsset(self)
+    def createNewAsset(self, data):
+        print(data)
+
+        endress_product = data['endress_product']
+        serial_number = data['serial_number']
+        description = data['description']
+        product_code = data['product_code']
+        product_name = data['product_name'] 
+        parent_id = data.get('parent_id', None)
+
+        createdAssetID = None
+        data = {}
+
+        # Recherche par serial number si produit Endress
+        if endress_product:
+            product_id = ""
+            endpoint = "endress/product_lookup?serial_number="+serial_number+"&include=order_code"
+            response = self.send_request("GET", endpoint)
+            # print(response.json())
+
+            if response.status_code == 200:
+                product_id = response.json().get("id")
+                data = {
+                    "description" : description,
+                    "serial_number" : serial_number,
+                    "product" : {
+                        "id" : product_id
+                    }
+                }
+            else:
+                print(f"Erreur lors de la recherche du SN: {response.status_code}")
+                raise Exception(f"Erreur lors de la recherche du SN: {response.status_code}")
+        else:
+            data = {
+                "description" : description,
+                "serial_number" : serial_number,
+                "product" : {
+                    "id" : product_id
+                }
+            }
+            pass
+        
+        # Création de l'asset
+        response = self.send_request("POST", "assets", data)
+        print(response.json())
+        
+        if response.status_code == 201:
+            if (parent_id):
+                print("Noeud à créer.")
+                createdAssetID = response.json().get("id")
+                endpoint = f'assets/{createdAssetID}/nodes'
+                data = {
+                    "nodes": [
+                        {
+                            "id": parent_id
+                        }
+                    ]
+                }
+                response = self.send_request("POST", endpoint, data)
+                if response.status_code == 204:
+                    print("Asset ajouté au noeud.")
+                else:
+                    raise Exception(f"Erreur lors de l'ajout de l'asset au node : {response.status_code}")
+
+
+            self.update_assets()
+
+            
+            return createdAssetID
+        else:
+            raise Exception(f"Erreur lors de la création de l'assset : {response.status_code}")
+
+
+    def deleteObject(self, data):
+        print(data)
+        object_type = data['object_type']
+        object_id = data['object_id']
+
+        # Suppression selon le type d''objet
+        endpoint = f'{object_type}s/{object_id}'
+        
+        response = self.send_request("DELETE", endpoint)
+        print(response)
+
+        if response.status_code == 204:
+            match object_type:
+                case "asset":
+                    for binding in PasserelleNetilion().bindings:
+                        if binding.netilion_binding_id == object_id:
+                            binding.netilion_binding_id = None
+                            print("suppression du binding")
+                    self.update_assets()
+                case "instrumentation":
+                    self.update_instrum()
+                case "node":
+                    self.update_nodes()
+             
+        else:
+            print(f"Erreur lors de la suppression : {response.status_code}")
+            raise Exception(f"Erreur lors de la suppression : {response.status_code}")
+
+
+        
+
+
 
 class Asset:
     def __init__(self, id: int, serial_number: str, description: str, nodes: set[int]=None, instrumentations: set[int]=None, product_name: int = None, parent_id: int = None):

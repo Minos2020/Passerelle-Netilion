@@ -60,31 +60,36 @@
 			width: 90%;
 			max-width: 100%;
 			display: flex;
-			flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
-			justify-content: center; /* Centrer les éléments */
-		}.nav-bar > a {
+		}
+        .logo-container {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-logo {
+            height: 32px;
+        }
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
+            flex: 1;
+            justify-content: center;
+            gap: 1em;
+        }
+        .nav-links > a {
 			color: #1971c2;
 			text-decoration: none;
-			padding: 5px 20px;
+			padding: 5px;
 			font-weight: bold;
 			overflow: hidden;
 			max-width: 100%;  /* Limite la largeur des éléments à la largeur du parent */
 			min-width: 100px;  /* Définit une largeur minimale pour éviter que le texte soit trop petit */
 			box-sizing: border-box; /* Inclut les paddings dans la largeur totale */
 		}
-
-    .nav-bar a:hover {
-      background: #b3ddf8;
-      border-radius: 5px;
-    }
-
-    .nav-bar .a-logout {
-      color: #000000;
-    }
-
-    .nav-bar .a-logout:hover {
-      background: #f8a6a6;
-    }
+        .nav-bar a:hover { background: #b3ddf8; border-radius: 5px; }
+        .nav-bar .a-logout {color: #000000;}
+        .nav-bar .a-logout:hover {background: #f8a6a6;}
 
     p {
       font-size: 1.1em;
@@ -321,13 +326,18 @@
 <body>
   <!-- Bandeau de navigation -->
   <div class="nav-bar">
-    <a href="{{ url_for('web.overview') }}">Résumé</a>
-    <a href="{{ url_for('web.networks') }}">Réseaux</a>
-    <a href="{{ url_for('web.netilion') }}">Comptes Netilion</a>
-    <a href="{{ url_for('web.bindings') }}">Bindings</a>
-    <a href="{{ url_for('web.modbus') }}">Général</a>
-    <a class="a-logout" href="{{ url_for('web.logout') }}">Déconnexion</a>
-  </div>
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='icons/endress_logo.svg') }}" alt="Logo" class="nav-logo">
+    </div>
+        <div class="nav-links">
+        <a href="{{ url_for('web.overview') }}">Résumé</a>
+        <a href="{{ url_for('web.networks') }}">Réseaux</a>
+        <a href="{{ url_for('web.netilion') }}">Comptes Netilion</a>
+        <a href="{{ url_for('web.bindings') }}">Bindings</a>
+        <a href="{{ url_for('web.modbus') }}">Général</a>
+        <a class="a-logout" href="{{ url_for('web.logout') }}">Déconnexion</a>
+    </div>
+</div>
 
   <div class="main-container" style="flex: 1 1 40%; align-items: center; flex-direction: column ;display: flex;">
     <p style="color: red; font-style: italic; font-weight: bold; max-width: 70%; text-justify: distribute;">
