@@ -330,11 +330,8 @@
 					account = data.account
 					accounts[account.account_id] = account
 					console.log(accounts[account.account_id])
-					selectedElementObj = account.assets.find(asset => asset.id === data.createdAssetID)
-					selectObject (bindingIndex, account)
-					// console.log(selectedElementObj)
 
-					showNotification("Asset créé et selectionné avec succès !", "success");
+					showNotification("Asset créé avec succès !", "success");
 					
 					// redemande les données afin de mettre à jour l'affichage
 					createTree(account, bindingIndex);

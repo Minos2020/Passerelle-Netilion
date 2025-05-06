@@ -290,10 +290,10 @@ function createTree(account, bindingIndex) {
   container.appendChild(root);
 }
 
-function selectObject (bindingIndex, account) {
-  if (selectedElementUI && selectedElementObj){
+function selectObject (bindingIndex, account, force = false) {
+  if (selectedElementUI && selectedElementObj || force){
     bindings[bindingIndex].netilion_binding_id = selectedElementObj.id;
-    
+
     if (account.assets.includes(selectedElementObj)) {
       document.getElementById(`binding-label-${bindingIndex}`).innerHTML = `
         <div class="asset-tag-header">${'📍'+selectedElementObj.product_name}</div>

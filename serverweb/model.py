@@ -338,11 +338,12 @@ class NetilionAccount:
             headers['accept'] = "application/json"
             response = requests.request(method, url, json=data, params=params, headers=headers)
 
-        response.raise_for_status()  # Lève une exception en cas d'erreur HTTP
+        
+        if not response.ok:  # Si la requête renvoie autre chose que le statut HTTP 2xx
+            raise Exception(f"HTTPError: {response.status_code} | {response.text}")
 
-        if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
-            self.update_last_connection()
-            # print(self.get_last_connection())
+        self.update_last_connection()
+        # print(self.get_last_connection())
         return response
         
     def update_nodes(self):
