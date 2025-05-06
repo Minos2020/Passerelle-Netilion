@@ -206,11 +206,17 @@
         div.classList.add("grid-container");
         div.innerHTML = `
                 <div class="grid-header">${account.identification}</div>
-                <div class="grid-key">Bindings</div><div class="grid-value">${bindingCount}</div>
+                
+                <div class="grid-key">Email</div><div class="grid-value">${account.email}</div>
+                <div class="grid-key">Tech. username</div><div class="grid-value">${account.username}</div>
+
+                <div class="separator"></div>
+                <div class="grid-key">Bindings</div><div class="grid-value"><b>${bindingCount}</b></div>
                 <div class="grid-key">Last connection</div>
                 <div class="grid-value">
                   ${account.last_connection ? account.last_connection.split('T')[0] + '<br>' + account.last_connection.split('T')[1].split('.')[0] : '—'}
                 </div>
+                
                 <div class="separator"></div>
                 <div class="grid-key">API usage</div>
                 <div class="grid-value">
@@ -232,11 +238,13 @@
                     ${usedMB} / ${quotaMB} Go (${storageUsage}%)
                   </small>
                 </div>
+                
                 <div class="separator"></div>
-                <div class="grid-key">Nodes</div><div class="grid-value">${nodeCount}</div>
-                <div class="grid-key">Tags</div><div class="grid-value">${instrumCount}</div>
-                <div class="grid-key">Assets</div><div class="grid-value">${assetCount}</div>
-                <div class="grid-key">Sous-assets</div><div class="grid-value">${subAssetCount}</div>
+                <div class="grid-key">Nodes</div><div class="grid-value"><b>${nodeCount}</b></div>
+                <div class="grid-key">Tags</div><div class="grid-value"><b>${instrumCount}</b></div>
+                <div class="grid-key">Assets</div><div class="grid-value"><b>${assetCount}</b></div>
+                <div class="grid-key">Sous-assets</div><div class="grid-value"><b>${subAssetCount}</b></div>
+                
                 <div class="separator"></div>
                 <button class="refresh-button" id="refresh-btn-${account.account_id}" style="grid-column: span 2;" data-account-id="${account.account_id}" title="Re-fetch data from Netilion">↺</button>
 

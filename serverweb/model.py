@@ -9,7 +9,7 @@ import psutil, subprocess, socket, platform, re
 
 
 token_url = "https://api.netilion.endress.com/oauth/token"
-BASE_URL = "https://api.netilion.endress.com/v1"
+BASE_URL = "https://api.netilion.endress.com/"
 
 
 class PasserelleNetilion:
@@ -117,8 +117,9 @@ class Network:
         )
 
 class NetilionAccount:
-    def __init__(self, identification: str, client_id: str, client_secret: str, username: str, password: str, account_id: int=None, changes_to_save=None):
+    def __init__(self, identification: str, email:str, client_id: str, client_secret: str, username: str, password: str, account_id: int=None, changes_to_save=None):
         self.identification: str = identification
+        self.email: str = email
         self.account_id: int = account_id
         self.client_id: str = client_id
         self.client_secret: str = client_secret
@@ -138,24 +139,12 @@ class NetilionAccount:
         self.api_call_quota: int = None
         self.api_calls_used: int = None
 
-    def __str__(self):
-        """Permet de faire un print(str(instance)) pour voir les informations voulues"""
-        return (
-        f"\nAcc ID : {self.account_id} - {self.identification}\n"
-        f"Client ID: {self.client_id}\n"
-        f"Client secret: {self.client_secret}\n"
-        f"Username : {self.username}\n"
-        f"Password : {self.password}\n"
-        f"Access token : {self.access_token if self.access_token is not None else 'Pas d\'access token'}\n"
-        f"Refresh token : {self.refresh_token if self.refresh_token is not None else 'Pas de refresh token'}\n"
-        f"{'Expiration token d\'accès dans ' + str(int(self.token_expiry - time.time())) + ' secondes' if time.time() < self.token_expiry else ('Pas d\'access token' if not self.access_token else 'Token d\'accès expiré')}"
-        f"{'Expiration refresh token dans ' + str(int(self.refresh_token_expiry - time.time())) + ' secondes' if time.time() < self.refresh_token_expiry else ('Pas de refresh token' if not self.refresh_token else 'Token refresh expiré')}"
-    )
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour la sérialisation"""
         return {
             "identification": self.identification,
+            "email": self.email,
             "account_id": self.account_id,
             "client_id": self.client_id,
             "client_secret": self.client_secret,
@@ -181,6 +170,7 @@ class NetilionAccount:
         sécurité"""
         return {
             "identification": self.identification,
+            "email": self.email,
             "account_id": self.account_id,
             "client_id": self.client_id,
             # "client_secret": self.client_secret,
@@ -204,7 +194,7 @@ class NetilionAccount:
     def from_dict(cls, data):
         """Crée une instance NetilionAuth à partir d'un dictionnaire"""
         instance = cls(
-            data["identification"], data["client_id"], data["client_secret"], data["username"], data["password"], data["account_id"]
+            data["identification"], data["email"], data["client_id"], data["client_secret"], data["username"], data["password"], data["account_id"]
         )
         instance.access_token = data.get("access_token", None)
         instance.refresh_token = data.get("refresh_token", None)
@@ -328,7 +318,7 @@ class NetilionAccount:
         return next((instrumentation for instrumentation in self.instrumentations if instrumentation.id == instrumentation_id), None)
 
 
-    def send_request(self, method, endpoint, data=None, params=None):
+    def send_request(self, method, endpoint, data=None, params=None, api_version="v1"):
         """Envoie une requête HTTP à Netilion avec gestion automatique du token."""
         
         # Obtenir les headers avec le token d'authentification
@@ -337,7 +327,7 @@ class NetilionAccount:
         headers["Content-Type"] = "application/json"
         # print(headers)
 
-        url = f"{BASE_URL}/{endpoint}"
+        url = f"{BASE_URL}/{api_version}/{endpoint}"
         # print(url)
 
         response = requests.request(method, url, json=data, params=params, headers=headers)
@@ -553,11 +543,10 @@ class NetilionAccount:
         # Création de l'asset
         response = self.send_request("POST", "assets", data)
         print(response.json())
+        createdAssetID = response.json().get("id")
         
         if response.status_code == 201:
             if (parent_id):
-                print("Noeud à créer.")
-                createdAssetID = response.json().get("id")
                 endpoint = f'assets/{createdAssetID}/nodes'
                 data = {
                     "nodes": [
@@ -571,9 +560,29 @@ class NetilionAccount:
                     print("Asset ajouté au noeud.")
                 else:
                     raise Exception(f"Erreur lors de l'ajout de l'asset au node : {response.status_code}")
-
-
+            
+            # Mise à jour des assets du compte
             self.update_assets()
+            
+            # partage de la propriété du nouvel asset avec le véritable User Netilion (pas le technical user)
+            # Cela permet à l'objet d'apparaître dans l'interface Netilion de l'utilisateur
+            endpoint = "owners"
+            data = {
+                "assignable": {
+                    "email": self.email,
+                    "type": "User"
+                },
+                "permitable": {
+                    "id": createdAssetID,
+                    "type": "Asset"
+                }
+            }
+            response = self.send_request("POST", endpoint, data, api_version="v2")
+            if not response.status_code == 204:
+                raise Exception(f"Erreur lors du partage de la propriété de l'asset créé : {response.status_code}")
+            
+            
+            
 
             
             return createdAssetID

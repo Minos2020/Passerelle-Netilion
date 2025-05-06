@@ -64,9 +64,10 @@ function createTree(account, bindingIndex) {
         
         if (response.ok && data.success) {
           showNotification("Objet supprimé !", "success");
-          accounts[data.account.account_id] = data.account
-          console.log(accounts)
+          // accounts[data.account.account_id] = data.account
+          // console.log(accounts)
           createTree(data.account, bindingIndex)
+          fetchData();
         } else if (response.ok && !data.success) {
           showNotification("Problème lors de la suppression de l'asset : " + data.error, "error", 6000);
         } else {
@@ -76,8 +77,7 @@ function createTree(account, bindingIndex) {
       showNotification(error, "error", 6000);
     }
     lastSelectedObjectType = null;
-    console.log("Objet supprimé");
-
+    
     // Cacher la fenêtre de confirmation
     document.getElementById("confirmation-modal").style.display = "none";
   }

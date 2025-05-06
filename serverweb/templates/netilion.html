@@ -69,13 +69,17 @@
           <div class="grid-key">Identification:</div>
           <input class="grid-value" type="text" value="${account.identification}" onchange="updateAccount(${index}, 'identification', this.value)">
           
+          <div class="grid-key">Account email:</div>
+          <input class="grid-value" title="Doit être renseigné afin que les assets créés depuis la passerelle soient accessibles directement depuis l'interface Netilion"
+          type="text" value="${account.email}" onchange="updateAccount(${index}, 'identification', this.value)">
+
           <div class="grid-key">Client ID:</div>
           <input class="grid-value" type="text" value="${account.client_id}" onchange="updateAccount(${index}, 'client_id', this.value)">
           
           <div class="grid-key">Client Secret:</div>
           <input class="grid-value" type="password" value="${account.client_secret}" onchange="updateAccount(${index}, 'client_secret', this.value)">
           
-          <div class="grid-key">Username:</div>
+          <div class="grid-key">Technical username:</div>
           <input class="grid-value" type="text" value="${account.username}" onchange="updateAccount(${index}, 'username', this.value)">
           
           <div class="grid-key">Password:</div>
@@ -120,6 +124,7 @@
 
       let newAccount = {
         identification: "Nouveau Compte",
+        email: "",
         client_id: "",
         client_secret: "",
         username: "",
