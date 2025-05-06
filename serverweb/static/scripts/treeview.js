@@ -64,8 +64,8 @@ function createTree(account, bindingIndex) {
         
         if (response.ok && data.success) {
           showNotification("Objet supprimé !", "success");
-          // accounts[data.account.account_id] = data.account
-          // console.log(accounts)
+          
+          // redemande les données afin de mettre à jour l'affichage
           createTree(data.account, bindingIndex)
           fetchData();
         } else if (response.ok && !data.success) {
