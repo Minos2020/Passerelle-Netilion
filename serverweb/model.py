@@ -294,7 +294,8 @@ class NetilionAccount:
                 "password": self.password
             })
         else:
-            print("Token d'accès toujours valide ✅")
+            # print("Token d'accès toujours valide ✅")
+            pass
         return
 
     def get_headersForAuth(self):
@@ -340,7 +341,16 @@ class NetilionAccount:
 
         
         if not response.ok:  # Si la requête renvoie autre chose que le statut HTTP 2xx
-            raise Exception(f"HTTPError: {response.status_code} | {response.text}")
+            data = {
+                "errorType": "HTTPError",
+                "endpoint": endpoint,
+                "status_code": response.status_code,
+                "message": response.text
+            }
+            # print(f"HTTPError: endpoint : {endpoint}\nCode : {response.status_code}\n{response.text}")
+            # raise Exception(f"HTTPError: {response.status_code} | {response.text}")
+            print(data)
+            raise Exception(data)
 
         self.update_last_connection()
         # print(self.get_last_connection())
@@ -505,46 +515,89 @@ class NetilionAccount:
         endress_product = data['endress_product']
         serial_number = data['serial_number']
         description = data['description']
-        product_code = data['product_code']
-        product_name = data['product_name'] 
+        product_code = data.get('product_code', None)
+        product_name = data.get('product_name', None)
         parent_id = data.get('parent_id', None)
-
+        
+        product_id = None
+        
         createdAssetID = None
         data = {}
 
         # Recherche par serial number si produit Endress
         if endress_product:
-            product_id = ""
             endpoint = "endress/product_lookup?serial_number="+serial_number+"&include=order_code"
             response = self.send_request("GET", endpoint)
-            # print(response.json())
 
             if response.status_code == 200:
-                product_id = response.json().get("id")
-                data = {
-                    "description" : description,
-                    "serial_number" : serial_number,
-                    "product" : {
-                        "id" : product_id
-                    }
-                }
+                data = response.json()
+                product_id = data.get("id")
+
             else:
                 print(f"Erreur lors de la recherche du SN: {response.status_code}")
                 raise Exception(f"Erreur lors de la recherche du SN: {response.status_code}")
         else:
-            data = {
-                "description" : description,
-                "serial_number" : serial_number,
-                "product" : {
-                    "id" : product_id
+            # Le produit n'est pas un produit Endress. Dans ce cas, on crée un produit, avec comme tenant
+            # un tenant par défaut appelé "username technical_tenant". Si ce tenant n'existe par encore on le crée
+            tenant_id = self.getTechnicalTenantID()
+
+            # Un produit doit avoir un "manufacturer" ou "company" donc on en crée une appelée "Random"
+            # Si elle existe déjà, on récupère son ID
+            company_id = self.getRandomCompanyID(tenant_id)
+
+            # on peut désormais soit créer le produit selon les spécifications de l'utilisateur (product_name, product_code)
+            # soit sélectionner un produit générique, qui est créé automatiquement à la création de la compagnie
+            
+            # Si l'utilisateur ne spécifie rien, on va chercher l'ID du produit générique de code "Unknown" et de nom "unknown product"
+            if not product_code and not product_name:
+                endpoint = f'companies/{company_id}/products?product_code=Unknown&name=unknown%20product&tenant_id={tenant_id}'
+                response = self.send_request("GET", endpoint)
+                data = response.json()
+                products = data.get("products", [])
+                product_id = products[0]["id"]
+                print("product_id récupéré : ", product_id)
+
+            # Si l'utilisateur a spécifié un code produit et un nom de produit, alors on crée le nouveau produit  
+            else:
+                data = {
+                    "name" : product_name,
+                    "product_code" : product_code,
+                    "manufacturer" : {
+                        "id" : company_id
+                    },
+                    "tenant" : {
+                        "id" : tenant_id
+                    },
+                    "status" : {
+                        "id" : 1
+                    }
                 }
-            }
-            pass
+                print(data)
+                response = self.send_request("POST", "products", data)
+                
+                if response.status_code == 201:
+                    data = response.json()
+                    product_id = data.get("id", None)
+                    print("Produit créé avec succès : ", product_id)
+                else:
+                    print(f"Erreur lors de la création du produit : {response.status_code}")
+                    raise Exception(f"Erreur lors de la création du produit : {response.status_code}")
+        
         
         # Création de l'asset
+        data = {
+            "description" : description,
+            "serial_number" : serial_number,
+            "product" : {
+                "id" : product_id
+            },
+            "tenant": {
+                "id": tenant_id
+            }
+        }
         response = self.send_request("POST", "assets", data)
-        print(response.json())
-        createdAssetID = response.json().get("id")
+        data = response.json()
+        createdAssetID = data.get("id")
         
         if response.status_code == 201:
             if (parent_id):
@@ -560,6 +613,7 @@ class NetilionAccount:
                 if response.status_code == 204:
                     print("Asset ajouté au noeud.")
                 else:
+                    print(f"Erreur lors de l'ajout de l'asset au node : {response.status_code}")
                     raise Exception(f"Erreur lors de l'ajout de l'asset au node : {response.status_code}")
             
             # Mise à jour des assets du compte
@@ -578,17 +632,117 @@ class NetilionAccount:
                     "type": "Asset"
                 }
             }
+            # On spécifie la version de l'API car l'endpoint utilisé ici appartient à la V2
             response = self.send_request("POST", endpoint, data, api_version="v2")
             if not response.status_code == 204:
                 raise Exception(f"Erreur lors du partage de la propriété de l'asset créé : {response.status_code}")
             
-            
-            
 
-            
             return createdAssetID
         else:
             raise Exception(f"Erreur lors de la création de l'assset : {response.status_code}")
+
+    def getTechnicalTenantID(self) -> int:
+        # récupération de l'ID du technical tenant, ou création s'il n'existe pas encore
+        tenant_name = f'{self.username.split("@")[0]} Technical tenant'
+        endpoint = f'tenants?name={tenant_name}&public=false'
+        response = self.send_request("GET", endpoint)
+        
+        data = response.json()
+        print(data)
+        tenants = data.get("tenants", [])
+        if tenants:
+            # le technical tenant existe déjà, on récupère simplement son id
+            tenant_id = tenants[0]["id"]
+            print("tenant_id récupéré : ", tenant_id)
+            return tenant_id
+        
+        else:
+            # on crée le tenant "technical tenant" car il n'existe pas encore
+            print("Création du tenant technical tenant")  
+            data = {
+                "name": tenant_name,
+                "description": f'Tenant créé automatiquement par le technical user {self.username} pour le bon fonctionnement de la passerelle Netilion.'
+            }
+            response = self.send_request("POST", "tenants", data)
+            print(response.json())
+            if response.status_code == 201:
+                data = response.json()
+                tenant_id = data.get("id", None)
+                print("tenant_id créé : ", tenant_id)
+
+                # On partage le tenant avec le véritable User Netilion (pas le technical user)
+                # ce qui permet à l'utilisateur réel d'avoir accès aux collections de ce tenant dans l'interface Netilion
+                
+                # on commence par récupérer l'id de l'utilisateur à qui on doit partager la ressource
+                user_id = None
+                endpoint = f'users/lookup?email={self.email}'
+                response = self.send_request("GET", endpoint)
+                data = response.json()
+                user_id = data.get("id", None)
+                print(f'user_id for {self.email} : {user_id}')
+                if response.status_code == 200 and user_id:
+                    # on promeut le user en tant qu'admin du tenant
+                    endpoint = f'tenants/{tenant_id}/admins'
+                    data = {
+                        "admins": [
+                            {
+                                "id": user_id
+                            }
+                        ]
+                    }
+                    response = self.send_request("POST", endpoint, data)
+                    if not response.status_code == 204:
+                        data = response.json()
+                        print(f"Erreur lors de l'ajout de l'utilisateur comme admin du tenant: {response.status_code, data}")
+                        raise Exception(f"Erreur lors de l'ajout de l'utilisateur comme admin du tenant: {response.status_code, data}")
+                    
+                    return tenant_id
+                
+                else:
+                    print(f"Erreur lors de la récupération de l'id de l'utilisateur: {response.status_code, data}")
+                    raise Exception(f"Erreur lors de la récupération de l'id de l'utilisateur: {response.status_code, data}")
+
+            else:
+                print(f"Erreur lors de la création du technical tenant: {response.status_code, data}")
+                raise Exception(f"Erreur lors de la création du technical tenant: {response.status_code, data}")
+
+    def getRandomCompanyID(self, tenant_id) -> int:
+        endpoint = f'companies?name=Random&tenant_id={tenant_id}'
+        response = self.send_request("GET", endpoint)
+
+        data = response.json()
+        companies = data.get("companies", [])
+        if companies:
+            # le manufacturer / company  existe déjà, on récupère donc simplement son id
+            company_id = companies[0]["id"]
+            print("company_id récupéré : ", company_id)
+            print(companies)
+            return company_id
+        
+        else:
+            # on crée la companie "Random" car elle n'existe pas encore
+            print("Création d'une compagnie Random")  
+            data = {
+                "name": "Random",
+                "description": f'Compagnie créée automatiquement par le technical user "{self.username}" pour le bon fonctionnement de la passerelle Netilion.',
+                "tenant": {
+                    "id": tenant_id
+                }
+            }
+            response = self.send_request("POST", "companies", data)
+            
+            if response.status_code == 201:
+                data = response.json()
+                company_id = data.get("id", None)
+                print("company_id créé : ", company_id)
+                
+                return company_id
+            
+            else:
+                print(f"Erreur lors de la création de la compagnie: {response.status_code, data}")
+                raise Exception(f"Erreur lors de la création de la compagnie: {response.status_code, data}")
+
 
 
     def deleteObject(self, data):
@@ -618,8 +772,6 @@ class NetilionAccount:
         else:
             print(f"Erreur lors de la suppression : {response.status_code}")
             raise Exception(f"Erreur lors de la suppression : {response.status_code}")
-
-
         
 
 

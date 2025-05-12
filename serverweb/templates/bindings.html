@@ -301,9 +301,13 @@
 			// console.log(bindingIndex, account, selectedParentObj)
 
 			// Vérification de la complétion des champs selon le cas
-			if ( (!endressProductToggle.checked && (!product_name || !serial_number || !description || !product_code))  ||
-				(!serial_number || !description)) {
-				showNotification("Tous les champs doivent être remplis.", "warning");
+			if (!serial_number || !description)  {
+				showNotification("Tous les champs obligatoires doivent être remplis.", "warning");
+				return; // Empêche la suite de s'exécuter
+			}
+			
+			if ((product_code && !product_name) || (!product_code && product_name))   {
+				showNotification("Si vous spécifiez un produit, vous devez spécifier à la fois le nom et le code produit.", "warning");
 				return; // Empêche la suite de s'exécuter
 			}
 
@@ -342,7 +346,7 @@
 					// console.log(accounts)
 				
 				} else if (response.ok && !data.success) {
-					showNotification("Problème lors de la création de l'asset :" + data.error, "error", 6000);
+					showNotification("Problème lors de la création de l'asset :" + data.error, "error", 10000);
 				}
 			} catch (error) {
 				showNotification(error, "error", 6000);
@@ -526,9 +530,9 @@
 				</div>
 
 				<div class="parameters-box">
-					<div class="grid-key">Numéro de série :</div>
+					<div class="grid-key">Numéro de série : <span style="color:red;">*</span></div>
 					<input class="grid-value" type="text" id="new-serial-number" >
-					<div class="grid-key">Description :</div>
+					<div class="grid-key">Description : <span style="color:red;">*</span></div>
 					<input class="grid-value" type="text" id="new-description" >
 
 					<div id="extra-parameters" style="display: contents;">
@@ -540,7 +544,7 @@
 						<input class="grid-value" type="text" id="new-product-name" >
 					</div>
 				</div>
-			</form>
+			</form><p style="font-size: 0.85em; color: red; margin-top: 10px;">* champs obligatoires</p>
 			<button id="create-asset-button" class="btn btn-primary">Créer l'asset</button>
 		</div>
 	</div>
