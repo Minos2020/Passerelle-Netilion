@@ -9,7 +9,7 @@
 	.table { width: 100%; margin-top: 20px; }
 	.table-header, .table-row { 
 		display: grid;
-		grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr 2fr 0.8fr 1fr 2.5fr 4fr 0.8fr 0.8fr;
+		grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr 2fr 0.8fr 2.5fr 4fr 0.8fr 1fr 1fr 0.8fr;
 		align-items: center;
 		justify-content: space-between;
 		gap: 20px;
@@ -18,6 +18,7 @@
 		width: 100%; 
 		overflow: hidden;
 	}
+	
 	.table-header { background: #e0e0e0; border-radius: 6px; }
 
 	.table-header > div {
@@ -86,8 +87,10 @@
       flex-direction: column;
       /* grid-gap: 5px; */
       /* width: min-content; */
-      max-width: 100%;
-	  max-height: 100%;
+      max-width: 90%;
+	  min-width: 90%;
+	  max-height: 90%;
+	  min-height: 90%;
       background: #fff;
       padding: 5px;
       border-radius: 6px;
@@ -96,7 +99,7 @@
   	}
   
 	.asset-tag-header {
-		background: #cae5fd;
+		background: #daeaf8;
 		text-align: center;
 		justify-content: center;
 		font-weight: bold;
@@ -133,6 +136,7 @@
 			try {
 				let response = await fetch("/api/get_units"); // Mets le bon chemin ici
 				units = await response.json();
+				console.log(units)
 				unitsLoaded = true; // Marque comme chargé
 				console.log("Units loaded:", units.length); // Debug
 			} catch (error) {
@@ -180,6 +184,13 @@
 						unitDisplay = `${found.name} (${found.symbol})`;
 					}
 				}
+
+				let groupOptions = netilionAccount?.assets?.find(asset => asset.id === binding.netilion_binding_id)?.value_groups ?? [];
+
+				let keyOptions = netilionAccount?.assets?.find(asset => asset.id === binding.netilion_binding_id)?.value_keys ?? [];
+
+
+
 				let bindingObject = bindableOptions.find(obj => obj.id === binding.netilion_binding_id);
 				let bindingLabel = "";
 
@@ -218,9 +229,6 @@
 						<button id="test-btn-${index}" title="Envoyer une requête modbus" class="btn btn-test" style="margin-top: 0px;" onclick="testBinding(${index})">Test</button>
 					</div>
 					<div>
-						<div id="test-result-${index}"></div>
-					</div>
-					<div>
 						<select onchange="updateBinding(${index}, 'netilion_account_id', this.value, true)">
 							${accounts.map(acc => `<option value="${acc.account_id}" ${acc.account_id === binding.netilion_account_id ? "selected" : ""}>${acc.identification}</option>`).join("")}
 						</select>
@@ -229,6 +237,24 @@
 						<div class="asset-tag-container" id="binding-label-${index}">--</div>
 					</div>
 					<button class="btn-choice" title="Sélectionner un asset" onclick="openSelectAssetModal(${index})">🔎</button>
+					<div>
+						<!-- Entrée pour la clé (key) -->
+						<input list="keys-list-${index}" name="key" id="key-input-${index}" value="${(binding.key === null) ? "" : binding.key}"
+						title="La clé permet de préciser quelle est la donnée dans Netilion et de différencier plusieurs types de données pour un même asset (ex: pH retour condensats, Turbidité retour condensats, Niveau cuve eaux de pluie, ...)"
+						onchange="updateBinding(${index}, 'key', this.value)">
+						<datalist id="keys-list-${index}">
+							${keyOptions.map(key => `<option value="${key}"></option>`).join("")}
+						</datalist>
+					</div>
+					<div>
+						<!-- Entrée pour le groupe (group) -->
+						<input list="groups-list-${index}" name="group" group="key-input-${index}" value="${(binding.group === null) ? "" : binding.group}"
+						title="Le groupe permet de créer des regroupements logiques de données pour un ou plusieurs assets (ex: Retour condensats, Circuit eaux de pluie, ...)"
+						onchange="updateBinding(${index}, 'group', this.value)">
+						<datalist id="groups-list-${index}">
+							${groupOptions.map(group => `<option value="${group}"></option>`).join("")}
+						</datalist>
+					</div>
 					<button class="btn btn-danger" title="Supprimer le binding" style="margin-top: 0px;" onclick="deleteBinding(${index})">&times;</button>
 					
 				`;
@@ -347,6 +373,9 @@
 				
 				} else if (response.ok && !data.success) {
 					showNotification("Problème lors de la création de l'asset :" + data.error, "error", 10000);
+				if (data.error === "{'errorType': 'HTTPError', 'endpoint': 'assets', 'status_code': 400, 'message': '{\"errors\":[{\"type\":\"not_unique_in_scope\",\"message\":\"serial number must be unique in manufacturer scope\",\"attribute\":\"serial_number\"}]}'}") {
+					showNotification("L'asset a déjà été ajouté par un autre utilisateur", "error", 10000);
+				}
 				}
 			} catch (error) {
 				showNotification(error, "error", 6000);
@@ -358,6 +387,7 @@
 
 
 		function updateBinding(index, field, value, render) {
+			console.log(value)
 			if (field === "netilion_account_id") {
 				// console.log(index);
 				// console.log(field);
@@ -374,6 +404,9 @@
 				}
 			} else if (field === "netilion_binding_id") {
 				bindings[index].netilion_binding_id = parseInt(value, 10);
+			} else if (field === "key" || field === "group") {
+				console.log(value)
+				bindings[index][field] = (value === "" || value === undefined) ? null : value;
 			} else {
 				bindings[index][field] = value;
 			}
@@ -394,6 +427,8 @@
 				unit_id: 1,
 				netilion_account_id: accounts.length > 0 ? accounts[0].id : null,
 				netilion_binding_id: null,
+				key: "",
+				group: "",
 			};
 			bindings.push(newBinding);
 			renderBindings();
@@ -437,11 +472,16 @@
 		async function testBinding(index) {
 			let binding = bindings[index];
 			let button = document.getElementById(`test-btn-${index}`);
-			let resultDiv = document.getElementById(`test-result-${index}`);
-
-			// Reset visuel avant de tester
-			button.style.backgroundColor = "#1971c2";
-			resultDiv.innerHTML = '<div class="spinner"></div>';
+			const originalHTML = button.innerHTML; // Sauvegarde de l'html du bouton
+			const originalClass = button.className; // Sauvegarde des classes du bouton
+						
+			// Remplacement du bouton par un spinner de chargement
+			button.disabled = true;
+			button.className = '';
+			button.style.backgroundColor = 'transparent';
+			button.style.border = 'none';
+			
+			button.innerHTML = '<div class="spinner"></div>';
 
 			try {
 				let response = await fetch("/api/modbus_test", {
@@ -459,35 +499,20 @@
 				let data = await response.json();
 				if (response.ok && data.status === "success") {
 					button.style.backgroundColor = "#28a745"; // Vert
-					resultDiv.innerText = `${data.value}`;
-					resultDiv.style.color = "#28a745";
+					showNotification(`Valeur lue : ${data.value}`, "success", 4000)
 				} else if (response.ok && data.status === "error") {
 					button.style.backgroundColor = "#dc3545"; // Rouge
-					resultDiv.innerText = `Échec : ${data.type}`;
-					resultDiv.style.color = "#dc3545";
+					showNotification(`Echec lecture valeur : ${data.type}`, "error", 4000)
 				}
 			} catch (error) {
 				button.style.backgroundColor = "#dc3545"; // Rouge
-				resultDiv.innerText = "Erreur";
-				resultDiv.style.color = "#dc3545";
+				showNotification(`Erreur : ${error}`, "error", 4000)
+			} finally {
+				// On replace le bouton tel qu'originalement
+				button.disabled = false;
+				button.className = originalClass;
+				button.innerHTML = originalHTML;
 			}
-
-			// Harmoniser les largeurs des resultDivs
-			let allResults = document.querySelectorAll("[id^='test-result-']");
-			let maxWidth = 0;
-
-			// On récupère la largeur de la plus grande case
-			allResults.forEach(div => {
-				div.style.width = "auto"; // Reset pour mesurer correctement
-				let width = div.offsetWidth;
-				if (width > maxWidth) maxWidth = width;
-			});
-
-			// On applique cette largeur à toutes les autres et au header également
-			allResults.forEach(div => {
-				div.style.width = `${maxWidth}px`;
-			});
-			document.getElementById('test-result-header').style.width = `${maxWidth}px`;
 		}
 
 	</script>
@@ -574,9 +599,10 @@
 		<div>Type</div>
 		<div>Unit</div>
 		<div></div>
-		<div id="test-result-header"></div>
 		<div>Compte</div>
 		<div style="grid-column: span 2;">Objet lié</div>
+		<div>Key</div>
+		<div>Group</div>
 		<div></div>
 	</div>
 

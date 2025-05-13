@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-import time, requests
+import time, requests, json
 from services.network_utils import getNetworkSettings
 
 
@@ -392,7 +392,7 @@ class NetilionAccount:
     def update_assets(self):
         """Récupère les assets associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
         # Endpoint pour récupérer les nodes
-        endpoint = "assets?include=instrumentations%2C%20nodes%2C%20product"
+        endpoint = "assets?include=instrumentations%2C%20nodes%2C%20product%2C%20values"
         
         # Utiliser la méthode send_request pour envoyer la requête
         response = self.send_request("GET", endpoint)
@@ -413,11 +413,19 @@ class NetilionAccount:
                     product_name=asset_data.get('product').get('name'),
                     parent_id=asset_data.get('parent', {}).get('id', None)
                 )
+                # print(asset_data.get('instrumentations', {}),'\n')
+                # print(asset_data.get('values', {}),'\n')
+
                 # Ajouter à chaque asset la liste de ses tags et de ses nodes
                 for instrum in asset_data.get('instrumentations', {}).get('items', []):
                     asset.instrumentations.add(instrum["id"])
                 for node in asset_data.get('nodes', {}).get('items', []):
                     asset.nodes.add(node["id"])
+                for value in asset_data.get('values', []):
+                    print(value)
+                    asset.value_groups.add(value.get("group", None))
+                    asset.value_keys.add(value["key"])
+                    print(asset.to_dict())
                 fetched_assets.append(asset)
             self.assets = fetched_assets
             if self.changes_to_save:
@@ -519,6 +527,7 @@ class NetilionAccount:
         product_name = data.get('product_name', None)
         parent_id = data.get('parent_id', None)
         
+        tenant_id = None
         product_id = None
         
         createdAssetID = None
@@ -532,7 +541,7 @@ class NetilionAccount:
             if response.status_code == 200:
                 data = response.json()
                 product_id = data.get("id")
-
+                tenant_id = 1
             else:
                 print(f"Erreur lors de la recherche du SN: {response.status_code}")
                 raise Exception(f"Erreur lors de la recherche du SN: {response.status_code}")
@@ -796,7 +805,7 @@ class NetilionAccount:
 
 
 class Asset:
-    def __init__(self, id: int, serial_number: str, description: str, nodes: set[int]=None, instrumentations: set[int]=None, product_name: int = None, parent_id: int = None):
+    def __init__(self, id: int, serial_number: str, description: str, nodes: set[int]=None, instrumentations: set[int]=None, product_name: int = None, parent_id: int = None, value_groups: set[int]=None, value_keys: set[int]=None):
         self.id: int = id
         self.serial_number: str = serial_number
         self.description: str = description
@@ -804,6 +813,8 @@ class Asset:
         self.instrumentations: set[int] = set(instrumentations) if instrumentations else set()
         self.product_name: int = product_name
         self.parent_id: int = parent_id
+        self.value_groups: set[str] = set(value_groups) if value_groups else set()
+        self.value_keys: set[str] = set(value_keys) if value_keys else set()
     
     def to_dict(self):
         return {
@@ -814,6 +825,8 @@ class Asset:
             "nodes": list(self.nodes),
             "instrumentations": list(self.instrumentations),
             "parent_id": self.parent_id,
+            "value_groups": list(self.value_groups),
+            "value_keys": list(self.value_keys),
         }
 
     @classmethod
@@ -825,7 +838,9 @@ class Asset:
             product_name=data.get("product_name", None),
             parent_id=data.get("parent_id", None),
             nodes=set(data.get("nodes", [])),
-            instrumentation=set(data.get("instrumentation", []))
+            instrumentations=set(data.get("instrumentations", [])),
+            value_groups=set(data.get("value_groups", [])),
+            value_keys=set(data.get("value_keys", []))
         )
     
 class Node:
@@ -930,7 +945,8 @@ class ValueSet:
 
 class Binding:
     def __init__(self, identification: str, protocol: str, slaveadress: str, registeradress: str,
-                 datatype: str, unit_id: int, netilion_account_id: int, netilion_binding_id: int):
+                 datatype: str, unit_id: int, netilion_account_id: int, netilion_binding_id: int,
+                 key: str=None, group: str=None):
         self.identification: str = identification
         self.protocol: str = protocol
         self.slaveadress: str = slaveadress
@@ -939,6 +955,8 @@ class Binding:
         self.unit_id: int = unit_id
         self.netilion_account_id: int = netilion_account_id
         self.netilion_binding_id: int = netilion_binding_id
+        self.key = key
+        self.group = group
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour la sérialisation JSON."""
@@ -950,7 +968,9 @@ class Binding:
             "datatype": self.datatype,
             "unit_id": self.unit_id,
             "netilion_account_id": self.netilion_account_id,
-            "netilion_binding_id": self.netilion_binding_id
+            "netilion_binding_id": self.netilion_binding_id,
+            "key": self.key,
+            "group": self.group
         }
 
     @classmethod
@@ -964,7 +984,9 @@ class Binding:
             datatype=data["datatype"],
             unit_id=data["unit_id"],
             netilion_account_id=data["netilion_account_id"],
-            netilion_binding_id=data["netilion_binding_id"]
+            netilion_binding_id=data["netilion_binding_id"],
+            key=data["key"],
+            group=data["group"],
         )
     
 
