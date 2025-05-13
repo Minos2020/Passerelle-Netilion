@@ -131,12 +131,13 @@
 		let units = []; // Contiendra toutes les unités Netilion
 		let unitsLoaded = false;
 
+		let inputErrors = {};
+
 		// Fonction pour charger les unités depuis le fichier units.json
 		async function loadUnits() {
 			try {
 				let response = await fetch("/api/get_units"); // Mets le bon chemin ici
 				units = await response.json();
-				console.log(units)
 				unitsLoaded = true; // Marque comme chargé
 				console.log("Units loaded:", units.length); // Debug
 			} catch (error) {
@@ -387,28 +388,50 @@
 
 
 		function updateBinding(index, field, value, render) {
-			console.log(value)
+			
+			// Initialisation du dict d'erreurs pour ce bindind s'il n'existe pas encore
+			if (!inputErrors[index]) inputErrors[index] = {};
+
 			if (field === "netilion_account_id") {
-				// console.log(index);
-				// console.log(field);
-				// console.log(value);
-				// console.log(bindings);
 				bindings[index].netilion_account_id = parseInt(value, 10);
 				bindings[index].netilion_binding_id = null;
+				delete inputErrors[index][field];
+				inputErrors[index]["netilion_binding_id"] = "Aucun asset n'a été lié";
+			
 			} else if (field === "unit") {
-				const selectedUnit = units.find(u => `${u.name} (${u.symbol})` === value);
-				if (selectedUnit) {
-					bindings[index].unit_id = selectedUnit.id;
+				const isUnitValid = units.find(u => `${u.name} (${u.symbol})` === value);
+				if (isUnitValid) {
+					bindings[index].unit_id = isUnitValid.id;
+					delete inputErrors[index][field];
 				} else {
-					showNotification("Unité non reconnue", "warning");
+					inputErrors[index][field] =  "Unité non reconnue";
 				}
+
 			} else if (field === "netilion_binding_id") {
 				bindings[index].netilion_binding_id = parseInt(value, 10);
-			} else if (field === "key" || field === "group") {
-				console.log(value)
+				console.log(inputErrors)
+				delete inputErrors[index][field];
+				console.log(inputErrors)
+
+			} else if (field === "group") {
 				bindings[index][field] = (value === "" || value === undefined) ? null : value;
+				delete inputErrors[index][field];
+			
+			} else if (field === "key") {
+				if (value === "" || value === undefined){
+					inputErrors[index][field] =  "Clé (key) manquante";
+				} else {
+					bindings[index][field] = value;
+					delete inputErrors[index][field];
+				}
 			} else {
 				bindings[index][field] = value;
+				delete inputErrors[index][field];
+			}
+
+			// Nettoyer s'il n'y a plus d'erreur pour ce binding
+			if (Object.keys(inputErrors[index]).length === 0) {
+				delete inputErrors[index];
 			}
 			
 			if (render){
@@ -432,6 +455,16 @@
 			};
 			bindings.push(newBinding);
 			renderBindings();
+			
+			const newIndex = bindings.length - 1;
+			inputErrors[newIndex] = {
+				netilion_account_id: "Aucun compte Netilion n'a été choisi",
+				netilion_binding_id: "Aucun asset n'a été lié",
+				slaveadress: "Adresse esclave manquante",
+				registeradress: "Registre esclave manquant",
+				identification: "Veuillez définir un nom pour le binding",
+				key: "Clé (key) manquante"
+			};
 		}
 
 		function deleteBinding(index) {
@@ -440,6 +473,19 @@
 		}
 
 		function saveBindings() {
+			console.log(inputErrors)
+			if (Object.keys(inputErrors).length > 0) {
+				// Optionnel : concaténer les messages d'erreurs pour la notif
+				const errorMessages = Object.entries(inputErrors)
+					.map(([index, fields]) => {
+						return Object.entries(fields).map(
+							([field, msg]) => `Binding ${parseInt(index)+1} - ${field} : ${msg}`
+						).join("\n");
+					}).join("\n");
+
+				showNotification(errorMessages, "error", 5000);
+				return;
+			}
 			fetch("/api/save_bindings", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -599,7 +645,7 @@
 		<div>Type</div>
 		<div>Unit</div>
 		<div></div>
-		<div>Compte</div>
+		<div>Compte Netilion</div>
 		<div style="grid-column: span 2;">Objet lié</div>
 		<div>Key</div>
 		<div>Group</div>

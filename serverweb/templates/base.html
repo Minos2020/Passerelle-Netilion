@@ -152,8 +152,8 @@
             closeButton.innerHTML = "&times;";
             closeButton.onclick = () => container.removeChild(notification);
 
-            const messageSpan = document.createElement("span");
-            messageSpan.textContent = message;
+            const messageSpan = document.createElement("div");
+            messageSpan.innerHTML = message.replace(/\n/g, "<br>");
 
             notification.appendChild(messageSpan);
             notification.appendChild(closeButton);
