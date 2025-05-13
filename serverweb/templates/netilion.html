@@ -71,7 +71,7 @@
           
           <div class="grid-key">Account email:</div>
           <input class="grid-value" title="Doit être renseigné afin que les assets créés depuis la passerelle soient accessibles directement depuis l'interface Netilion"
-          type="text" value="${account.email}" onchange="updateAccount(${index}, 'identification', this.value)">
+          type="text" value="${account.email}" onchange="updateAccount(${index}, 'email', this.value)">
 
           <div class="grid-key">Client ID:</div>
           <input class="grid-value" type="text" value="${account.client_id}" onchange="updateAccount(${index}, 'client_id', this.value)">
@@ -96,7 +96,7 @@
     }
 
     function updateAccount(index, field, value) {
-      if (["client_id", "client_secret", "username", "password"].includes(field)) {
+      if (["email", "client_id", "client_secret", "username", "password"].includes(field)) {
         accounts[index][field] = value;
 
         // On marque quels champs ont été modifiés au fur et à mesure

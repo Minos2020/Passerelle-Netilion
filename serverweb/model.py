@@ -619,10 +619,28 @@ class NetilionAccount:
             # Mise à jour des assets du compte
             self.update_assets()
             
+            
             # partage de la propriété du nouvel asset avec le véritable User Netilion (pas le technical user)
             # Cela permet à l'objet d'apparaître dans l'interface Netilion de l'utilisateur
-            endpoint = "owners"
+            # # on commence par récupérer l'ID de l'utilisateur réel
+            # user_id = None
+            # endpoint = f'users/lookup?email={self.email}'
+            # response = self.send_request("GET", endpoint)
+            # data = response.json()
+            # user_id = data.get("id", None)
+            
+            # if not (response.status_code == 200 and user_id):
+            #     print(f"Erreur lors de la récupération de l'id de l'utilisateur: {response.status_code, data}")
+            #     raise Exception(f"Erreur lors de la récupération de l'id de l'utilisateur: {response.status_code, data}")
+            
+            endpoint = 'permissions'
             data = {
+                "permission_types": [
+                    "can_read",
+                    "can_update",
+                    "can_delete",
+                    "can_permit"
+                ],
                 "assignable": {
                     "email": self.email,
                     "type": "User"
@@ -634,13 +652,14 @@ class NetilionAccount:
             }
             # On spécifie la version de l'API car l'endpoint utilisé ici appartient à la V2
             response = self.send_request("POST", endpoint, data, api_version="v2")
-            if not response.status_code == 204:
-                raise Exception(f"Erreur lors du partage de la propriété de l'asset créé : {response.status_code}")
-            
+            data = response.json()
+            if not response.status_code == 201:
+                print(f"Erreur lors du partage de la propriété de l'asset créé : {response.status_code, data}")
+                raise Exception(f"Erreur lors du partage de la propriété de l'asset créé : {response.status_code, data}")
 
             return createdAssetID
         else:
-            raise Exception(f"Erreur lors de la création de l'assset : {response.status_code}")
+            raise Exception(f"Erreur lors de la création de l'assset : {response.status_code, data}")
 
     def getTechnicalTenantID(self) -> int:
         # récupération de l'ID du technical tenant, ou création s'il n'existe pas encore

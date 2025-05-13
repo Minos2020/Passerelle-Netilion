@@ -216,6 +216,7 @@ def save_netilion_config():
                 # Nouveau compte → crée l'objet sans ID, puis utilise add_account
                 account = NetilionAccount(
                     identification=acc_dict["identification"],
+                    email=acc_dict["email"],
                     client_id=acc_dict["client_id"],
                     client_secret=acc_dict["client_secret"],
                     username=acc_dict["username"],
@@ -228,12 +229,14 @@ def save_netilion_config():
                 # Compte existant → on récupère le compte et on met à jour uniquement les infos qui ont changé
                 account = passerelle.getAccountByID(acc_dict["account_id"])
                 
+                email = acc_dict["email"] if "email" in acc_dict.get("hasChanged", []) else account.email
                 client_id = acc_dict["client_id"] if "client_id" in acc_dict.get("hasChanged", []) else account.client_id
                 client_secret = acc_dict["client_secret"] if "client_secret" in acc_dict.get("hasChanged", []) else account.client_secret
                 username = acc_dict["username"] if "username" in acc_dict.get("hasChanged", []) else account.username
                 password = acc_dict["password"] if "password" in acc_dict.get("hasChanged", []) else account.password
                 
                 account.identification=acc_dict["identification"]
+                account.email=email
                 account.client_id=client_id
                 account.client_secret=client_secret
                 account.username=username
@@ -259,6 +262,7 @@ def test_account_connection():
         if data.get('isNew'):
             tested_account = NetilionAccount(
                 "tested_account",
+                data["email"],
                 data["client_id"],
                 data["client_secret"],
                 data["username"],
@@ -269,6 +273,7 @@ def test_account_connection():
         else:
             saved_account = PasserelleNetilion().getAccountByID(data["account_id"])
             # Reconstitue un compte à partir des infos modifiées + les anciennes si pas modifiées
+            email = data["email"] if "email" in data.get("hasChanged", []) else saved_account.email
             client_id = data["client_id"] if "client_id" in data.get("hasChanged", []) else saved_account.client_id
             client_secret = data["client_secret"] if "client_secret" in data.get("hasChanged", []) else saved_account.client_secret
             username = data["username"] if "username" in data.get("hasChanged", []) else saved_account.username
@@ -276,6 +281,7 @@ def test_account_connection():
             
             tested_account = NetilionAccount(
                 "tested_account",
+                email,
                 client_id,
                 client_secret,
                 username,
