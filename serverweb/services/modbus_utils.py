@@ -6,10 +6,6 @@ from flask import  jsonify
 from pymodbus.client import ModbusTcpClient #, ModbusSerialClient
 from datetime import datetime
 
-# Paramètres de configuration (doivent être extraits de ton fichier config.json)
-MODBUS_CONFIG = get_config_value('modbus')
-
-BINDINGS = get_config_value('bindings')
 
 # Index des datatypes et du nombre de registres associé
 counts = {
@@ -97,42 +93,87 @@ def get_current_time():
     """ Récupère l'heure actuelle sous forme ISO 8601 """
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-def store_data_to_json(data, filename="modbus_data.json"):
-    """ Enregistre les données dans un fichier JSON """
-    try:
-        with open(filename, "a") as f:
-            json.dump(data, f)
-            f.write("\n")  # Ajouter un saut de ligne entre les entrées
-    except Exception as e:
-        print(f"Erreur lors de l'enregistrement des données dans le fichier JSON: {e}")
-    
 
+def store_data_to_json(binding, new_data_entry):
+    asset_id = str(binding.netilion_asset_id)
+    filename = os.path.join("data", f"{binding.netilion_account_id}.json")
+
+    # On crée le dossier "data" si jamais il n'existe pas / plus
+    os.makedirs("data", exist_ok=True)
+    
+    # On lit les données du fichier (obligatoire pour pouvoir y ajouter les nouvelles)
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as f:
+            all_data = json.load(f)
+    else:
+        all_data = {}
+    
+    # On crée une nouvelle clé avec l'asset_id si elle n'existe pas
+    if asset_id not in all_data:
+        all_data[asset_id] = []
+
+    # Chercher si une entrée avec la même clé (asset_id) existe déjà
+    found = False
+    for entry in all_data[asset_id]:
+        if entry["key"] == binding.key and entry["group"] == binding.group:
+            # Créer un champ "data" si inexistant
+            if "data" not in entry:
+                entry["data"] = []
+
+            # Ajouter le nouveau lot dans "data"
+            entry["data"].append(new_data_entry)
+            found = True
+            break
+
+    # Si pas trouvé, on ajoute une nouvelle entrée
+    if not found:
+        all_data[asset_id].append(
+            {
+                "key": binding.key,
+                "group": binding.group,
+                "unit": {"id": binding.unit_id},
+                "data": [new_data_entry]
+            }
+        )
+
+    # Sauvegarder dans le fichier
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(all_data, f, indent=4)
+
+
+def readAllBindings():
+    while True:
+        # Cycle toutes les X secondes selon fréquence d'interrogation
+        time.sleep(PasserelleNetilion().modbus_rate)
+        print("Lecture des données...", end=" ")
+
+        for binding in PasserelleNetilion().bindings:
+                value = None
+
+                if binding.protocol == "TCP":
+                    client = modbus_tcp_client(binding.slaveadress)
+                    value = read_registers(client, binding.slaveadress, binding.registeradress, binding.datatype)
+                
+                else:
+                    print(f"Binding \"{binding.identification}\" : protocole inconnu ou non pris en charge")
+                    continue
+
+                if value is not None:
+                    timestamp = get_current_time()
+                    data_entry = {
+                        "status": "good",
+                        "value": value,
+                        "timestamp": timestamp
+                    }
+                    store_data_to_json(binding, data_entry)
+                    # print(f"Donnée enregistrée pour {binding.identification}: {value} à {timestamp}")
+                
+                client.close()  # Fermer la connexion après chaque lecture
+
+        print("Fait")
+        
+        
 
 
 if __name__ == "__main__":
-    # Exemple d'utilisation de modbus_tcp_client ou modbus_rtu_client selon le type de protocole
-    while (True):
-        for binding in BINDINGS:
-            if binding["protocol"] == "TCP":
-                client = modbus_tcp_client(binding["slaveadress"])
-            # elif binding["protocol"] == "RTU":
-            #     client = modbus_rtu_client("/dev/ttyUSB0")  # Exemple de port série
-            else:
-                print(f"Protocole inconnu pour l'identification {binding['identification']}")
-                continue
-
-            valeur = read_registers(client, binding["slaveadress"], binding["registeradress"], binding["datatype"])
-
-            if valeur is not None:
-                timestamp = get_current_time()
-                data = {
-                    "identification": binding["identification"],
-                    "value": valeur,
-                    "timestamp": timestamp
-                }
-                store_data_to_json(data)
-                print(f"Donnée enregistrée pour {binding['identification']}: {valeur} à {timestamp}")
-            
-            client.close()  # Fermer la connexion après chaque lecture
-        
-        time.sleep(int(MODBUS_CONFIG["rate"]))  # Attendre avant de lire le prochain registre
+    pass

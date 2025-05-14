@@ -788,8 +788,8 @@ class NetilionAccount:
             match object_type:
                 case "asset":
                     for binding in PasserelleNetilion().bindings:
-                        if binding.netilion_binding_id == object_id:
-                            binding.netilion_binding_id = None
+                        if binding.netilion_asset_id == object_id:
+                            binding.netilion_asset_id = None
                             print("suppression du binding")
                     self.update_assets()
                 case "instrumentation":
@@ -945,7 +945,7 @@ class ValueSet:
 
 class Binding:
     def __init__(self, identification: str, protocol: str, slaveadress: str, registeradress: str,
-                 datatype: str, unit_id: int, netilion_account_id: int, netilion_binding_id: int,
+                 datatype: str, unit_id: int, netilion_account_id: int, netilion_asset_id: int,
                  key: str=None, group: str=None):
         self.identification: str = identification
         self.protocol: str = protocol
@@ -954,7 +954,7 @@ class Binding:
         self.datatype: str = datatype
         self.unit_id: int = unit_id
         self.netilion_account_id: int = netilion_account_id
-        self.netilion_binding_id: int = netilion_binding_id
+        self.netilion_asset_id: int = netilion_asset_id
         self.key = key
         self.group = group
 
@@ -968,7 +968,7 @@ class Binding:
             "datatype": self.datatype,
             "unit_id": self.unit_id,
             "netilion_account_id": self.netilion_account_id,
-            "netilion_binding_id": self.netilion_binding_id,
+            "netilion_asset_id": self.netilion_asset_id,
             "key": self.key,
             "group": self.group
         }
@@ -984,11 +984,32 @@ class Binding:
             datatype=data["datatype"],
             unit_id=data["unit_id"],
             netilion_account_id=data["netilion_account_id"],
-            netilion_binding_id=data["netilion_binding_id"],
+            netilion_asset_id=data["netilion_asset_id"],
             key=data["key"],
             group=data["group"],
         )
     
+    def checkIntegrity(self):
+        """
+        Vérifie que le compte et l'asset Netilion paramétrés sont toujours existants.
+        Renvoie False si l'un des deux est manquant, True sinon.
+        """
+        passerelle = PasserelleNetilion()
+        
+        # Vérifier que le compte existe
+        account = next((acc for acc in passerelle.accounts if acc.account_id == self.netilion_account_id), None)
+        if not account:
+            self.netilion_account_id = None
+            self.netilion_asset_id = None
+            return False
+
+        # Vérifier que l'asset existe dans ce compte
+        asset_exists = any(asset.id == self.netilion_asset_id for asset in account.assets)
+        if not asset_exists:
+            self.netilion_asset_id = None
+            return False
+
+        return True
 
 if __name__ == '__main__':
     
@@ -998,10 +1019,10 @@ if __name__ == '__main__':
         print(network.to_dict())
 
     # # Création des objets Binding
-    # binding1 = Binding(identification="Math 4", protocol="TCP", slaveadress="192.168.200.23", registeradress="4206", datatype="FLOAT_B", unit_id=1, netilion_account_id=1, netilion_binding_id=2159190)
-    # binding2 = Binding(identification="Niveau 3", protocol="TCP", slaveadress="192.168.200.23", registeradress="4204", datatype="FLOAT_B", unit_id=1, netilion_account_id=1, netilion_binding_id=1999331)
-    # binding3 = Binding(identification="Niveau 1", protocol="TCP", slaveadress="192.168.200.23", registeradress="4200", datatype="FLOAT_B", unit_id=2, netilion_account_id=2, netilion_binding_id=12)
-    # binding4 = Binding(identification="Math 11", protocol="TCP", slaveadress="192.168.200.23", registeradress="4220", datatype="FLOAT_B", unit_id=2, netilion_account_id=2, netilion_binding_id=2163151)
+    # binding1 = Binding(identification="Math 4", protocol="TCP", slaveadress="192.168.200.23", registeradress="4206", datatype="FLOAT_B", unit_id=1, netilion_account_id=1, netilion_asset_id=2159190)
+    # binding2 = Binding(identification="Niveau 3", protocol="TCP", slaveadress="192.168.200.23", registeradress="4204", datatype="FLOAT_B", unit_id=1, netilion_account_id=1, netilion_asset_id=1999331)
+    # binding3 = Binding(identification="Niveau 1", protocol="TCP", slaveadress="192.168.200.23", registeradress="4200", datatype="FLOAT_B", unit_id=2, netilion_account_id=2, netilion_asset_id=12)
+    # binding4 = Binding(identification="Math 11", protocol="TCP", slaveadress="192.168.200.23", registeradress="4220", datatype="FLOAT_B", unit_id=2, netilion_account_id=2, netilion_asset_id=2163151)
 
     # # Création des objets Asset
     # asset1 = Asset(id=1999331, serial_number="020202020202", description="Blabla", product_name=1, nodes=[1], instrumentation=[1])

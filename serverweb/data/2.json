@@ -1,0 +1,258 @@
+{
+    "2206791": [
+        {
+            "key": "coucou",
+            "group": "hey",
+            "unit": {
+                "id": 64
+            },
+            "data": [
+                {
+                    "status": "good",
+                    "value": 46573,
+                    "timestamp": "2025-05-14T23:58:06.165013Z"
+                },
+                {
+                    "status": "good",
+                    "value": 5551,
+                    "timestamp": "2025-05-14T23:58:26.339396Z"
+                },
+                {
+                    "status": "good",
+                    "value": 38388,
+                    "timestamp": "2025-05-14T23:58:46.580829Z"
+                },
+                {
+                    "status": "good",
+                    "value": 326,
+                    "timestamp": "2025-05-14T23:59:06.738973Z"
+                },
+                {
+                    "status": "good",
+                    "value": 65142,
+                    "timestamp": "2025-05-14T23:59:26.861871Z"
+                },
+                {
+                    "status": "good",
+                    "value": 15627,
+                    "timestamp": "2025-05-14T23:59:46.952511Z"
+                },
+                {
+                    "status": "good",
+                    "value": 22989,
+                    "timestamp": "2025-05-15T00:00:17.656841Z"
+                },
+                {
+                    "status": "good",
+                    "value": 56908,
+                    "timestamp": "2025-05-15T00:00:37.766284Z"
+                },
+                {
+                    "status": "good",
+                    "value": 26346,
+                    "timestamp": "2025-05-15T00:01:06.016501Z"
+                },
+                {
+                    "status": "good",
+                    "value": 53814,
+                    "timestamp": "2025-05-15T00:01:26.212101Z"
+                },
+                {
+                    "status": "good",
+                    "value": 8944,
+                    "timestamp": "2025-05-15T00:01:46.263180Z"
+                },
+                {
+                    "status": "good",
+                    "value": 56462,
+                    "timestamp": "2025-05-15T00:02:06.398852Z"
+                },
+                {
+                    "status": "good",
+                    "value": 6193,
+                    "timestamp": "2025-05-15T00:02:26.504882Z"
+                },
+                {
+                    "status": "good",
+                    "value": 60808,
+                    "timestamp": "2025-05-15T00:02:46.614112Z"
+                },
+                {
+                    "status": "good",
+                    "value": 11314,
+                    "timestamp": "2025-05-15T00:03:06.774651Z"
+                }
+            ]
+        },
+        {
+            "key": "salut",
+            "group": "bye",
+            "unit": {
+                "id": 1
+            },
+            "data": [
+                {
+                    "status": "good",
+                    "value": 6549,
+                    "timestamp": "2025-05-14T23:58:06.267661Z"
+                },
+                {
+                    "status": "good",
+                    "value": 1923,
+                    "timestamp": "2025-05-14T23:58:26.486997Z"
+                },
+                {
+                    "status": "good",
+                    "value": 30976,
+                    "timestamp": "2025-05-14T23:58:46.644684Z"
+                },
+                {
+                    "status": "good",
+                    "value": 29460,
+                    "timestamp": "2025-05-14T23:59:06.785327Z"
+                },
+                {
+                    "status": "good",
+                    "value": 53746,
+                    "timestamp": "2025-05-14T23:59:26.898328Z"
+                },
+                {
+                    "status": "good",
+                    "value": 13709,
+                    "timestamp": "2025-05-14T23:59:47.073650Z"
+                },
+                {
+                    "status": "good",
+                    "value": 17954,
+                    "timestamp": "2025-05-15T00:00:17.737340Z"
+                },
+                {
+                    "status": "good",
+                    "value": 3430,
+                    "timestamp": "2025-05-15T00:00:37.838008Z"
+                },
+                {
+                    "status": "good",
+                    "value": 43699,
+                    "timestamp": "2025-05-15T00:01:06.121511Z"
+                },
+                {
+                    "status": "good",
+                    "value": 64909,
+                    "timestamp": "2025-05-15T00:01:26.234374Z"
+                },
+                {
+                    "status": "good",
+                    "value": 35162,
+                    "timestamp": "2025-05-15T00:01:46.331813Z"
+                },
+                {
+                    "status": "good",
+                    "value": 7336,
+                    "timestamp": "2025-05-15T00:02:06.460613Z"
+                },
+                {
+                    "status": "good",
+                    "value": 61975,
+                    "timestamp": "2025-05-15T00:02:26.580647Z"
+                },
+                {
+                    "status": "good",
+                    "value": 31164,
+                    "timestamp": "2025-05-15T00:02:46.709649Z"
+                },
+                {
+                    "status": "good",
+                    "value": 41186,
+                    "timestamp": "2025-05-15T00:03:06.864775Z"
+                }
+            ]
+        }
+    ],
+    "2206812": [
+        {
+            "key": "hello",
+            "group": "hey",
+            "unit": {
+                "id": 1
+            },
+            "data": [
+                {
+                    "status": "good",
+                    "value": 63022,
+                    "timestamp": "2025-05-14T23:58:06.207078Z"
+                },
+                {
+                    "status": "good",
+                    "value": 13390,
+                    "timestamp": "2025-05-14T23:58:26.410770Z"
+                },
+                {
+                    "status": "good",
+                    "value": 34333,
+                    "timestamp": "2025-05-14T23:58:46.594339Z"
+                },
+                {
+                    "status": "good",
+                    "value": 48986,
+                    "timestamp": "2025-05-14T23:59:06.754048Z"
+                },
+                {
+                    "status": "good",
+                    "value": 15231,
+                    "timestamp": "2025-05-14T23:59:26.887637Z"
+                },
+                {
+                    "status": "good",
+                    "value": 31622,
+                    "timestamp": "2025-05-14T23:59:47.026526Z"
+                },
+                {
+                    "status": "good",
+                    "value": 26470,
+                    "timestamp": "2025-05-15T00:00:17.703359Z"
+                },
+                {
+                    "status": "good",
+                    "value": 28718,
+                    "timestamp": "2025-05-15T00:00:37.805381Z"
+                },
+                {
+                    "status": "good",
+                    "value": 44855,
+                    "timestamp": "2025-05-15T00:01:06.074650Z"
+                },
+                {
+                    "status": "good",
+                    "value": 32189,
+                    "timestamp": "2025-05-15T00:01:26.224638Z"
+                },
+                {
+                    "status": "good",
+                    "value": 3499,
+                    "timestamp": "2025-05-15T00:01:46.301623Z"
+                },
+                {
+                    "status": "good",
+                    "value": 45633,
+                    "timestamp": "2025-05-15T00:02:06.430049Z"
+                },
+                {
+                    "status": "good",
+                    "value": 34178,
+                    "timestamp": "2025-05-15T00:02:26.541893Z"
+                },
+                {
+                    "status": "good",
+                    "value": 38720,
+                    "timestamp": "2025-05-15T00:02:46.662883Z"
+                },
+                {
+                    "status": "good",
+                    "value": 39069,
+                    "timestamp": "2025-05-15T00:03:06.832939Z"
+                }
+            ]
+        }
+    ]
+}

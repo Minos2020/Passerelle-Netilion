@@ -86,7 +86,7 @@
       document.getElementById("parameters-form").addEventListener("submit", function (event) {
         event.preventDefault();
         const configData = {
-          modbus_rate: document.getElementById("rate").value,
+          modbus_rate: parseInt(document.getElementById("rate").value, 10),
           mode: document.getElementById("mode-toggle").checked ? "production" : "configuration",
           encryption: document.getElementById("encryption-toggle").checked
         };

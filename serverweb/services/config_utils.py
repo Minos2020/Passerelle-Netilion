@@ -3,7 +3,7 @@ from services.encryption_utils import decrypt_data_from_file, encrypt_data_into_
 from model import PasserelleNetilion
 
 # Chemin du fichier de configuration
-CONFIG_PATH = "tempconf.conf"
+CONFIG_PATH = "configuration.conf"
 SAVE_INTERVAL = 60  # secondes
 
 CONFIG_ENCRYPTION_KEY = os.getenv("CONFIG_ENCRYPTION_KEY")

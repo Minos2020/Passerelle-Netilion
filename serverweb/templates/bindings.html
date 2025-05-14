@@ -186,13 +186,13 @@
 					}
 				}
 
-				let groupOptions = netilionAccount?.assets?.find(asset => asset.id === binding.netilion_binding_id)?.value_groups ?? [];
+				let groupOptions = netilionAccount?.assets?.find(asset => asset.id === binding.netilion_asset_id)?.value_groups ?? [];
 
-				let keyOptions = netilionAccount?.assets?.find(asset => asset.id === binding.netilion_binding_id)?.value_keys ?? [];
+				let keyOptions = netilionAccount?.assets?.find(asset => asset.id === binding.netilion_asset_id)?.value_keys ?? [];
 
 
 
-				let bindingObject = bindableOptions.find(obj => obj.id === binding.netilion_binding_id);
+				let bindingObject = bindableOptions.find(obj => obj.id === binding.netilion_asset_id);
 				let bindingLabel = "";
 
 				row.innerHTML = `
@@ -394,9 +394,9 @@
 
 			if (field === "netilion_account_id") {
 				bindings[index].netilion_account_id = parseInt(value, 10);
-				bindings[index].netilion_binding_id = null;
+				bindings[index].netilion_asset_id = null;
 				delete inputErrors[index][field];
-				inputErrors[index]["netilion_binding_id"] = "Aucun asset n'a été lié";
+				inputErrors[index]["netilion_asset_id"] = "Aucun asset n'a été lié";
 			
 			} else if (field === "unit") {
 				const isUnitValid = units.find(u => `${u.name} (${u.symbol})` === value);
@@ -407,8 +407,8 @@
 					inputErrors[index][field] =  "Unité non reconnue";
 				}
 
-			} else if (field === "netilion_binding_id") {
-				bindings[index].netilion_binding_id = parseInt(value, 10);
+			} else if (field === "netilion_asset_id") {
+				bindings[index].netilion_asset_id = parseInt(value, 10);
 				console.log(inputErrors)
 				delete inputErrors[index][field];
 				console.log(inputErrors)
@@ -424,9 +424,20 @@
 					bindings[index][field] = value;
 					delete inputErrors[index][field];
 				}
+			} else if (field === "protocol") {
+				if (value === "RTU"){
+					inputErrors[index][field] =  "Protocole RTU non pris en charge pour le moment";
+				} else {
+					bindings[index][field] = value;
+					delete inputErrors[index][field];
+				}
 			} else {
-				bindings[index][field] = value;
-				delete inputErrors[index][field];
+				if (value === "" || value === undefined){
+					inputErrors[index][field] =  "Valeur manquante";
+				} else {
+					bindings[index][field] = value;
+					delete inputErrors[index][field];
+				}
 			}
 
 			// Nettoyer s'il n'y a plus d'erreur pour ce binding
@@ -449,7 +460,7 @@
 				datatype: "INT16",
 				unit_id: 1,
 				netilion_account_id: accounts.length > 0 ? accounts[0].id : null,
-				netilion_binding_id: null,
+				netilion_asset_id: null,
 				key: "",
 				group: "",
 			};
@@ -459,7 +470,7 @@
 			const newIndex = bindings.length - 1;
 			inputErrors[newIndex] = {
 				netilion_account_id: "Aucun compte Netilion n'a été choisi",
-				netilion_binding_id: "Aucun asset n'a été lié",
+				netilion_asset_id: "Aucun asset n'a été lié",
 				slaveadress: "Adresse esclave manquante",
 				registeradress: "Registre esclave manquant",
 				identification: "Veuillez définir un nom pour le binding",
@@ -469,11 +480,12 @@
 
 		function deleteBinding(index) {
 			bindings.splice(index, 1);
+			delete inputErrors[index];
 			renderBindings();
 		}
 
 		function saveBindings() {
-			console.log(inputErrors)
+			// console.log(inputErrors)
 			if (Object.keys(inputErrors).length > 0) {
 				// Optionnel : concaténer les messages d'erreurs pour la notif
 				const errorMessages = Object.entries(inputErrors)

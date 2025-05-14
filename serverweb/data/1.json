@@ -1,0 +1,88 @@
+{
+    "2204854": [
+        {
+            "key": "encore un test",
+            "group": "",
+            "unit": {
+                "id": 128
+            },
+            "data": [
+                {
+                    "status": "good",
+                    "value": 28494,
+                    "timestamp": "2025-05-14T23:58:06.308878Z"
+                },
+                {
+                    "status": "good",
+                    "value": 13432,
+                    "timestamp": "2025-05-14T23:58:26.527779Z"
+                },
+                {
+                    "status": "good",
+                    "value": 61779,
+                    "timestamp": "2025-05-14T23:58:46.711881Z"
+                },
+                {
+                    "status": "good",
+                    "value": 46771,
+                    "timestamp": "2025-05-14T23:59:06.844772Z"
+                },
+                {
+                    "status": "good",
+                    "value": 36888,
+                    "timestamp": "2025-05-14T23:59:26.929109Z"
+                },
+                {
+                    "status": "good",
+                    "value": 16461,
+                    "timestamp": "2025-05-14T23:59:47.095884Z"
+                },
+                {
+                    "status": "good",
+                    "value": 36757,
+                    "timestamp": "2025-05-15T00:00:17.747571Z"
+                },
+                {
+                    "status": "good",
+                    "value": 18906,
+                    "timestamp": "2025-05-15T00:00:37.855142Z"
+                },
+                {
+                    "status": "good",
+                    "value": 59585,
+                    "timestamp": "2025-05-15T00:01:06.162880Z"
+                },
+                {
+                    "status": "good",
+                    "value": 53774,
+                    "timestamp": "2025-05-15T00:01:26.254288Z"
+                },
+                {
+                    "status": "good",
+                    "value": 43816,
+                    "timestamp": "2025-05-15T00:01:46.364364Z"
+                },
+                {
+                    "status": "good",
+                    "value": 13681,
+                    "timestamp": "2025-05-15T00:02:06.489230Z"
+                },
+                {
+                    "status": "good",
+                    "value": 6354,
+                    "timestamp": "2025-05-15T00:02:26.598337Z"
+                },
+                {
+                    "status": "good",
+                    "value": 42998,
+                    "timestamp": "2025-05-15T00:02:46.741563Z"
+                },
+                {
+                    "status": "good",
+                    "value": 59377,
+                    "timestamp": "2025-05-15T00:03:06.896476Z"
+                }
+            ]
+        }
+    ]
+}
