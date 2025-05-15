@@ -117,7 +117,7 @@ class Network:
         )
 
 class NetilionAccount:
-    def __init__(self, identification: str, email:str, client_id: str, client_secret: str, username: str, password: str, account_id: int=None, changes_to_save=None):
+    def __init__(self, identification: str, email:str, client_id: str, client_secret: str, username: str, password: str, account_id: int=None, changes_to_save=None, netilion_rate: int=0, netilion_rate_mode: str="off"):
         self.identification: str = identification
         self.email: str = email
         self.account_id: int = account_id
@@ -138,6 +138,8 @@ class NetilionAccount:
         self.storage_used: int = None
         self.api_call_quota: int = None
         self.api_calls_used: int = None
+        self.netilion_rate: int = netilion_rate
+        self.netilion_rate_mode: str = netilion_rate_mode
 
 
     def to_dict(self):
@@ -161,7 +163,9 @@ class NetilionAccount:
             "storage_quota": self.storage_quota,
             "storage_used": self.storage_used,
             "api_call_quota": self.api_call_quota,
-            "api_calls_used": self.api_calls_used
+            "api_calls_used": self.api_calls_used,
+            "netilion_rate": self.netilion_rate,
+            "netilion_rate_mode": self.netilion_rate_mode
         }
     
     def to_dict_secured(self):
@@ -187,7 +191,9 @@ class NetilionAccount:
             "storage_quota": self.storage_quota,
             "storage_used": self.storage_used,
             "api_call_quota": self.api_call_quota,
-            "api_calls_used": self.api_calls_used
+            "api_calls_used": self.api_calls_used,
+            "netilion_rate": self.netilion_rate,
+            "netilion_rate_mode": self.netilion_rate_mode
         }
 
     @classmethod
@@ -205,6 +211,8 @@ class NetilionAccount:
         instance.storage_used = data.get("storage_used", 0)
         instance.api_call_quota = data.get("api_call_quota", 0)
         instance.api_calls_used = data.get("api_calls_used", 0)
+        instance.netilion_rate = data.get("netilion_rate", 0)
+        instance.netilion_rate_mode = data.get("netilion_rate_mode", "off")
 
         # Désérialisation de la date de dernière connexion
         instance.last_connection = datetime.fromisoformat(data.get("last_connection")) if data.get("last_connection") else None
@@ -224,6 +232,8 @@ class NetilionAccount:
         """Retourne la dernière connexion sous forme lisible."""
         return self.last_connection.strftime("%Y-%m-%d %H:%M:%S") if self.last_connection else "Jamais connecté"
 
+    def get_recommanded_netilion_rate(self) -> int:
+        pass
 
     def _request_token(self, grant_type, extra_data=None) -> None:
         """
@@ -391,7 +401,7 @@ class NetilionAccount:
         
     def update_assets(self):
         """Récupère les assets associés au compte Netilion et les ajoute à l'instance de NetilionAccount."""
-        # Endpoint pour récupérer les nodes
+        # Endpoint pour récupérer les assets
         endpoint = "assets?include=instrumentations%2C%20nodes%2C%20product%2C%20values"
         
         # Utiliser la méthode send_request pour envoyer la requête
@@ -399,9 +409,6 @@ class NetilionAccount:
         
         if response.status_code == 200:
             data = response.json()
-            # pagination = data.get("pagination")
-            # if pagination:
-            #     print(pagination.get("total_count"))
 
             fetched_assets = []
             # Ajouter chaque asset dans la liste des assets du compte
@@ -421,11 +428,13 @@ class NetilionAccount:
                     asset.instrumentations.add(instrum["id"])
                 for node in asset_data.get('nodes', {}).get('items', []):
                     asset.nodes.add(node["id"])
+                
+                # Récupérer également les dernières valeurs afin de connaître les différents
+                # keys et groups déjà existants
                 for value in asset_data.get('values', []):
                     print(value)
                     asset.value_groups.add(value.get("group", None))
                     asset.value_keys.add(value["key"])
-                    print(asset.to_dict())
                 fetched_assets.append(asset)
             self.assets = fetched_assets
             if self.changes_to_save:

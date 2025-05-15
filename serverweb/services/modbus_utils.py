@@ -143,34 +143,38 @@ def store_data_to_json(binding, new_data_entry):
 
 def readAllBindings():
     while True:
-        # Cycle toutes les X secondes selon fréquence d'interrogation
-        time.sleep(PasserelleNetilion().modbus_rate)
-        print("Lecture des données...", end=" ")
+        
+        # Uniquement si la passerelle est en mode PRODUCTION
+        if (PasserelleNetilion().mode == "production"):
+            
+            # Cycle toutes les X secondes selon fréquence d'interrogation
+            time.sleep(PasserelleNetilion().modbus_rate)
+            print("Lecture des données...", end=" ")
 
-        for binding in PasserelleNetilion().bindings:
-                value = None
+            for binding in PasserelleNetilion().bindings:
+                    value = None
 
-                if binding.protocol == "TCP":
-                    client = modbus_tcp_client(binding.slaveadress)
-                    value = read_registers(client, binding.slaveadress, binding.registeradress, binding.datatype)
-                
-                else:
-                    print(f"Binding \"{binding.identification}\" : protocole inconnu ou non pris en charge")
-                    continue
+                    if binding.protocol == "TCP":
+                        client = modbus_tcp_client(binding.slaveadress)
+                        value = read_registers(client, binding.slaveadress, binding.registeradress, binding.datatype)
+                    
+                    else:
+                        print(f"Binding \"{binding.identification}\" : protocole inconnu ou non pris en charge")
+                        continue
 
-                if value is not None:
-                    timestamp = get_current_time()
-                    data_entry = {
-                        "status": "good",
-                        "value": value,
-                        "timestamp": timestamp
-                    }
-                    store_data_to_json(binding, data_entry)
-                    # print(f"Donnée enregistrée pour {binding.identification}: {value} à {timestamp}")
-                
-                client.close()  # Fermer la connexion après chaque lecture
+                    if value is not None:
+                        timestamp = get_current_time()
+                        data_entry = {
+                            "status": "good",
+                            "value": value,
+                            "timestamp": timestamp
+                        }
+                        store_data_to_json(binding, data_entry)
+                        # print(f"Donnée enregistrée pour {binding.identification}: {value} à {timestamp}")
+                    
+                    client.close()  # Fermer la connexion après chaque lecture
 
-        print("Fait")
+            print("Fait")
         
         
 

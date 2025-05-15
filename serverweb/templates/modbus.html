@@ -140,12 +140,13 @@ Si désactivé il est en clair.">
           <span id="encryption-toggle-label" style="min-width: 175px;">...</span>
         </div>
 
-      <div class="parameters-box">
-        <div class="grid-key" title="Fréquence à la laquelle les registres modbus seront interrogés.
-Commune à tous les bindings.">Fréquence d'interrogation (s)</div>
-        <input class="grid-value" title="Fréquence à la laquelle les registres modbus seront interrogés" type="number" id="rate" name="rate" min="1" max="600" value="1">
-        <div class="grid-key">Wait Delay (s)</div>
-        <input class="grid-value" type="number" id="waitdelay" name="waitdelay" min="1" max="60" value="1">
+      <div class="parameters-box" title="Période d'interrogation des registres modbus pour chaque binding.
+(toutes les x secondes, chacun des registres configurés dans les bindings sera interrogé)
+Cette période est commune à tous les bindings.">
+        <div class="grid-key">Fréquence d'interrogation (s)</div>
+        <input class="grid-value" type="number" id="rate" name="rate" min="1" max="600" value="1">
+        <!-- <div class="grid-key">Wait Delay (s)</div>
+        <input class="grid-value" type="number" id="waitdelay" name="waitdelay" min="1" max="60" value="1"> -->
       </div>
 
     <div class="parameters-box" style="align-self: center;" onclick="notImplementedYet()">

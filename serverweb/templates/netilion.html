@@ -61,7 +61,7 @@
     function renderAccounts() {
       let container = document.getElementById("accounts-container");
       container.innerHTML = ""; // Clear before rendering
-
+     
       accounts.forEach((account, index) => {
         let div = document.createElement("div");
         div.classList.add("account-box");
@@ -85,20 +85,67 @@
           <div class="grid-key">Password:</div>
           <input class="grid-value" type="password" value="${account.password}" onchange="updateAccount(${index}, 'password', this.value)">
           
-          
+          <div class="parameters-box" style="grid-column: span 2; width: auto; grid-gap: 20px; box-shadow: none;"
+          title="Période d'envoi dans Netilion des données enregistrées pour ce compte.
+(toutes les x minutes, toutes les données enregistrées pour ce comptes seront poussées dans Netilion et supprimées localement)">
+            <div class="grid-key">
+              Période d'envoi <span style="font-weight: normal;"><br>(minutes)</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <select id="netilion-rate-mode-${index}">
+                <option value="off" ${account.netilion_rate_mode === "off" ? "selected" : ""}>off</option>
+                <option value="auto" ${account.netilion_rate_mode === "auto" ? "selected" : ""}>auto</option>
+                <option value="personnalisé" ${account.netilion_rate_mode === "personnalisé" ? "selected" : ""}>personnalisé</option>
+              </select>
+              <input id="netilion-rate-input-${index}" value="${account.netilion_rate}" type="number" min="1" max="10080" onchange="updateAccount(${index}, 'netilion_rate', this.value)">
+            </div>  
+          </div>
+
           <button id="test-btn-${index}" class="btn btn-test" onclick="testConnection(${index})">Tester la connexion</button>
           <button class="btn btn-danger" onclick="deleteAccount(${index})">Supprimer</button>
           
           <div id="test-result-${index}"></div>
         `;
+        
         container.appendChild(div);
+        
+        
+        // Ajout d'une logique pour les champs concernant la période d'envoi dans Netilion 
+
+        const select = div.querySelector(`#netilion-rate-mode-${index}`);
+        const rateInput = div.querySelector(`#netilion-rate-input-${index}`);
+
+        // valeur à afficher si "auto" est sélectionné
+        const autoRateValue = 60;
+
+        select.addEventListener("change", () => {
+          if (select.value === "auto") {
+            rateInput.value = autoRateValue;
+            rateInput.disabled = true;
+            rateInput.style.opacity = 0.6; // optionnel : visuel
+          } else if (select.value === "off"){
+            rateInput.value = 0;
+            rateInput.disabled = true;
+            rateInput.style.opacity = 0.6; // optionnel : visuel
+          } else {
+            rateInput.disabled = false;
+            rateInput.style.opacity = 1; // optionnel : visuel
+            if (rateInput.value === 0) {
+              rateInput.value = 1;
+            } 
+          }
+          updateAccount(index, 'netilion_rate', rateInput.value)
+          updateAccount(index, 'netilion_rate_mode', select.value)
+        });
+
+        // Pour que le comportement soit correct dès l’initialisation
+        select.dispatchEvent(new Event("change"));
       });
     }
 
     function updateAccount(index, field, value) {
+      // console.log("Update : ", field, value)
       if (["email", "client_id", "client_secret", "username", "password"].includes(field)) {
-        accounts[index][field] = value;
-
         // On marque quels champs ont été modifiés au fur et à mesure
         if (!accounts[index].hasChanged) {
           accounts[index].hasChanged = [];
@@ -107,9 +154,11 @@
           accounts[index]['hasChanged'].push(field);
         }
 
-      } else {
-        accounts[index][field] = value;
-      }
+      } else if (field === "netilion_rate") {
+        value = parseInt(value, 10)
+        
+      } 
+      accounts[index][field] = value;
     }
 
     function addAccount() {
@@ -132,6 +181,8 @@
         access_token: "",
         refresh_token: "",
         token_expiry: 0,
+        netilion_rate: 0,
+        netilion_rate_mode: "off",
         bindable_objects: [],
         isNew: true
       };

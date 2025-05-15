@@ -241,6 +241,10 @@ def save_netilion_config():
                 account.client_secret=client_secret
                 account.username=username
                 account.password=password
+                account.netilion_rate = acc_dict["netilion_rate"]
+                account.netilion_rate_mode = acc_dict["netilion_rate_mode"]
+                print(account.netilion_rate_mode)
+
             updated_accounts.append(account)
         
         # Ne conserver que les comptes mis à jour ou ajoutés
