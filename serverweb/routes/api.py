@@ -215,7 +215,7 @@ def get_recommended_netilion_rate(account_id):
 
         # Vérifie que l'ID est valide
         if not account == None:
-            recommended_netilion_rate = account.get_recommended_netilion_rate()
+            recommended_netilion_rate = account.calc_recommended_netilion_rate()
             return jsonify({"status": "success", "recommended_netilion_rate": recommended_netilion_rate})
         else:
             raise Exception("Compte introuvable")

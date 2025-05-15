@@ -237,7 +237,7 @@ class NetilionAccount:
         """Retourne la dernière connexion sous forme lisible."""
         return self.last_connection.strftime("%Y-%m-%d %H:%M:%S") if self.last_connection else "Jamais connecté"
 
-    def get_recommended_netilion_rate(self) -> int:
+    def calc_recommended_netilion_rate(self) -> int:
         """
         Calcule la période d'envoi de données idéale afin de respecter le quota de requêtes à l'API autorisé par la souscription du compte.
         - on compte combien d'assets sont connectés
@@ -271,8 +271,6 @@ class NetilionAccount:
         
         minutes_until_quota_reset = int((reset_date - now).total_seconds() // 60)
         days_until_quota_reset = minutes_until_quota_reset // 60 // 24
-        # print("Minutes : ", minutes_until_quota_reset)
-        # print("Days : ", days_until_quota_reset)
 
         quota_left = self.api_call_quota - self.api_calls_used
 
@@ -284,17 +282,20 @@ class NetilionAccount:
         possible_left_batches = quota_left // requests_per_batch
 
         # division par 2 pour prendre en compte la lecture des données côté visualisation
-        possible_left_batches = possible_left_batches // 2
+        possible_left_batches = int ((possible_left_batches // 2) * 0.95)
 
-        print(
-            "Nombre d'assets liés (= nombre de lots de donnée) : ", len(assets_bound_ids),"\n",
-            "Quota restant : ", quota_left, "\n",
-            "Jours restants : ", days_until_quota_reset, "\n",
-            "Nombre de requêtes par lot envoyé : ", requests_per_batch, "\n",
-            "Nombre de lots restants possible : ", possible_left_batches, "\n",
-        )
+        # print(
+        #     "Nombre d'assets liés (= nombre de lots de donnée) : ", len(assets_bound_ids),"\n",
+        #     "Quota restant : ", quota_left, "\n",
+        #     "Jours restants : ", days_until_quota_reset, "\n",
+        #     "Minutes restantes : ", minutes_until_quota_reset, "\n",
+        #     "Nombre de requêtes par lot envoyé : ", requests_per_batch, "\n",
+        #     "Nombre de lots restants possible : ", possible_left_batches, "\n",
+        # )
 
-        return 1000
+        recommended_netilion_rate = (minutes_until_quota_reset // possible_left_batches) + 1
+
+        return recommended_netilion_rate
 
     def _request_token(self, grant_type, extra_data=None) -> None:
         """
