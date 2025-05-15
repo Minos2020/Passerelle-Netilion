@@ -115,12 +115,18 @@
         const select = div.querySelector(`#netilion-rate-mode-${index}`);
         const rateInput = div.querySelector(`#netilion-rate-input-${index}`);
 
-        // valeur à afficher si "auto" est sélectionné
-        const autoRateValue = 60;
-
-        select.addEventListener("change", () => {
+        select.addEventListener("change", async () => {
           if (select.value === "auto") {
-            rateInput.value = autoRateValue;
+            await fetch(`/api/get_recommended_netilion_rate/${account.account_id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                      rateInput.value = data.recommended_netilion_rate
+                    } else {
+                      showNotification("Erreur récupération de netilion_rate : " + data.message, "error", 6000)
+                      rateInput.value = 60
+                    }
+              });
             rateInput.disabled = true;
             rateInput.style.opacity = 0.6; // optionnel : visuel
           } else if (select.value === "off"){
@@ -211,7 +217,8 @@
               } else {
                 showNotification("Problème lors de l'enregistrement : " + data.message, "error", 6000)
               }
-            });
+        }
+    );
     }
 
     function testConnection(index) {

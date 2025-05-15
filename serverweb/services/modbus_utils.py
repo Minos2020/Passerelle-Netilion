@@ -147,8 +147,6 @@ def readAllBindings():
         # Uniquement si la passerelle est en mode PRODUCTION
         if (PasserelleNetilion().mode == "production"):
             
-            # Cycle toutes les X secondes selon fréquence d'interrogation
-            time.sleep(PasserelleNetilion().modbus_rate)
             print("Lecture des données...", end=" ")
 
             for binding in PasserelleNetilion().bindings:
@@ -175,6 +173,9 @@ def readAllBindings():
                     client.close()  # Fermer la connexion après chaque lecture
 
             print("Fait")
+
+            # Cycle toutes les X secondes selon fréquence d'interrogation
+            time.sleep(PasserelleNetilion().modbus_rate)
         
         
 

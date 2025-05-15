@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
 import time, requests, json
 from services.network_utils import getNetworkSettings
 
@@ -138,6 +138,7 @@ class NetilionAccount:
         self.storage_used: int = None
         self.api_call_quota: int = None
         self.api_calls_used: int = None
+        self.subscription_start_date: datetime = None
         self.netilion_rate: int = netilion_rate
         self.netilion_rate_mode: str = netilion_rate_mode
 
@@ -164,6 +165,7 @@ class NetilionAccount:
             "storage_used": self.storage_used,
             "api_call_quota": self.api_call_quota,
             "api_calls_used": self.api_calls_used,
+            "subscription_start_date": self.subscription_start_date,
             "netilion_rate": self.netilion_rate,
             "netilion_rate_mode": self.netilion_rate_mode
         }
@@ -192,6 +194,7 @@ class NetilionAccount:
             "storage_used": self.storage_used,
             "api_call_quota": self.api_call_quota,
             "api_calls_used": self.api_calls_used,
+            "subscription_start_date": self.subscription_start_date,
             "netilion_rate": self.netilion_rate,
             "netilion_rate_mode": self.netilion_rate_mode
         }
@@ -211,6 +214,8 @@ class NetilionAccount:
         instance.storage_used = data.get("storage_used", 0)
         instance.api_call_quota = data.get("api_call_quota", 0)
         instance.api_calls_used = data.get("api_calls_used", 0)
+        instance.subscription_start_date = data.get("subscription_start_date", None)
+
         instance.netilion_rate = data.get("netilion_rate", 0)
         instance.netilion_rate_mode = data.get("netilion_rate_mode", "off")
 
@@ -232,8 +237,64 @@ class NetilionAccount:
         """Retourne la dernière connexion sous forme lisible."""
         return self.last_connection.strftime("%Y-%m-%d %H:%M:%S") if self.last_connection else "Jamais connecté"
 
-    def get_recommanded_netilion_rate(self) -> int:
-        pass
+    def get_recommended_netilion_rate(self) -> int:
+        """
+        Calcule la période d'envoi de données idéale afin de respecter le quota de requêtes à l'API autorisé par la souscription du compte.
+        - on compte combien d'assets sont connectés
+        - il en résulte le nombre de requêtes pour l'envoi de 1 lot de données
+        - on regarde combien d'envoi de lots on peut faire avec le nombre de requêtes restantes avant le quota
+
+        - on divise par 2 la valeur pour prendre en compte les requêtes qui seront effectuées par le système de visualisation pour récupérer les données
+        - on prend 90% de la valeur afin de laisser le champ libre à des modifications ultérieures de la configuration, qui rajouteront des requêtes
+        
+        - on regarde où on en est dans l'année en fonction de la datre de souscription (donc la date de réinitialisation du quota de requêtes)
+        - on en déduit la période à paramétrer
+        """
+        # pour récupérer le quota le plus récent possible
+        self.update_quotas()
+
+        # récupère la date de souscription en format datetime
+        subscription_start_date = datetime.strptime(self.subscription_start_date, "%Y-%m-%dT%H:%M:%S.000Z").replace(tzinfo=timezone.utc)
+        print(subscription_start_date)
+        
+        # calcul de la date de réinitialisation du quota
+        reset_date = subscription_start_date.replace(year=subscription_start_date.year + 1)
+        print(reset_date)
+
+        now = datetime.now(timezone.utc) # date actuelle
+        print(now)
+
+        # si jamais on est déjà plus d'1 an après le début de la souscription
+        if now > reset_date:
+            reset_date = reset_date.replace(year=reset_date.year + 1)
+
+        
+        minutes_until_quota_reset = int((reset_date - now).total_seconds() // 60)
+        days_until_quota_reset = minutes_until_quota_reset // 60 // 24
+        # print("Minutes : ", minutes_until_quota_reset)
+        # print("Days : ", days_until_quota_reset)
+
+        quota_left = self.api_call_quota - self.api_calls_used
+
+        # on extrait la liste des assets qui sont liés par des bindings pour ce compte
+        assets_bound_ids = {binding.netilion_asset_id for binding in PasserelleNetilion().bindings if binding.netilion_account_id == self.account_id}
+        
+        requests_per_batch = len(assets_bound_ids)
+        
+        possible_left_batches = quota_left // requests_per_batch
+
+        # division par 2 pour prendre en compte la lecture des données côté visualisation
+        possible_left_batches = possible_left_batches // 2
+
+        print(
+            "Nombre d'assets liés (= nombre de lots de donnée) : ", len(assets_bound_ids),"\n",
+            "Quota restant : ", quota_left, "\n",
+            "Jours restants : ", days_until_quota_reset, "\n",
+            "Nombre de requêtes par lot envoyé : ", requests_per_batch, "\n",
+            "Nombre de lots restants possible : ", possible_left_batches, "\n",
+        )
+
+        return 1000
 
     def _request_token(self, grant_type, extra_data=None) -> None:
         """
@@ -254,9 +315,7 @@ class NetilionAccount:
 
         if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
             self.update_last_connection()
-        
-        # print(self.get_last_connection())
-        
+                
         if response.status_code == 200:
             print(
                 "Access granted with password" if grant_type == "password"
@@ -487,31 +546,22 @@ class NetilionAccount:
         """Récupère les quotas et limites associées au compte Netilion et les ajoute à l'instance NetilionAccount concernée."""
        
         endpoint1 = "api_subscriptions"
-        endpoint2 = "subscriptions" # à rajouter plus tard
         
         # Utiliser la méthode send_request pour envoyer la requête
         response1 = self.send_request("GET", endpoint1)
-        # response2 = self.send_request("GET", endpoint2)
         
         if response1.status_code == 200:
             # Normalement, ne retourne qu'une seule souscription API
             subscription = response1.json().get("api_subscriptions")[0]
             
-            # pagination = data.get("pagination")
-            # if pagination:
-            #     print(pagination.get("total_count"))
-
             # Récupérer les limites et les quotas de la subcription API
             self.api_call_quota = subscription.get("api_call_quota")
             self.api_calls_used = subscription.get("api_calls_used")
-            
-            
-            # # Récupérer les limites et les quotas de la subcription API
             self.storage_quota = subscription.get("storage_quota")
             self.storage_used = subscription.get("storage_used")
-            
 
-            
+            self.subscription_start_date = subscription.get("start_date")
+
             if self.changes_to_save:
                 # print("Sauvegarde des quotas mis à jour...")
                 self.changes_to_save()
@@ -1021,11 +1071,11 @@ class Binding:
         return True
 
 if __name__ == '__main__':
-    
-    # Tester la fonction
-    networks = getNetworkSettings()
-    for network in networks:
-        print(network.to_dict())
+    pass
+    # # Tester la fonction
+    # networks = getNetworkSettings()
+    # for network in networks:
+    #     print(network.to_dict())
 
     # # Création des objets Binding
     # binding1 = Binding(identification="Math 4", protocol="TCP", slaveadress="192.168.200.23", registeradress="4206", datatype="FLOAT_B", unit_id=1, netilion_account_id=1, netilion_asset_id=2159190)

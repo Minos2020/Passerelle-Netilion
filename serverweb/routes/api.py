@@ -200,9 +200,29 @@ def save_networks_config():
 @api_bp.route('/get_accounts', methods=['GET'])
 @login_required  # 🔒 Protège cette route
 def get_accounts():
+    
+    # includes = request.args.get('include', '').split(',')
+
     passerelle = PasserelleNetilion()
     accounts = passerelle.to_dict_secured()["accounts"]
     return jsonify(accounts)
+
+@api_bp.route('/get_recommended_netilion_rate/<int:account_id>', methods=['GET'])
+@login_required  # 🔒 Protège cette route
+def get_recommended_netilion_rate(account_id):
+    try:    
+        account = PasserelleNetilion().getAccountByID(account_id)
+
+        # Vérifie que l'ID est valide
+        if not account == None:
+            recommended_netilion_rate = account.get_recommended_netilion_rate()
+            return jsonify({"status": "success", "recommended_netilion_rate": recommended_netilion_rate})
+        else:
+            raise Exception("Compte introuvable")
+    
+    except Exception as e:
+        print("Erreur lors de la récupération de netilion_rate : ", e)
+        return jsonify({"status": "error", "message": str(e)})
 
 @api_bp.route('/save_accounts', methods=['POST'])
 @login_required  # 🔒 Protège cette route
@@ -300,15 +320,15 @@ def test_account_connection():
         return jsonify({"success": False, "error": str(e)})
     
 
-@api_bp.route('/get_last_connection',  methods=['POST'])
-@login_required  # 🔒 Protège cette route
-def get_last_connection():
-    data = request.json
-    account = PasserelleNetilion().getAccountByID(data["account_id"])
-    if not account:    
-        return jsonify({"success": False, "error": "no account found"})
-    else:
-        return jsonify({"success": True, "last_connection": account.get_last_connection()})
+# @api_bp.route('/get_last_connection',  methods=['POST'])
+# @login_required  # 🔒 Protège cette route
+# def get_last_connection():
+#     data = request.json
+#     account = PasserelleNetilion().getAccountByID(data["account_id"])
+#     if not account:    
+#         return jsonify({"success": False, "error": "no account found"})
+#     else:
+#         return jsonify({"success": True, "last_connection": account.get_last_connection()})
     
 @api_bp.route('/get_units',  methods=['GET'])
 @login_required  # 🔒 Protège cette route
