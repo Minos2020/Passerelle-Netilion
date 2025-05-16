@@ -1,11 +1,5 @@
-import requests, os, time, json
-from model import PasserelleNetilion, NetilionAccount
-
-def refreshAccountStructure(account_id: int):
-    account: NetilionAccount = PasserelleNetilion().getAccountByID(account_id)
-
-    pass
-
+import json
+from model import PasserelleNetilion
 
 
 def fetch_all_units():
@@ -44,8 +38,8 @@ def fetch_all_units():
 
     print(f"✅ {len(units)} unités enregistrées dans {"units.json"}")
 
-
-    
+        
+        
 
 
 
@@ -54,7 +48,7 @@ def fetch_all_units():
 
 if __name__ == '__main__':
     
-    load_dotenv()
+    # load_dotenv()
 
     from services.config_utils import load_config
     load_config(False)

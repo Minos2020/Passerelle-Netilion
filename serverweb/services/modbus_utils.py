@@ -1,8 +1,6 @@
 from services.config_utils import*
 import struct
-import time
 import json
-from flask import  jsonify
 from pymodbus.client import ModbusTcpClient #, ModbusSerialClient
 from datetime import datetime
 
@@ -142,12 +140,8 @@ def store_data_to_json(binding, new_data_entry):
 
 
 def readAllBindings():
-    while True:
-        
-        # Uniquement si la passerelle est en mode PRODUCTION
-        if (PasserelleNetilion().mode == "production"):
-            
-            print("Lecture des données...", end=" ")
+        if PasserelleNetilion().mode == "production":
+            print("Modbus TCP - lecture des données...", end=" ")
 
             for binding in PasserelleNetilion().bindings:
                     value = None
@@ -173,10 +167,6 @@ def readAllBindings():
                     client.close()  # Fermer la connexion après chaque lecture
 
             print("Fait")
-
-            # Cycle toutes les X secondes selon fréquence d'interrogation
-            time.sleep(PasserelleNetilion().modbus_rate)
-        
         
 
 

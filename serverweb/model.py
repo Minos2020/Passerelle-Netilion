@@ -1,12 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-import time, requests, json
-from services.network_utils import getNetworkSettings
-
-
-# from services.encryption_utils import encrypt_data_into_file
-import psutil, subprocess, socket, platform, re
-
+import time, requests, threading
 
 token_url = "https://api.netilion.endress.com/oauth/token"
 BASE_URL = "https://api.netilion.endress.com/"
@@ -250,19 +244,20 @@ class NetilionAccount:
         - on regarde où on en est dans l'année en fonction de la datre de souscription (donc la date de réinitialisation du quota de requêtes)
         - on en déduit la période à paramétrer
         """
+        
+        # ATTENTION : garder en tête que le quota n'est peut-être pas à jour !!!
+        # Il faut donc le mettre à jour manuellement de temps en temps.
+
         # pour récupérer le quota le plus récent possible
-        self.update_quotas()
+        # self.update_quotas()
 
         # récupère la date de souscription en format datetime
         subscription_start_date = datetime.strptime(self.subscription_start_date, "%Y-%m-%dT%H:%M:%S.000Z").replace(tzinfo=timezone.utc)
-        print(subscription_start_date)
         
         # calcul de la date de réinitialisation du quota
         reset_date = subscription_start_date.replace(year=subscription_start_date.year + 1)
-        print(reset_date)
 
         now = datetime.now(timezone.utc) # date actuelle
-        print(now)
 
         # si jamais on est déjà plus d'1 an après le début de la souscription
         if now > reset_date:
@@ -296,6 +291,15 @@ class NetilionAccount:
         recommended_netilion_rate = (minutes_until_quota_reset // possible_left_batches) + 1
 
         return recommended_netilion_rate
+
+    
+    def send_data_to_netilion(self):
+            # Uniquement si la passerelle est en mode PRODUCTION
+            if (PasserelleNetilion().mode == "production" and self.netilion_rate != 0):
+                print(self.account_id, self.netilion_rate, " - envoi des données...",  end=" ")
+
+                print("Fait")
+
 
     def _request_token(self, grant_type, extra_data=None) -> None:
         """
@@ -334,17 +338,6 @@ class NetilionAccount:
         else:
             raise Exception(f"Failed to obtain access token: {response_data}")
         return response
-
-
-    # def authenticate(self):
-    #     """
-    #     Authentifie l'utilisateur et stocke le token.
-    #     """
-    #     response = self._request_token("password", {
-    #         "username": self.username,
-    #         "password": self.password
-    #     })
-    #     return response
 
     def refresh_token_if_needed(self):
         """
