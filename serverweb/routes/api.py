@@ -7,6 +7,7 @@ import services.network_utils as network_utils
 from model import PasserelleNetilion, Binding, NetilionAccount
 
 
+
 api_bp = Blueprint('api', __name__)
 
 
@@ -131,12 +132,22 @@ def get_general_config():
 @login_required  # 🔒 Protège cette route
 def save_general_config():
     try:
-        PasserelleNetilion().modbus_rate = request.json["modbus_rate"]
-        PasserelleNetilion().mode = request.json["mode"]
+        changedValues = []
+        passerelle = PasserelleNetilion()
+        if passerelle.modbus_rate != request.json["modbus_rate"]:
+            passerelle.modbus_rate = request.json["modbus_rate"]
+            changedValues.append("modbus_rate")
+        if passerelle.mode != request.json["mode"]:
+            passerelle.mode = request.json["mode"]
+            changedValues.append("mode")
 
-
-        save_config(PasserelleNetilion().encryption) # A ENLEVER (False pour ne pas chiffrer les données)
-
+        if any(changedValues):
+            save_config(passerelle.encryption) # A ENLEVER (False pour ne pas chiffrer les données)
+            
+            if "mode" in changedValues:
+                from app import handle_mode_change
+                handle_mode_change(changedValues)
+            
 
         return jsonify({"status": "success"})
     except Exception as e:
@@ -263,7 +274,6 @@ def save_netilion_config():
                 account.password=password
                 account.netilion_rate = acc_dict["netilion_rate"]
                 account.netilion_rate_mode = acc_dict["netilion_rate_mode"]
-                print(account.netilion_rate_mode)
 
             updated_accounts.append(account)
         

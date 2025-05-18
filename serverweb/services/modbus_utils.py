@@ -3,6 +3,9 @@ import struct
 import json
 from pymodbus.client import ModbusTcpClient #, ModbusSerialClient
 from datetime import datetime
+import threading
+
+file_lock = threading.Lock()
 
 
 # Index des datatypes et du nombre de registres associé
@@ -99,47 +102,53 @@ def store_data_to_json(binding, new_data_entry):
     # On crée le dossier "data" si jamais il n'existe pas / plus
     os.makedirs("data", exist_ok=True)
     
-    # On lit les données du fichier (obligatoire pour pouvoir y ajouter les nouvelles)
-    if os.path.exists(filename):
-        with open(filename, "r", encoding="utf-8") as f:
-            all_data = json.load(f)
-    else:
-        all_data = {}
-    
-    # On crée une nouvelle clé avec l'asset_id si elle n'existe pas
-    if asset_id not in all_data:
-        all_data[asset_id] = []
+    with file_lock:
+        # On lit les données du fichier (obligatoire pour pouvoir y ajouter les nouvelles)
+        if os.path.exists(filename):
+            try:
+                with open(filename, "r", encoding="utf-8") as f:
+                    all_data = json.load(f)
+            except json.JSONDecodeError:
+                print(f"[Erreur] Fichier JSON corrompu : {filename}. Écrasement avec un dictionnaire vide.")
+                all_data = {}
+        else:
+            all_data = {}
+        
+        # On crée une nouvelle clé avec l'asset_id si elle n'existe pas
+        if asset_id not in all_data:
+            all_data[asset_id] = []
 
-    # Chercher si une entrée avec la même clé (asset_id) existe déjà
-    found = False
-    for entry in all_data[asset_id]:
-        if entry["key"] == binding.key and entry["group"] == binding.group:
-            # Créer un champ "data" si inexistant
-            if "data" not in entry:
-                entry["data"] = []
+        # Chercher si une entrée avec la même clé (asset_id) existe déjà
+        found = False
+        for entry in all_data[asset_id]:
+            if entry["key"] == binding.key and entry["group"] == binding.group:
+                # Créer un champ "data" si inexistant
+                if "data" not in entry:
+                    entry["data"] = []
 
-            # Ajouter le nouveau lot dans "data"
-            entry["data"].append(new_data_entry)
-            found = True
-            break
+                # Ajouter le nouveau lot dans "data"
+                entry["data"].append(new_data_entry)
+                found = True
+                break
 
-    # Si pas trouvé, on ajoute une nouvelle entrée
-    if not found:
-        all_data[asset_id].append(
-            {
-                "key": binding.key,
-                "group": binding.group,
-                "unit": {"id": binding.unit_id},
-                "data": [new_data_entry]
-            }
-        )
+        # Si pas trouvé, on ajoute une nouvelle entrée
+        if not found:
+            all_data[asset_id].append(
+                {
+                    "key": binding.key,
+                    "group": binding.group,
+                    "unit": {"id": binding.unit_id},
+                    "data": [new_data_entry]
+                }
+            )
 
-    # Sauvegarder dans le fichier
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(all_data, f, indent=4)
+        # Sauvegarder dans le fichier
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(all_data, f, indent=4)
 
 
 def readAllBindings():
+                
         if PasserelleNetilion().mode == "production":
             print("Modbus TCP - lecture des données...", end=" ")
 
