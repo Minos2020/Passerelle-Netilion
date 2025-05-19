@@ -31,7 +31,7 @@ def get_active_timers():
         else:
             print(f"{key} [{timer.interval}s] ({status})   ", end="")
         
-        logger.debug(f' id={id(timer)}')
+        # logger.debug(f' id={id(timer)}')
         # if status == 'alive':
         #     active_timers.pop(key)
     print("\n")
@@ -74,9 +74,9 @@ def set_new_timer(timer_type: str, **kwargs):
             )
             timer.start()
             active_timers[account_id] = timer
-            logger.debug(f"[Netilion] Timer lancé à {time.time()} id={id(timer)}")
+            logger.debug(f"[Netilion] Compte {account_id} - Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.debug(f"[Netilion] Lancement du timer pour send_to_netilion ({account_id})")
+            logger.info(f"[Netilion] Nouveau timer send_to_netilion Compte ({account_id})")
         else:
             logger.debug(f"[Netilion] Mode production OFF, ou taux nul pour {account_id} : timer send_to_netilion non lancé.")
             pass
@@ -107,7 +107,7 @@ def set_new_timer(timer_type: str, **kwargs):
             active_timers["modbus"] = timer
             logger.debug(f"[Modbus] Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.debug("[Modbus] Lancement du timer pour read_modbus_tcp (modbus)")
+            logger.info("[Modbus] Nouveau timer modbus")
         else:
             logger.debug("[Modbus] Mode production inactif : le timer modbus ne redémarre pas.")
     
@@ -140,7 +140,7 @@ def set_new_timer(timer_type: str, **kwargs):
             active_timers["daily_accounts_sync"] = timer
             logger.debug(f"[Sync] Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.debug("[Sync] Lancement du timer pour la synchronisation journalière")
+            logger.info("[Sync] Nouveau timer synchronisation journalière")
         else:
             logger.debug("[Sync] Mode production inactif : le timer sync ne redémarre pas.")
 
@@ -161,9 +161,10 @@ def handle_mode_change(changedValues):
     if is_production_mode():
         if "mode" in changedValues:
             logger.info("Passage en mode production.")
+        set_new_timer("read_modbus_tcp")
         for account in passerelle.accounts:
             set_new_timer("send_to_netilion", account=account)
-        set_new_timer("read_modbus_tcp")
+        
         set_new_timer("daily_accounts_sync")
 
     else:
