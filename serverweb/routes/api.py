@@ -225,11 +225,18 @@ def get_recommended_netilion_rate(account_id):
         account = PasserelleNetilion().getAccountByID(account_id)
 
         # Vérifie que l'ID est valide
-        if not account == None:
+        if account:
             recommended_netilion_rate = account.calc_recommended_netilion_rate()
-            return jsonify({"status": "success", "recommended_netilion_rate": recommended_netilion_rate})
+            if recommended_netilion_rate == 0:
+                return jsonify({
+                    "status": "warning",
+                    "message": f'Aucun asset lié au compte {account.account_id} - impossible de calculer une fréquence recommandée',
+                    "recommended_netilion_rate": recommended_netilion_rate
+                })
+            else:
+                return jsonify({"status": "success", "recommended_netilion_rate": recommended_netilion_rate})
         else:
-            raise Exception("Compte introuvable")
+            raise Exception("Erreur : compte introuvable")
     
     except Exception as e:
         print("Erreur lors de la récupération de netilion_rate : ", e)
@@ -361,6 +368,7 @@ def refresh_netilion_account():
             return jsonify({"success": False, "error": "no account found"}), 404
     try:
         account.refresh_all_data()
+        save_config(False)
         # [print(asset.to_dict()["id"]) for asset in account.assets]
         return jsonify({"success": True, "account": account.to_dict_secured()})
     except Exception as e:

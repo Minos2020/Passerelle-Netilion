@@ -67,10 +67,10 @@
 
         modeToggle.addEventListener("change", function () {
           if (this.checked) {
-            modeToggleLabel.textContent = "Mode production";
+            modeToggleLabel.textContent = "Mode production ON";
             
           } else {
-            modeToggleLabel.textContent = "Mode configuration";
+            modeToggleLabel.textContent = "Mode production OFF";
           }
         });
         
@@ -123,8 +123,7 @@
   <h1>Réglages généraux</h1>
   <form id="parameters-form">
     <div id="main-container">
-      <div class="switch-container" title="En mode production les requêtes Modbus et HTTPS à Netilion sont envoyées selon les intervalles paramétrés.
-En mode configuration aucune requête n'est envoyée automatiquement.">
+      <div class="switch-container" title="En mode production les bindings sont 'activés', ce qui signifie que les requêtes Modbus et HTTPS à Netilion sont envoyées selon les intervalles paramétrés dans la configuration.">
           <label class="switch">
             <input type="checkbox" id="mode-toggle">
             <span class="slider round"></span>

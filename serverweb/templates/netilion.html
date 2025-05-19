@@ -122,9 +122,9 @@
                 .then(data => {
                     if (data.status === "success") {
                       rateInput.value = data.recommended_netilion_rate
-                    } else {
-                      showNotification("Erreur récupération de netilion_rate : " + data.message, "error", 6000)
-                      rateInput.value = 60
+                    } else if (data.status === "warning"){
+                      showNotification(data.message, "warning", 6000)
+                      rateInput.value = data.recommended_netilion_rate
                     }
               });
             rateInput.disabled = true;

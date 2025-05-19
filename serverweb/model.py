@@ -1,6 +1,9 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-import time, requests, threading
+import time, requests, os, json
+from services.locker_utils import file_lock
+from services.logger_utils import logger
+
 
 token_url = "https://api.netilion.endress.com/oauth/token"
 BASE_URL = "https://api.netilion.endress.com/"
@@ -260,7 +263,7 @@ class NetilionAccount:
         now = datetime.now(timezone.utc) # date actuelle
 
         # si jamais on est déjà plus d'1 an après le début de la souscription
-        if now > reset_date:
+        while now > reset_date:
             reset_date = reset_date.replace(year=reset_date.year + 1)
 
         
@@ -272,6 +275,10 @@ class NetilionAccount:
         # on extrait la liste des assets qui sont liés par des bindings pour ce compte
         assets_bound_ids = {binding.netilion_asset_id for binding in PasserelleNetilion().bindings if binding.netilion_account_id == self.account_id}
         
+        if not assets_bound_ids:
+            logger.warning(f"[Netilion] Aucun asset lié au compte {self.account_id} — impossible de calculer une fréquence recommandée.")
+            return 0  # ou par exemple return 60*24 pour une tentative par jour
+
         requests_per_batch = len(assets_bound_ids)
         
         possible_left_batches = quota_left // requests_per_batch
@@ -290,15 +297,71 @@ class NetilionAccount:
 
         recommended_netilion_rate = (minutes_until_quota_reset // possible_left_batches) + 1
 
+
         return recommended_netilion_rate
 
     
     def send_data_to_netilion(self):
-            # Uniquement si la passerelle est en mode PRODUCTION
-            if (PasserelleNetilion().mode == "production" and self.netilion_rate != 0):
-                print(self.account_id, self.netilion_rate, " - envoi des données...",  end=" ")
+        # Uniquement si la passerelle est en mode PRODUCTION
+        if (PasserelleNetilion().mode == "production" and self.netilion_rate != 0):
+            # print(self.account_id, self.netilion_rate, " - envoi des données...",  end=" ")
 
-                print("Fait")
+            filename = os.path.join("data", f"{self.account_id}.json")
+            
+            if not os.path.exists(filename):
+                logger.info(f"[Netilion] Aucun fichier de données pour le compte {self.identification} ({self.account_id})")
+                return
+
+            # lecture du fichier avec un file_lock afin de ne pas interférer avec les autres threads 
+            with file_lock:
+                try:
+                    with open(filename, "r", encoding="utf-8") as f:
+                        all_data = json.load(f)
+                except json.JSONDecodeError:
+                    logger.error(f"[Netilion] Fichier JSON corrompu pour le compte {self.account_id}")
+                    return
+
+            assets_sent = []  # Pour savoir si on doit réécrire le fichier à la fin
+            error_occured = []  # Pour savoir si l'envoi a échoué pour au moins un des lots de donnée
+
+            # Envoi
+            for asset_id, entries in all_data.items():
+                endpoint = f"assets/{asset_id}/values"
+                
+                if not entries:
+                    continue  # On saute les assets sans données
+
+                body = {
+                    "values": entries
+                }
+
+                try:
+                    response = self.send_request('POST', endpoint=endpoint, data=body)
+                    if response.status_code == 204:
+                        logger.debug(f"[Netilion] ✅ Données envoyées pour asset {asset_id}")
+                        all_data[asset_id] = []
+                        assets_sent.append(asset_id)
+                    
+                    else:
+                        logger.error(f"[Netilion] ❌ Erreur {response.status_code} : {response.text}")
+                        error_occured.append(asset_id)
+                except Exception as e:
+                    logger.exception(f"[Netilion] ❌ Exception pendant l'envoi : {e}")
+            
+            # Réécriture sécurisée du fichier si modification
+            if assets_sent:
+                logger.info(f'[Netilion] Compte {self.account_id} - données envoyées pour les assets suivants : {assets_sent}')
+                with file_lock:
+                    try:
+                        with open(filename, "w", encoding="utf-8") as f:
+                            json.dump(all_data, f, indent=2)
+                        logger.debug(f"[Netilion] 📁 Fichier mis à jour après suppression des données envoyées")
+                    except Exception as e:
+                        logger.exception(f"[Netilion] ❌ Erreur lors de la mise à jour du fichier JSON : {e}")
+            else:
+                logger.info(f'[Netilion] Compte {self.account_id} - aucune données disponible pour envoi')
+            if error_occured:
+                logger.warning(f"[Netilion] ⚠️ L'envoi n'a pas pu être effectué pour les assets suivant : {error_occured}")
 
 
     def _request_token(self, grant_type, extra_data=None) -> None:
@@ -316,6 +379,8 @@ class NetilionAccount:
             token_data.update(extra_data)
 
         response = requests.post(token_url, data=token_data)
+        self.api_calls_used += 1
+        
         response_data = response.json()
 
         if response.ok:  # Vérifie si la requête a réussi (statut HTTP 2xx)
@@ -395,13 +460,15 @@ class NetilionAccount:
         # print(url)
 
         response = requests.request(method, url, json=data, params=params, headers=headers)
+        self.api_calls_used += 1
+        # self.changes_to_save()
 
         if response.status_code == 401:  # Token expiré
             self.refresh_token_if_needed()
             headers["Authorization"] = f"Bearer {self.access_token}"
             headers['accept'] = "application/json"
             response = requests.request(method, url, json=data, params=params, headers=headers)
-
+            self.api_calls_used += 1
         
         if not response.ok:  # Si la requête renvoie autre chose que le statut HTTP 2xx
             data = {
@@ -410,13 +477,11 @@ class NetilionAccount:
                 "status_code": response.status_code,
                 "message": response.text
             }
-            # print(f"HTTPError: endpoint : {endpoint}\nCode : {response.status_code}\n{response.text}")
-            # raise Exception(f"HTTPError: {response.status_code} | {response.text}")
-            print(data)
+            
+            logger.error(data)
             raise Exception(data)
 
         self.update_last_connection()
-        # print(self.get_last_connection())
         return response
         
     def update_nodes(self):
@@ -429,9 +494,6 @@ class NetilionAccount:
         
         if response.status_code == 200:
             data = response.json()
-            # pagination = data.get("pagination")
-            # if pagination:
-            #     print(pagination.get("total_count"))
 
             fetched_nodes = []
             # Ajouter chaque nœud dans la liste des nodes du compte
@@ -444,9 +506,7 @@ class NetilionAccount:
                 )
                 fetched_nodes.append(node)
             self.nodes = fetched_nodes
-            if self.changes_to_save:
-                # print("Sauvegarde des nouveaux nodes...")
-                self.changes_to_save()
+            
             return True
         else:
             print(f"Erreur lors de la récupération des nodes: {response.status_code}")
@@ -485,14 +545,12 @@ class NetilionAccount:
                 # Récupérer également les dernières valeurs afin de connaître les différents
                 # keys et groups déjà existants
                 for value in asset_data.get('values', []):
-                    print(value)
+                    # print(value)
                     asset.value_groups.add(value.get("group", None))
                     asset.value_keys.add(value["key"])
                 fetched_assets.append(asset)
             self.assets = fetched_assets
-            if self.changes_to_save:
-                # print("Sauvegarde des nouveaux assets...")
-                self.changes_to_save()
+            
             return True
         else:
             print(f"Erreur lors de la récupération des assets: {response.status_code}")
@@ -528,9 +586,7 @@ class NetilionAccount:
                     instrum.nodes.add(node["id"])
                 fetched_instrum.append(instrum)
             self.instrumentations = fetched_instrum
-            if self.changes_to_save:
-                # print("Sauvegarde des nouveaux tags...")
-                self.changes_to_save()
+            
             return True
         else:
             print(f"Erreur lors de la récupération des tags: {response.status_code}")
@@ -555,20 +611,22 @@ class NetilionAccount:
             self.storage_used = subscription.get("storage_used")
 
             self.subscription_start_date = subscription.get("start_date")
-
-            if self.changes_to_save:
-                # print("Sauvegarde des quotas mis à jour...")
-                self.changes_to_save()
+            
             return True
         else:
             print(f"Erreur lors de la récupération des quotas: {response1.status_code}")
             raise Exception(f"Erreur lors de la récupération des quotas: {response1.status_code}")
     
     def refresh_all_data(self):
-        self.update_nodes()
-        self.update_assets()
-        self.update_instrum()
-        self.update_quotas()
+        try:
+            self.update_nodes()
+            self.update_assets()
+            self.update_instrum()
+            self.update_quotas()
+        
+        except Exception as e:
+            logger.exception(f"[Netilion] Echec du rafraichissement des information pour le compte {self.account_id} : {e}")
+        
         
     def createNewAsset(self, data):
         print(data)

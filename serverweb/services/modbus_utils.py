@@ -3,10 +3,8 @@ import struct
 import json
 from pymodbus.client import ModbusTcpClient #, ModbusSerialClient
 from datetime import datetime
-import threading
-
-file_lock = threading.Lock()
-
+from services.locker_utils import file_lock
+from services.logger_utils import logger
 
 # Index des datatypes et du nombre de registres associé
 counts = {
@@ -35,21 +33,19 @@ def read_registers(client, slave_address, register_address, datatype):
             raise ValueError("Client Modbus invalide.")
         
         if result.isError():
-            print(f"Erreur lecture registre {register_address} sur l'esclave {slave_address}.")
+            logger.error(f"Erreur lecture registre {register_address} sur l'esclave {slave_address}")
             return None
         else:
             # Conversion du registre en float32 si nécessaire
             data = result.registers  # Par exemple, pour 1 registre de 16 bits
             return convert_modbus_data(data, datatype)
     except Exception as e:
-        print(f"Erreur lecture registre Modbus: {e}")
+        logger.error(f"Erreur lecture registre Modbus: {e}")
         return None
 
 def modbus_tcp_client(ip, port=502):
     """ Création du client Modbus TCP """
-    client = ModbusTcpClient(ip, port=port)
-    client.connect()
-    return client
+    return ModbusTcpClient(ip, port=port, timeout=2)
 
 # def modbus_rtu_client(port, baudrate=19200, parity="N", stopbits=1):
 #     """ Création du client Modbus RTU """
@@ -109,7 +105,7 @@ def store_data_to_json(binding, new_data_entry):
                 with open(filename, "r", encoding="utf-8") as f:
                     all_data = json.load(f)
             except json.JSONDecodeError:
-                print(f"[Erreur] Fichier JSON corrompu : {filename}. Écrasement avec un dictionnaire vide.")
+                logger.error(f"Fichier JSON corrompu : {filename}. Écrasement avec un dictionnaire vide.")
                 all_data = {}
         else:
             all_data = {}
@@ -144,38 +140,53 @@ def store_data_to_json(binding, new_data_entry):
 
         # Sauvegarder dans le fichier
         with open(filename, "w", encoding="utf-8") as f:
-            json.dump(all_data, f, indent=4)
+            json.dump(all_data, f, indent=2)
 
 
 def readAllBindings():
                 
-        if PasserelleNetilion().mode == "production":
-            print("Modbus TCP - lecture des données...", end=" ")
+        if PasserelleNetilion().mode != "production":
+            return
+        
+        logger.info("[Modbus] - lecture des données...")
 
-            for binding in PasserelleNetilion().bindings:
-                    value = None
+        for binding in PasserelleNetilion().bindings:
+            
+            if not binding.protocol == "TCP":    
+                logger.warning(f"[Modbus] Binding \"{binding.identification}\" : protocole inconnu ou non pris en charge")
+                continue
+            
+            
+            value = None
+            client = None
 
-                    if binding.protocol == "TCP":
-                        client = modbus_tcp_client(binding.slaveadress)
-                        value = read_registers(client, binding.slaveadress, binding.registeradress, binding.datatype)
-                    
-                    else:
-                        print(f"Binding \"{binding.identification}\" : protocole inconnu ou non pris en charge")
-                        continue
+            try:
+                client = modbus_tcp_client(binding.slaveadress)
+                if not client.connect():
+                    raise ConnectionError(f"Connexion échouée vers {binding.slaveadress}")
+                
+                value = read_registers(client, binding.slaveadress, binding.registeradress, binding.datatype)
+            
+            except Exception as e:
+                logger.error(f"[Modbus] Binding {binding.identification} : {e}")
+            
+            finally:
+                if client:
+                    client.close()
 
-                    if value is not None:
-                        timestamp = get_current_time()
-                        data_entry = {
-                            "status": "good",
-                            "value": value,
-                            "timestamp": timestamp
-                        }
-                        store_data_to_json(binding, data_entry)
-                        # print(f"Donnée enregistrée pour {binding.identification}: {value} à {timestamp}")
-                    
-                    client.close()  # Fermer la connexion après chaque lecture
+            if value is not None:
+                timestamp = get_current_time()
+                data_entry = {
+                    "status": "good",
+                    "value": value,
+                    "timestamp": timestamp
+                }
+                store_data_to_json(binding, data_entry)
+                logger.debug(f"[Modbus] Donnée enregistrée pour {binding.identification}: {value} à {timestamp}")
+            
+            # client.close()  # Fermer la connexion après chaque lecture
 
-            print("Fait")
+        # print("Fait")
         
 
 

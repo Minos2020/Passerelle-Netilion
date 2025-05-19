@@ -45,9 +45,8 @@ def load_config(encrypted=True):
         passerelle.password = os.getenv('PASSWORD')
         
         attach_callbacks(passerelle)
-        # print(passerelle.to_dict())
 
-        print("✅ Configuration chargée en mémoire !")
+        print("\n✅ Configuration chargée en mémoire !\n")
     except Exception as e:
         print(f"❌ Erreur lors du chargement de la configuration : {e}")
         passerelle = PasserelleNetilion()
@@ -61,7 +60,7 @@ def save_config(encrypted=True):
         passerelle = PasserelleNetilion()
         data_to_encrypt = json.dumps(passerelle.to_dict(), indent=4)
         encrypt_data_into_file(data_to_encrypt.encode(), CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
-        print("💾 Configuration mise à jour !")
+        print("\n💾 Configuration enregistrée !\n")
         config_modified = False
         last_save_time = time.time()
     except Exception as e:
