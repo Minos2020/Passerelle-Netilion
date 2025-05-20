@@ -134,7 +134,7 @@ class NetilionAccount:
         self.storage_quota: int = None
         self.storage_used: int = None
         self.api_call_quota: int = None
-        self.api_calls_used: int = None
+        self.api_calls_used: int = 0
         self.subscription_start_date: datetime = None
         self.netilion_rate: int = netilion_rate
         self.netilion_rate_mode: str = netilion_rate_mode
@@ -276,7 +276,7 @@ class NetilionAccount:
         assets_bound_ids = {binding.netilion_asset_id for binding in PasserelleNetilion().bindings if binding.netilion_account_id == self.account_id}
         
         if not assets_bound_ids:
-            logger.warning(f"[Netilion] Aucun asset lié au compte {self.account_id} — impossible de calculer une fréquence recommandée.")
+            print(f"[Netilion] Compte {self.account_id} - Aucun asset lié au compte — impossible de calculer une fréquence recommandée.")
             return 0  # ou par exemple return 60*24 pour une tentative par jour
 
         requests_per_batch = len(assets_bound_ids)
@@ -309,7 +309,7 @@ class NetilionAccount:
             filename = os.path.join("data", f"{self.account_id}.json")
             
             if not os.path.exists(filename):
-                logger.info(f"[Netilion] Aucun fichier de données pour le compte {self.identification} ({self.account_id})")
+                logger.warning(f"[Netilion] Compte {self.account_id} : Aucun fichier de données")
                 return
 
             # lecture du fichier avec un file_lock afin de ne pas interférer avec les autres threads 
@@ -318,57 +318,162 @@ class NetilionAccount:
                     with open(filename, "r", encoding="utf-8") as f:
                         all_data = json.load(f)
                 except json.JSONDecodeError:
-                    logger.error(f"[Netilion] Fichier JSON corrompu pour le compte {self.account_id}")
+                    logger.error(f"[Netilion] Compte {self.account_id} : Fichier JSON corrompu")
                     return
 
-            assets_sent = []  # Pour savoir si on doit réécrire le fichier à la fin
-            error_occured = []  # Pour savoir si l'envoi a échoué pour au moins un des lots de donnée
+            
+            # Envoi des données dans Netilion
 
-            # Envoi
+            assets_fully_sent = []  # Pour savoir quels lots de données ont bien été envoyés
+            assets_error_occured = []  # Pour savoir si l'envoi a échoué pour certains lots de données
+            
+            # 500 kB en octets est la limite de taille du payload imposé par l'API pour ce endpoint
+            MAX_PAYLOAD_SIZE = 490_000
+
+            
             for asset_id, entries in all_data.items():
-                endpoint = f"assets/{asset_id}/values"
-                
+
                 if not entries:
                     continue  # On saute les assets sans données
-
-                body = {
-                    "values": entries
-                }
-
-                try:
-                    response = self.send_request('POST', endpoint=endpoint, data=body)
-                    if response.status_code == 204:
-                        logger.debug(f"[Netilion] ✅ Données envoyées pour asset {asset_id}")
-                        all_data[asset_id] = []
-                        assets_sent.append(asset_id)
+                
+                endpoint = f"assets/{asset_id}/values"
+                
+                entry_index = 0
+                batches = []
+                
+                while entry_index < len(entries):
                     
-                    else:
-                        logger.error(f"[Netilion] ❌ Erreur {response.status_code} : {response.text}")
-                        error_occured.append(asset_id)
-                except Exception as e:
-                    logger.exception(f"[Netilion] ❌ Exception pendant l'envoi : {e}")
-            
-            # Réécriture sécurisée du fichier si modification
-            if assets_sent:
-                logger.info(f'[Netilion] Compte {self.account_id} - données envoyées pour les assets suivants : {assets_sent}')
-                with file_lock:
+                    batch = []
+                
+                    while entry_index < len(entries):
+                        
+                        entry = entries[entry_index]
+
+                        # On extrait les métadonnées de l’entrée
+                        entry_metadatas = dict({
+                            "key": entry["key"],
+                            "group": entry["group"],
+                            "unit": entry["unit"],
+                            "data": []
+                        })
+                        
+                        test_batch = batch + [entry_metadatas]
+                        test_body = json.dumps({"values": test_batch})
+                        
+                        # Test de dépassement de la taille lors de l'ajout des
+                        # métadonnées d'une nouvelle entrée
+                        if len(test_body.encode("utf-8")) > MAX_PAYLOAD_SIZE:
+                            # print("Dépassement lors de l'ajout de metadonnées")
+                            print(len(test_body.encode("utf-8")))
+                            break
+
+                        batch = test_batch
+                        
+                        
+                        # Ajout des datas, une à une
+                        data_list = entry["data"] 
+                        data_index = 0
+
+                        # Ajouter des entrées jusqu’à la limite de taille du payload
+                        while data_index < len(data_list):
+                            # copie afin de ne pas modifier les vraies données
+                            entry_copy = dict(batch[-1])
+                            entry_copy["data"] = entry_copy["data"] + [data_list[data_index]]
+                            
+
+                            test_batch = batch[:-1] + [entry_copy]
+                            test_body = json.dumps({"values": test_batch})
+
+                            # Si le rajout de la dernière entrée fait dépasser MAX_PAYLOAD_SIZE, on ne le rajoute pas
+                            if len(test_body.encode("utf-8")) > MAX_PAYLOAD_SIZE:
+                                # print("Dépassement lors de l'ajout d'une data")
+                                print(len(test_body.encode("utf-8")))
+                                break
+                            
+                            batch = test_batch
+                            data_index += 1
+                        
+                        if data_index < len(data_list):
+                            # Il reste des datas à batcher, on les conserve pour le prochain batch
+                            entries[entry_index]["data"] = data_list[data_index:]
+                            break  # On enverra la suite au prochain tour
+                        else:
+                            # Toutes les datas on été batché pour cet entrée
+                            entry_index += 1 
+                    
+                    
+                    batches.append(batch)
+                
+                batches_sent = []
+                batches_error_occured = []
+
+                for i, batch in enumerate(batches, start=1):
+                    body = json.dumps({"values": batch})
+
                     try:
-                        with open(filename, "w", encoding="utf-8") as f:
-                            json.dump(all_data, f, indent=2)
-                        logger.debug(f"[Netilion] 📁 Fichier mis à jour après suppression des données envoyées")
+                        response = self.send_request('POST', endpoint=endpoint, data=body)
+                        if response.status_code == 204:
+                            logger.debug(f"[Netilion] Compte {self.account_id} : asset {asset_id} : envoi batch {i}/{len(batches)} (payload : {len(body.encode('utf-8'))}o)")
+                            all_data[asset_id] = []
+                            batches_sent.append(batch)
+                        
+                        else:
+                            logger.error(f"[Netilion] Compte {self.account_id} : asset {asset_id} : erreur batch {i}/{len(batches)} (payload : {len(body.encode('utf-8'))}o) - {response.status_code} : {response.text}")
+                            batches_error_occured.append(batch)
                     except Exception as e:
-                        logger.exception(f"[Netilion] ❌ Erreur lors de la mise à jour du fichier JSON : {e}")
+                        logger.exception(f"[Netilion] Compte {self.account_id} : asset {asset_id} : erreur batch {i}/{len(batches)} (payload : {len(body.encode('utf-8'))}o) - Exception pendant l'envoi : {e}")
+                
+                if len(batches_sent) == len(batches):
+                    new_asset_sent = {
+                        asset_id : {
+                            "total_batches": len(batches),
+                            "batches_sent": len(batches_sent)
+                        }
+                    }
+                    assets_fully_sent.append(new_asset_sent)
+                else:
+                    new_asset_error = {
+                        asset_id : {
+                            "total_batches": len(batches),
+                            "batches_sent": len(batches_sent)
+                        }
+                    }
+                    assets_error_occured.append(new_asset_error)
+
+
+            # Réécriture sécurisée du fichier sans les
+            # données qui ont déjà été envoyées
+            if assets_fully_sent or assets_error_occured:
+                if assets_fully_sent:
+                    logger.info(
+                        f'[Netilion] Compte {self.account_id} - données envoyées pour les assets suivants : '
+                        f'{[f"{asset_id} ({stats["batches_sent"]}/{stats["total_batches"]} batch)" for d in assets_fully_sent for asset_id, stats in d.items()]}'
+                    )
+
+                    with file_lock:
+                        try:
+                            with open(filename, "w", encoding="utf-8") as f:
+                                json.dump(all_data, f, indent=2)
+                            logger.debug(f"[Netilion] Compte {self.account_id} - Fichier mis à jour après suppression des données envoyées")
+                        except Exception as e:
+                            logger.exception(f"[Netilion] Compte {self.account_id} - Erreur lors de la mise à jour du fichier JSON : {e}")
+                elif assets_error_occured:
+                    logger.error(
+                        f"[Netilion] Compte {self.account_id} - l'envoi de certains batchs a échoué : "
+                        f'{[f"{asset_id} ({stats["batches_sent"]}/{stats["total_batches"]} batch)" for d in assets_error_occured for asset_id, stats in d.items()]}'
+                    )
             else:
-                logger.info(f'[Netilion] Compte {self.account_id} - aucune données disponible pour envoi')
-            if error_occured:
-                logger.warning(f"[Netilion] ⚠️ L'envoi n'a pas pu être effectué pour les assets suivant : {error_occured}")
+                logger.warning(f'[Netilion] Compte {self.account_id} : aucune donnée à envoyer')
+            if assets_error_occured:
+                logger.warning(f"[Netilion] ⚠️ L'envoi n'a pas pu être effectué pour les assets suivant : {assets_error_occured}")
+
 
 
     def _request_token(self, grant_type, extra_data=None) -> None:
         """
         Demande un token d'accès OAuth2 (soit initial, soit via refresh).
         """
-        print(f"...requesting access token with ({grant_type})...")
+        logger.debug(f"...requesting access token with ({grant_type})...")
         token_data = {
             "grant_type": grant_type,
             "client_id": self.client_id,
@@ -379,7 +484,7 @@ class NetilionAccount:
             token_data.update(extra_data)
 
         response = requests.post(token_url, data=token_data)
-        self.api_calls_used += 1
+        self.api_calls_used += 2
         
         response_data = response.json()
 
@@ -397,9 +502,7 @@ class NetilionAccount:
             self.refresh_token_expiry = time.time() + 24 * 60 * 60  # 24h
             self.update_last_connection()
             if self.changes_to_save:
-                print("Sauvegarde des nouveaux token...")
                 self.changes_to_save()
-                print([self.access_token, self.refresh_token, self.token_expiry])
         else:
             raise Exception(f"Failed to obtain access token: {response_data}")
         return response
@@ -412,11 +515,11 @@ class NetilionAccount:
         
         # Si seul le token d'accès est expiré, on rafraîchit le token avec le refresh_token
         if (current_time >= self.token_expiry and current_time < self.refresh_token_expiry):
-            print("🔄 Token d'accès expiré ou absent, rafraîchissement en cours...")
+            logger.debug("🔄 Token d'accès expiré ou absent, rafraîchissement en cours...")
             self._request_token("refresh_token", {"refresh_token": self.refresh_token})
         # Sinon, (les 2 tokens sont expirés) on réauthentifie avec les identifiants
         elif current_time >= self.refresh_token_expiry:
-            print("🔄 Token d'accès et de refresh expirés ou absents, demande de nouveaux token...")
+            logger.debug("🔄 Token d'accès et de refresh expirés ou absents, demande de nouveaux token...")
             self._request_token("password", {
                 "username": self.username,
                 "password": self.password
@@ -460,7 +563,7 @@ class NetilionAccount:
         # print(url)
 
         response = requests.request(method, url, json=data, params=params, headers=headers)
-        self.api_calls_used += 1
+        self.api_calls_used += 2
         # self.changes_to_save()
 
         if response.status_code == 401:  # Token expiré
@@ -468,7 +571,7 @@ class NetilionAccount:
             headers["Authorization"] = f"Bearer {self.access_token}"
             headers['accept'] = "application/json"
             response = requests.request(method, url, json=data, params=params, headers=headers)
-            self.api_calls_used += 1
+            self.api_calls_used += 2
         
         if not response.ok:  # Si la requête renvoie autre chose que le statut HTTP 2xx
             data = {

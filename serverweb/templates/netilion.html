@@ -66,6 +66,7 @@
         let div = document.createElement("div");
         div.classList.add("account-box");
         div.innerHTML = `
+          <div class="grid-key">N° de compte</div><div class="grid-value" style="background: none; border: none;">${account.account_id}</div>
           <div class="grid-key">Identification:</div>
           <input class="grid-value" type="text" value="${account.identification}" onchange="updateAccount(${index}, 'identification', this.value)">
           

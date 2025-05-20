@@ -143,10 +143,10 @@ def save_general_config():
 
         if any(changedValues):
             save_config(passerelle.encryption) # A ENLEVER (False pour ne pas chiffrer les données)
-            
-            if "mode" in changedValues:
-                from app import handle_mode_change
-                handle_mode_change(changedValues)
+            from app import handle_mode_change
+            handle_mode_change(changedValues)
+
+                
             
 
         return jsonify({"status": "success"})
@@ -248,6 +248,10 @@ def save_netilion_config():
     try:
         passerelle = PasserelleNetilion()
         updated_accounts = []  # Contiendra les comptes à conserver après mise à jour
+        
+        # Pour stocker les ids des comptes modifiés et les
+        # passer en paramètres de handle_mode_change()
+        changedValues = []
 
         for acc_dict in request.json:
             if 'isNew' in acc_dict:
@@ -263,9 +267,15 @@ def save_netilion_config():
                 )
                 passerelle.add_account(account)
                 
+                changedValues.append(account.account_id)
+                
             else:
                 # Compte existant → on récupère le compte et on met à jour uniquement les infos qui ont changé
                 account = passerelle.getAccountByID(acc_dict["account_id"])
+                
+                former_netilion_rate = account.netilion_rate
+                new_netilion_rate = acc_dict["netilion_rate"]
+                
                 
                 email = acc_dict["email"] if "email" in acc_dict.get("hasChanged", []) else account.email
                 client_id = acc_dict["client_id"] if "client_id" in acc_dict.get("hasChanged", []) else account.client_id
@@ -279,14 +289,23 @@ def save_netilion_config():
                 account.client_secret=client_secret
                 account.username=username
                 account.password=password
-                account.netilion_rate = acc_dict["netilion_rate"]
+                account.netilion_rate = new_netilion_rate
                 account.netilion_rate_mode = acc_dict["netilion_rate_mode"]
+
+                if former_netilion_rate != new_netilion_rate:
+                    print(f"Changment de rate détecté pour le compte {account.account_id}")
+                    
+                    changedValues.append(account.account_id)
 
             updated_accounts.append(account)
         
         # Ne conserver que les comptes mis à jour ou ajoutés
         passerelle.accounts = updated_accounts
-        save_config(False)
+        save_config(passerelle.encryption)
+
+        if any(changedValues):            
+            from app import handle_mode_change
+            handle_mode_change(changedValues)
 
         return jsonify({"status": "success"})
     except Exception as e:

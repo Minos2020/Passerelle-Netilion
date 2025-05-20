@@ -46,7 +46,7 @@ def set_new_timer(timer_type: str, **kwargs):
     if timer_type == "send_to_netilion":
         account: NetilionAccount = kwargs.get("account")
         if not account:
-            logger.debug("[Netilion] Aucun compte fourni pour send_to_netilion, timer non lancé.")
+            logger.debug(f"[Netilion] Compte {account_id} - Aucun compte fourni pour send_to_netilion, timer non lancé.")
             return
         
         account_id = account.account_id
@@ -54,7 +54,7 @@ def set_new_timer(timer_type: str, **kwargs):
         # Vérifie si un timer actif existe déjà et est vivant
         existing = active_timers.get(account_id)
         if existing and not existing.is_alive():
-            logger.info(f"[Netilion] Timer déjà actif pour {account_id}, on ne relance pas.")
+            logger.info(f"[Netilion] Compte {account_id} - Timer déjà actif, on ne relance pas.")
             return
         
         # Suppression de l'ancien timer s'il existe
@@ -76,9 +76,9 @@ def set_new_timer(timer_type: str, **kwargs):
             active_timers[account_id] = timer
             logger.debug(f"[Netilion] Compte {account_id} - Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.info(f"[Netilion] Nouveau timer send_to_netilion Compte ({account_id})")
+            logger.info(f"[Netilion] Compte {account_id} - Nouveau timer send_to_netilion ({timer.interval}s)")
         else:
-            logger.debug(f"[Netilion] Mode production OFF, ou taux nul pour {account_id} : timer send_to_netilion non lancé.")
+            logger.debug(f"[Netilion] Compte {account_id} - Mode production OFF, ou taux nul : timer send_to_netilion non lancé.")
             pass
 
     elif timer_type == "read_modbus_tcp":
@@ -95,6 +95,7 @@ def set_new_timer(timer_type: str, **kwargs):
             former_timer.cancel()
         
         if is_production_mode():
+            
             readAllBindings()
 
             # Remet un timer pour le prochain cycle
@@ -107,7 +108,7 @@ def set_new_timer(timer_type: str, **kwargs):
             active_timers["modbus"] = timer
             logger.debug(f"[Modbus] Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.info("[Modbus] Nouveau timer modbus")
+            logger.info(f"[Modbus] Nouveau timer modbus ({timer.interval}s)")
         else:
             logger.debug("[Modbus] Mode production inactif : le timer modbus ne redémarre pas.")
     
@@ -140,7 +141,7 @@ def set_new_timer(timer_type: str, **kwargs):
             active_timers["daily_accounts_sync"] = timer
             logger.debug(f"[Sync] Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.info("[Sync] Nouveau timer synchronisation journalière")
+            logger.info(f"[Sync] Nouveau timer synchronisation journalière  ({timer.interval}s)")
         else:
             logger.debug("[Sync] Mode production inactif : le timer sync ne redémarre pas.")
 
@@ -148,40 +149,48 @@ def set_new_timer(timer_type: str, **kwargs):
 
 
 def handle_mode_change(changedValues):
-    global former_mode
     passerelle = PasserelleNetilion()
-
-    current_mode = passerelle.mode
-    if current_mode == former_mode and not changedValues:
-        # Rien n’a changé, on ne touche à rien
-        return
-    
-    former_mode = current_mode
-
-    if is_production_mode():
-        if "mode" in changedValues:
-            logger.info("Passage en mode production.")
-        set_new_timer("read_modbus_tcp")
-        for account in passerelle.accounts:
-            set_new_timer("send_to_netilion", account=account)
         
-        set_new_timer("daily_accounts_sync")
+    if(changedValues):
 
-    else:
-        if "mode" in changedValues:
-            logger.info("Passe en mode configuration : annulation des timers en cours.")
-            for key, timer in list(active_timers.items()):
-                timer.cancel()
-                active_timers.pop(key, None)
-                logger.debug(f"Annulation du timer {key}")
-            logger.info("✅ Threads annulés.")
+        for value in changedValues:
+            # si int, c'est que c'est l'id d'un compte dont la rate a changé
+            if isinstance(value, int):
+                account = passerelle.getAccountByID(value)
+                set_new_timer("send_to_netilion", account=account)
+            
+            # sinon c'est que c'est un valeur globale (mode ou modbus_rate)
+            else:
+                if value == "mode":
+                    if is_production_mode():
+                        logger.info("Passage en mode production.")
+                        set_new_timer("read_modbus_tcp")
+                        for account in passerelle.accounts:
+                            set_new_timer("send_to_netilion", account=account)
+                        
+                        set_new_timer("daily_accounts_sync")
 
+                    else:
+                        logger.info("Passe en mode configuration : annulation des timers en cours.")
+                        for key, timer in list(active_timers.items()):
+                            timer.cancel()
+                            active_timers.pop(key, None)
+                            logger.debug(f"Annulation du timer {key}")
+                        logger.info("✅ Threads annulés.")
+                
+                if value == "modbus_rate":
+                    set_new_timer("read_modbus_tcp")
+
+
+    
 
 def periodic_check():
     """
     Vérification régulière afin d'arrêter ou relancer des timers
     en fonction des éventuels changements de la configuration
     """
+    handle_mode_change(["mode"]) 
+    
     while not stop_event.is_set():
         handle_mode_change([]) 
         get_active_timers()
@@ -215,12 +224,12 @@ if __name__ == '__main__':
 
         # Permet de terminer proprement tous les timers qui ont été lancés avant de fermer le programme
         def graceful_shutdown(*args):
-            logger.info("⏹️  Arrêt propre en cours...")
-            logger.info("Enregistrement de la configuration...")
+            print("⏹️  Arrêt propre en cours...")
+            print("Enregistrement de la configuration...")
             save_config(False)
             for timer in active_timers.values():
                 timer.cancel()
-            logger.info("✅ Threads annulés. Fermeture de Flask...")
+            print("✅ Threads annulés. Fermeture de Flask...")
             sys.exit(0)  # Force l’arrêt sans laisser Flask traîner
         
         # Gère le Ctrl+C (SIGINT)

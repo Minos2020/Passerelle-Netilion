@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import sys
 from colorama import init, Fore, Style
 
@@ -33,8 +34,16 @@ console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(ColorFormatter(log_format, date_format))
 
-# File handler (enregistre tous les niveaux dans un fichier)
-file_handler = logging.FileHandler("passerelle.log", encoding='utf-8')
+# Fichier rotatif : 1 fichier par semaine, conservés 4 semaines
+file_handler = TimedRotatingFileHandler(
+    "passerelle.log", 
+    when="W0",              # W0 = chaque lundi (W1 pour mardi, etc.)
+    interval=1,             # toutes les 1 semaine
+    backupCount=5,          # nombre de fichiers à conserver
+    encoding='utf-8',
+    delay=True
+)
+
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter(log_format, date_format))
 
