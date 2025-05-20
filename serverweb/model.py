@@ -406,16 +406,20 @@ class NetilionAccount:
                 
                 batches_sent = []
                 batches_error_occured = []
+                total_size = 0
+                sent_size = 0
 
                 for i, batch in enumerate(batches, start=1):
                     body = json.dumps({"values": batch})
-
+                    total_size += len(body.encode("utf-8"))
+                    
                     try:
                         response = self.send_request('POST', endpoint=endpoint, data=body)
                         if response.status_code == 204:
                             logger.debug(f"[Netilion] Compte {self.account_id} : asset {asset_id} : envoi batch {i}/{len(batches)} (payload : {len(body.encode('utf-8'))}o)")
                             all_data[asset_id] = []
                             batches_sent.append(batch)
+                            sent_size += len(body.encode("utf-8"))
                         
                         else:
                             logger.error(f"[Netilion] Compte {self.account_id} : asset {asset_id} : erreur batch {i}/{len(batches)} (payload : {len(body.encode('utf-8'))}o) - {response.status_code} : {response.text}")
@@ -427,7 +431,9 @@ class NetilionAccount:
                     new_asset_sent = {
                         asset_id : {
                             "total_batches": len(batches),
-                            "batches_sent": len(batches_sent)
+                            "batches_sent": len(batches_sent),
+                            "total_size": total_size,
+                            "sent_size": sent_size
                         }
                     }
                     assets_fully_sent.append(new_asset_sent)
@@ -447,7 +453,7 @@ class NetilionAccount:
                 if assets_fully_sent:
                     logger.info(
                         f'[Netilion] Compte {self.account_id} - données envoyées pour les assets suivants : '
-                        f'{[f"{asset_id} ({stats["batches_sent"]}/{stats["total_batches"]} batch)" for d in assets_fully_sent for asset_id, stats in d.items()]}'
+                        f'{[f"{asset_id} [batches ({stats["batches_sent"]}/{stats["total_batches"]})  payload ({stats["sent_size"]}/{stats["total_size"]})]" for d in assets_fully_sent for asset_id, stats in d.items()]}'
                     )
 
                     with file_lock:

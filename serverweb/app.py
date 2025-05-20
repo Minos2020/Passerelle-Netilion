@@ -197,51 +197,48 @@ def periodic_check():
         stop_event.wait(timeout=10)
 
 
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
+# Chargement de la configuration au démarrage
+load_config(False)
 
+# Enregistrement des routes
+app.register_blueprint(web_bp)
+app.register_blueprint(api_bp, url_prefix='/api')
+
+# Initialisation des threads et signal handler uniquement dans le processus principal
+def start_background_tasks():
+    global stop_event
+    stop_event = threading.Event()
+    thread = threading.Thread(target=periodic_check, daemon=True)
+    thread.start()
+
+    def graceful_shutdown(*args):
+        print("⏹️  Arrêt propre en cours...")
+        print("Enregistrement de la configuration...")
+        save_config(False)
+        for timer in active_timers.values():
+            timer.cancel()
+        print("✅ Threads annulés. Fermeture de Flask...")
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, graceful_shutdown)
+    signal.signal(signal.SIGTERM, graceful_shutdown)
+
+# ✅ Gunicorn : il suffit d'importer `app` depuis ce fichier
+# Gunicorn exécutera le code ci-dessus, mais pas le bloc `if __name__ == '__main__'`
+
+# ✅ Flask debug : on utilise ce bloc pour développement
 if __name__ == '__main__':
-    
-    app = Flask(__name__)
-
-    
-    
-    app.secret_key = os.getenv("FLASK_SECRET_KEY")
-    
-    load_config(False)
-
-    # Enregistrer les routes
-    app.register_blueprint(web_bp)
-    app.register_blueprint(api_bp, url_prefix='/api')
-
-    
-    # Pour éviter le double lancement des threads à cause du mode debug !!
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        
-        stop_event = threading.Event()
-        thread = threading.Thread(target=periodic_check, daemon=True)
-        thread.start()
-
-
-        # Permet de terminer proprement tous les timers qui ont été lancés avant de fermer le programme
-        def graceful_shutdown(*args):
-            print("⏹️  Arrêt propre en cours...")
-            print("Enregistrement de la configuration...")
-            save_config(False)
-            for timer in active_timers.values():
-                timer.cancel()
-            print("✅ Threads annulés. Fermeture de Flask...")
-            sys.exit(0)  # Force l’arrêt sans laisser Flask traîner
-        
-        # Gère le Ctrl+C (SIGINT)
-        signal.signal(signal.SIGINT, graceful_shutdown)
-        signal.signal(signal.SIGTERM, graceful_shutdown)
-
+        start_background_tasks()
     
+    # 🚀 Lancer Flask en mode debug pour développement
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
-    app.run(host='0.0.0.0', port=5000, debug=True) 
-
-
-    
-
+else:
+    # Si importé par un serveur WSGI (Waitress ou Gunicorn), on démarre aussi les tâches
+    start_background_tasks()
 
 
