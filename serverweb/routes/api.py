@@ -427,3 +427,29 @@ def delete_object():
     except Exception as e:
         print("Problème lors de la suppression de l'objet :")
         return jsonify({"success": False, "error": str(e)})
+    
+
+
+    
+# -------------  TESTS ------------
+
+
+
+@api_bp.route('/read_modbus',  methods=['GET'])
+@login_required  # 🔒 Protège cette route
+def read_modbus():
+    readAllBindings()
+    print("hey")
+
+    return jsonify({"success": False})
+
+
+@api_bp.route('/send_data',  methods=['GET'])
+@login_required  # 🔒 Protège cette route
+def send_data():
+    account = PasserelleNetilion().getAccountByID(2)
+
+    print("coucou")
+    account.send_data_to_netilion()
+
+    return jsonify({"success": False})

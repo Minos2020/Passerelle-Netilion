@@ -241,7 +241,9 @@
 					<div>
 						<!-- Entrée pour la clé (key) -->
 						<input list="keys-list-${index}" name="key" id="key-input-${index}" value="${(binding.key === null) ? "" : binding.key}"
-						title="La clé permet de préciser quelle est la donnée dans Netilion et de différencier plusieurs types de données pour un même asset (ex: pH retour condensats, Turbidité retour condensats, Niveau cuve eaux de pluie, ...)"
+						title="La clé permet de préciser quelle est la donnée dans Netilion et de différencier plusieurs types de données pour un même asset (ex: pH retour condensats, Turbidité retour condensats, Niveau cuve eaux de pluie, ...)
+
+Les SEULS caractères autorisés sont les suivants : [a-z A-Z 0-9 . - _ ]"
 						onchange="updateBinding(${index}, 'key', this.value)">
 						<datalist id="keys-list-${index}">
 							${keyOptions.map(key => `<option value="${key}"></option>`).join("")}
@@ -250,7 +252,9 @@
 					<div>
 						<!-- Entrée pour le groupe (group) -->
 						<input list="groups-list-${index}" name="group" group="key-input-${index}" value="${(binding.group === null) ? "" : binding.group}"
-						title="Le groupe permet de créer des regroupements logiques de données pour un ou plusieurs assets (ex: Retour condensats, Circuit eaux de pluie, ...)"
+						title="Le groupe permet de créer des regroupements logiques de données pour un ou plusieurs assets (ex: Retour condensats, Circuit eaux de pluie, ...)
+
+Les SEULS caractères autorisés sont les suivants : [a-z A-Z 0-9 . - _ ]"
 						onchange="updateBinding(${index}, 'group', this.value)">
 						<datalist id="groups-list-${index}">
 							${groupOptions.map(group => `<option value="${group}"></option>`).join("")}

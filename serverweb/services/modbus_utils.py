@@ -143,9 +143,9 @@ def store_data_to_json(binding, new_data_entry):
             json.dump(all_data, f, indent=2)
 
 
-def readAllBindings():
+def readAllBindings(force=False):
                 
-        if PasserelleNetilion().mode != "production":
+        if PasserelleNetilion().mode != "production" and not force:
             return
         
         logger.info("[Modbus] - lecture des données...")

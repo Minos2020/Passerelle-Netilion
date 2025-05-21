@@ -112,6 +112,17 @@
       showNotification("Modbus RTU non supporté actuellement", "warning")
     }
 
+    
+    // POUR TESTS
+    function read_modbus(){
+      fetch("/api/read_modbus")
+      showNotification("Lecture Modbus", "warning")
+    }
+    function send_data(){
+      fetch("/api/send_data")
+      showNotification("Envoi compte 2", "warning")
+    }
+
   </script>
   
   {% endblock %}
@@ -176,6 +187,12 @@ Cette période est commune à tous les bindings.">
 <div style="height: 20px;"></div>
 <button class="btn" type="submit">Save Configuration</button>
 </form>
+
+<!-- POUR TESTS -->
+<button class="btn" style="margin-top: 20px;" onclick="read_modbus()">Lire modbus</button>
+<button class="btn" style="margin-top: 20px;" onclick="send_data()">Envoyer Netilion Compte 2</button>
+
+
 </div>
 
 {% endblock %}
