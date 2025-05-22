@@ -7,8 +7,20 @@ serverweb/.env
 # Ignorer les données enregistrées, qui sont spécifique à une installation donnée
 serverweb/data
 
-# Ignorer les fichiers temporaires et logs
+# Fichiers temporaires Python
 __pycache__/
-*.log
+*.py[cod]
 *.sqlite3
+
+# Fichiers de log
+*.log
+*.log.*
+logs/
+
+# Fichiers .env à la racine
 .env
+
+
+
+# Fichiers divers
+serverweb\encryption_temp.py

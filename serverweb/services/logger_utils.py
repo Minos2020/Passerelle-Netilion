@@ -1,7 +1,10 @@
-import logging
+import logging, os
 from logging.handlers import TimedRotatingFileHandler
 import sys
 from colorama import init, Fore, Style
+
+# Créer le dossier logs/ s'il n'existe pas
+os.makedirs("logs", exist_ok=True)
 
 # Initialiser colorama pour les couleurs sur tous les OS
 init()
@@ -36,7 +39,7 @@ console_handler.setFormatter(ColorFormatter(log_format, date_format))
 
 # Fichier rotatif : 1 fichier par semaine, conservés 4 semaines
 file_handler = TimedRotatingFileHandler(
-    "passerelle.log", 
+    "logs/passerelle.log", 
     when="W0",              # W0 = chaque lundi (W1 pour mardi, etc.)
     interval=1,             # toutes les 1 semaine
     backupCount=5,          # nombre de fichiers à conserver
