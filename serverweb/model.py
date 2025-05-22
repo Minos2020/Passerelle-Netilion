@@ -301,178 +301,183 @@ class NetilionAccount:
         return recommended_netilion_rate
 
     
-    def send_data_to_netilion(self):
-        # Uniquement si la passerelle est en mode PRODUCTION
-        if (PasserelleNetilion().mode == "production" and self.netilion_rate != 0):
-            # print(self.account_id, self.netilion_rate, " - envoi des données...",  end=" ")
-
-            filename = os.path.join("data", f"{self.account_id}.json")
+    def send_data_to_netilion(self, force=False):
+        
+        # Empêche l'exécution si la passerelle n'est pas en mode production
+        # et que le forçage n'est pas actif
+        if PasserelleNetilion().mode != "production" and self.netilion_rate != 0 and not force:
+            return
+        
             
-            if not os.path.exists(filename):
-                logger.warning(f"[Netilion] Compte {self.account_id} : Aucun fichier de données")
+        # print(self.account_id, self.netilion_rate, " - envoi des données...",  end=" ")
+
+        filename = os.path.join("data", f"{self.account_id}.json")
+        
+        if not os.path.exists(filename):
+            logger.warning(f"[Netilion] Compte {self.account_id} : Aucun fichier de données")
+            return
+
+        # lecture du fichier avec un file_lock afin de ne pas interférer avec les autres threads 
+        with file_lock:
+            try:
+                with open(filename, "r", encoding="utf-8") as f:
+                    all_data = json.load(f)
+            except json.JSONDecodeError:
+                logger.error(f"[Netilion] Compte {self.account_id} : Fichier JSON corrompu")
                 return
 
-            # lecture du fichier avec un file_lock afin de ne pas interférer avec les autres threads 
-            with file_lock:
-                try:
-                    with open(filename, "r", encoding="utf-8") as f:
-                        all_data = json.load(f)
-                except json.JSONDecodeError:
-                    logger.error(f"[Netilion] Compte {self.account_id} : Fichier JSON corrompu")
-                    return
+        
+        # Envoi des données dans Netilion
 
+        assets_fully_sent = []  # Pour savoir quels lots de données ont bien été envoyés
+        assets_error_occured = []  # Pour savoir si l'envoi a échoué pour certains lots de données
+        
+        # 500 kB en octets est la limite de taille du payload imposé par l'API pour ce endpoint
+        MAX_PAYLOAD_SIZE = 490_000
+
+        
+        for asset_id, entries in all_data.items():
+
+            if not entries:
+                continue  # On saute les assets sans données
             
-            # Envoi des données dans Netilion
-
-            assets_fully_sent = []  # Pour savoir quels lots de données ont bien été envoyés
-            assets_error_occured = []  # Pour savoir si l'envoi a échoué pour certains lots de données
+            endpoint = f"assets/{asset_id}/values"
             
-            # 500 kB en octets est la limite de taille du payload imposé par l'API pour ce endpoint
-            MAX_PAYLOAD_SIZE = 490_000
-
+            entry_index = 0
+            batches = []
             
-            for asset_id, entries in all_data.items():
-
-                if not entries:
-                    continue  # On saute les assets sans données
+            while entry_index < len(entries):
                 
-                endpoint = f"assets/{asset_id}/values"
-                
-                entry_index = 0
-                batches = []
-                
+                batch = []
+            
                 while entry_index < len(entries):
                     
-                    batch = []
-                
-                    while entry_index < len(entries):
-                        
-                        entry = entries[entry_index]
+                    entry = entries[entry_index]
 
-                        # On extrait les métadonnées de l’entrée
-                        entry_metadatas = dict({
-                            "key": entry["key"],
-                            "group": entry["group"],
-                            "unit": entry["unit"],
-                            "data": []
-                        })
+                    # On extrait les métadonnées de l’entrée
+                    entry_metadatas = dict({
+                        "key": entry["key"],
+                        "group": entry["group"],
+                        "unit": entry["unit"],
+                        "data": []
+                    })
+                    
+                    test_batch = batch + [entry_metadatas]
+                    test_body = json.dumps({"values": test_batch})
+                    
+                    # Test de dépassement de la taille lors de l'ajout des
+                    # métadonnées d'une nouvelle entrée
+                    if len(test_body.encode("utf-8")) > MAX_PAYLOAD_SIZE:
+                        # print("Dépassement lors de l'ajout de metadonnées")
+                        print(len(test_body.encode("utf-8")))
+                        break
+
+                    batch = test_batch
+                    
+                    
+                    # Ajout des datas, une à une
+                    data_list = entry["data"] 
+                    data_index = 0
+
+                    # Ajouter des entrées jusqu’à la limite de taille du payload
+                    while data_index < len(data_list):
+                        # copie afin de ne pas modifier les vraies données
+                        entry_copy = dict(batch[-1])
+                        entry_copy["data"] = entry_copy["data"] + [data_list[data_index]]
                         
-                        test_batch = batch + [entry_metadatas]
+
+                        test_batch = batch[:-1] + [entry_copy]
                         test_body = json.dumps({"values": test_batch})
-                        
-                        # Test de dépassement de la taille lors de l'ajout des
-                        # métadonnées d'une nouvelle entrée
+
+                        # Si le rajout de la dernière entrée fait dépasser MAX_PAYLOAD_SIZE, on ne le rajoute pas
                         if len(test_body.encode("utf-8")) > MAX_PAYLOAD_SIZE:
-                            # print("Dépassement lors de l'ajout de metadonnées")
+                            # print("Dépassement lors de l'ajout d'une data")
                             print(len(test_body.encode("utf-8")))
                             break
-
+                        
                         batch = test_batch
-                        
-                        
-                        # Ajout des datas, une à une
-                        data_list = entry["data"] 
-                        data_index = 0
-
-                        # Ajouter des entrées jusqu’à la limite de taille du payload
-                        while data_index < len(data_list):
-                            # copie afin de ne pas modifier les vraies données
-                            entry_copy = dict(batch[-1])
-                            entry_copy["data"] = entry_copy["data"] + [data_list[data_index]]
-                            
-
-                            test_batch = batch[:-1] + [entry_copy]
-                            test_body = json.dumps({"values": test_batch})
-
-                            # Si le rajout de la dernière entrée fait dépasser MAX_PAYLOAD_SIZE, on ne le rajoute pas
-                            if len(test_body.encode("utf-8")) > MAX_PAYLOAD_SIZE:
-                                # print("Dépassement lors de l'ajout d'une data")
-                                print(len(test_body.encode("utf-8")))
-                                break
-                            
-                            batch = test_batch
-                            data_index += 1
-                        
-                        if data_index < len(data_list):
-                            # Il reste des datas à batcher, on les conserve pour le prochain batch
-                            entries[entry_index]["data"] = data_list[data_index:]
-                            break  # On enverra la suite au prochain tour
-                        else:
-                            # Toutes les datas on été batché pour cet entrée
-                            entry_index += 1 
+                        data_index += 1
                     
-                    
-                    batches.append(batch)
+                    if data_index < len(data_list):
+                        # Il reste des datas à batcher, on les conserve pour le prochain batch
+                        entries[entry_index]["data"] = data_list[data_index:]
+                        break  # On enverra la suite au prochain tour
+                    else:
+                        # Toutes les datas on été batché pour cet entrée
+                        entry_index += 1 
                 
-                batches_sent = []
-                batches_error_occured = []
-                total_size = 0
-                sent_size = 0
-
-                for i, batch in enumerate(batches, start=1):
-                    body = {"values": batch}
-                    json_body = json.dumps({"values": batch})
-                    total_size += len(json_body.encode("utf-8"))
-                    
-                    try:
-                        response = self.send_request('POST', endpoint=endpoint, data=body)
-                        if response.status_code == 204:
-                            logger.debug(f"[Netilion] Compte {self.account_id} : asset {asset_id} : envoi batch {i}/{len(batches)} (payload : {len(json_body.encode('utf-8'))}o)")
-                            all_data[asset_id] = []
-                            batches_sent.append(batch)
-                            sent_size += len(json_body.encode("utf-8"))
-                        
-                        else:
-                            logger.error(f"[Netilion] Compte {self.account_id} : asset {asset_id} : erreur batch {i}/{len(batches)} (payload : {len(json_body.encode('utf-8'))}o) - {response.status_code} : {response.text}")
-                            batches_error_occured.append(batch)
-                    except Exception as e:
-                        logger.exception(f"[Netilion] Compte {self.account_id} : asset {asset_id} : erreur batch {i}/{len(batches)} (payload : {len(json_body.encode('utf-8'))}o) - Exception pendant l'envoi : {e}")
                 
-                if len(batches_sent) == len(batches):
-                    new_asset_sent = {
-                        asset_id : {
-                            "total_batches": len(batches),
-                            "batches_sent": len(batches_sent),
-                            "total_size": total_size,
-                            "sent_size": sent_size
-                        }
+                batches.append(batch)
+            
+            batches_sent = []
+            batches_error_occured = []
+            total_size = 0
+            sent_size = 0
+
+            for i, batch in enumerate(batches, start=1):
+                body = {"values": batch}
+                json_body = json.dumps({"values": batch})
+                total_size += len(json_body.encode("utf-8"))
+                
+                try:
+                    response = self.send_request('POST', endpoint=endpoint, data=body)
+                    if response.status_code == 204:
+                        logger.debug(f"[Netilion] Compte {self.account_id} : asset {asset_id} : envoi batch {i}/{len(batches)} (payload : {len(json_body.encode('utf-8'))}o)")
+                        all_data[asset_id] = []
+                        batches_sent.append(batch)
+                        sent_size += len(json_body.encode("utf-8"))
+                    
+                    else:
+                        logger.error(f"[Netilion] Compte {self.account_id} : asset {asset_id} : erreur batch {i}/{len(batches)} (payload : {len(json_body.encode('utf-8'))}o) - {response.status_code} : {response.text}")
+                        batches_error_occured.append(batch)
+                except Exception as e:
+                    logger.exception(f"[Netilion] Compte {self.account_id} : asset {asset_id} : erreur batch {i}/{len(batches)} (payload : {len(json_body.encode('utf-8'))}o) - Exception pendant l'envoi : {e}")
+            
+            if len(batches_sent) == len(batches):
+                new_asset_sent = {
+                    asset_id : {
+                        "total_batches": len(batches),
+                        "batches_sent": len(batches_sent),
+                        "total_size": total_size,
+                        "sent_size": sent_size
                     }
-                    assets_fully_sent.append(new_asset_sent)
-                else:
-                    new_asset_error = {
-                        asset_id : {
-                            "total_batches": len(batches),
-                            "batches_sent": len(batches_sent)
-                        }
-                    }
-                    assets_error_occured.append(new_asset_error)
-
-
-            # Réécriture sécurisée du fichier sans les
-            # données qui ont déjà été envoyées
-            if assets_fully_sent or assets_error_occured:
-                if assets_fully_sent:
-                    logger.info(
-                        f'[Netilion] Compte {self.account_id} - données envoyées pour les assets suivants : '
-                        f'{[f"{asset_id} [batches ({stats["batches_sent"]}/{stats["total_batches"]})  payload ({stats["sent_size"]}/{stats["total_size"]} octets)]" for d in assets_fully_sent for asset_id, stats in d.items()]}'
-                    )
-
-                    with file_lock:
-                        try:
-                            with open(filename, "w", encoding="utf-8") as f:
-                                json.dump(all_data, f, indent=2)
-                            logger.debug(f"[Netilion] Compte {self.account_id} - Fichier mis à jour après suppression des données envoyées")
-                        except Exception as e:
-                            logger.exception(f"[Netilion] Compte {self.account_id} - Erreur lors de la mise à jour du fichier JSON : {e}")
-                elif assets_error_occured:
-                    logger.error(
-                        f"[Netilion] Compte {self.account_id} - l'envoi de certains batchs a échoué : "
-                        f'{[f"{asset_id} ({stats["batches_sent"]}/{stats["total_batches"]} batch)" for d in assets_error_occured for asset_id, stats in d.items()]}'
-                    )
+                }
+                assets_fully_sent.append(new_asset_sent)
             else:
-                logger.warning(f'[Netilion] Compte {self.account_id} : aucune donnée à envoyer')
-            if assets_error_occured:
-                logger.warning(f"[Netilion] ⚠️ L'envoi n'a pas pu être effectué pour les assets suivant : {assets_error_occured}")
+                new_asset_error = {
+                    asset_id : {
+                        "total_batches": len(batches),
+                        "batches_sent": len(batches_sent)
+                    }
+                }
+                assets_error_occured.append(new_asset_error)
+
+
+        # Réécriture sécurisée du fichier sans les
+        # données qui ont déjà été envoyées
+        if assets_fully_sent or assets_error_occured:
+            if assets_fully_sent:
+                logger.info(
+                    f'[Netilion] Compte {self.account_id} - données envoyées pour les assets suivants : '
+                    f'{[f"{asset_id} [batches ({stats["batches_sent"]}/{stats["total_batches"]})  payload ({stats["sent_size"]}/{stats["total_size"]} octets)]" for d in assets_fully_sent for asset_id, stats in d.items()]}'
+                )
+
+                with file_lock:
+                    try:
+                        with open(filename, "w", encoding="utf-8") as f:
+                            json.dump(all_data, f, indent=2)
+                        logger.debug(f"[Netilion] Compte {self.account_id} - Fichier mis à jour après suppression des données envoyées")
+                    except Exception as e:
+                        logger.exception(f"[Netilion] Compte {self.account_id} - Erreur lors de la mise à jour du fichier JSON : {e}")
+            elif assets_error_occured:
+                logger.error(
+                    f"[Netilion] Compte {self.account_id} - l'envoi de certains batchs a échoué : "
+                    f'{[f"{asset_id} ({stats["batches_sent"]}/{stats["total_batches"]} batch)" for d in assets_error_occured for asset_id, stats in d.items()]}'
+                )
+        else:
+            logger.warning(f'[Netilion] Compte {self.account_id} : aucune donnée à envoyer')
+        if assets_error_occured:
+            logger.warning(f"[Netilion] ⚠️ L'envoi n'a pas pu être effectué pour les assets suivant : {assets_error_occured}")
 
 
 
@@ -568,7 +573,7 @@ class NetilionAccount:
 
         url = f"{BASE_URL}/{api_version}/{endpoint}"
         # print(url)
-        
+
         response = requests.request(method, url, json=data, params=params, headers=headers)
         
         self.api_calls_used += 2
@@ -1119,51 +1124,51 @@ class Instrumentation:
             nodes=set(data.get("nodes", [])) 
         )
 
-class Value:
-    def __init__(self, timestamp: str, value, status: str):
-        self.timestamp: str = timestamp
-        self.value = value
-        self.status: int = status
+# class Value:
+#     def __init__(self, timestamp: str, value, status: str):
+#         self.timestamp: str = timestamp
+#         self.value = value
+#         self.status: int = status
 
-    def to_dict(self):
-        return {
-            "timestamp": self.timestamp,
-            "value": self.value,
-            "status": self.status
-        }
+#     def to_dict(self):
+#         return {
+#             "timestamp": self.timestamp,
+#             "value": self.value,
+#             "status": self.status
+#         }
 
-    @classmethod
-    def from_dict(cls, data):
-        return cls(
-            timestamp=data["timestamp"],
-            value=data["value"],
-            status=data["status"]
-        )
+#     @classmethod
+#     def from_dict(cls, data):
+#         return cls(
+#             timestamp=data["timestamp"],
+#             value=data["value"],
+#             status=data["status"]
+#         )
 
-class ValueSet:
-    def __init__(self, asset: int, key: str, unit_id: int):
-        self.asset: int = asset  
-        self.key: str = key
-        self.unit_id: int = unit_id
-        self.values: list[Value] = []
+# class ValueSet:
+#     def __init__(self, asset: int, key: str, unit_id: int):
+#         self.asset: int = asset  
+#         self.key: str = key
+#         self.unit_id: int = unit_id
+#         self.values: list[Value] = []
 
-    def to_dict(self):
-        return {
-            "key": self.key,
-            "unit": {
-                self.unit_id,
-            },
-            "data": [value.to_dict() for value in self.values]
-        }
+#     def to_dict(self):
+#         return {
+#             "key": self.key,
+#             "unit": {
+#                 self.unit_id,
+#             },
+#             "data": [value.to_dict() for value in self.values]
+#         }
 
-    @classmethod
-    def from_dict(cls, data):
-        instance = cls(
-            key=data["key"],
-            unit_id=data["unit"]
-        )
-        instance.values = [Value.from_dict(v) for v in data.get("data", [])]
-        return instance
+#     @classmethod
+#     def from_dict(cls, data):
+#         instance = cls(
+#             key=data["key"],
+#             unit_id=data["unit"]
+#         )
+#         instance.values = [Value.from_dict(v) for v in data.get("data", [])]
+#         return instance
 
 class Binding:
     def __init__(self, identification: str, protocol: str, slaveadress: str, registeradress: str,

@@ -144,7 +144,9 @@ def store_data_to_json(binding, new_data_entry):
 
 
 def readAllBindings(force=False):
-                
+
+        # Empêche l'exécution si la passerelle n'est pas en mode production
+        # et que le forçage n'est pas actif
         if PasserelleNetilion().mode != "production" and not force:
             return
         

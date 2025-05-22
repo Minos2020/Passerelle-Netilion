@@ -265,6 +265,7 @@ def save_netilion_config():
                     password=acc_dict["password"],
                     changes_to_save=lambda: save_config(PasserelleNetilion().encryption)
                 )
+                print(account.account_id)
                 passerelle.add_account(account)
                 
                 changedValues.append(account.account_id)
@@ -293,14 +294,13 @@ def save_netilion_config():
                 account.netilion_rate_mode = acc_dict["netilion_rate_mode"]
 
                 if former_netilion_rate != new_netilion_rate:
-                    print(f"Changment de rate détecté pour le compte {account.account_id}")
-                    
                     changedValues.append(account.account_id)
 
             updated_accounts.append(account)
         
         # Ne conserver que les comptes mis à jour ou ajoutés
         passerelle.accounts = updated_accounts
+        print([account.to_dict() for account in passerelle.accounts])
         save_config(passerelle.encryption)
 
         if any(changedValues):            
@@ -439,7 +439,6 @@ def delete_object():
 @login_required  # 🔒 Protège cette route
 def read_modbus():
     readAllBindings()
-    print("hey")
 
     return jsonify({"success": False})
 
@@ -448,8 +447,6 @@ def read_modbus():
 @login_required  # 🔒 Protège cette route
 def send_data():
     account = PasserelleNetilion().getAccountByID(2)
-
-    print("coucou")
     account.send_data_to_netilion()
 
     return jsonify({"success": False})

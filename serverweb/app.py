@@ -76,7 +76,7 @@ def set_new_timer(timer_type: str, **kwargs):
             active_timers[account_id] = timer
             logger.debug(f"[Netilion] Compte {account_id} - Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.info(f"[Netilion] Compte {account_id} - Nouveau timer send_to_netilion ({timer.interval}s)")
+            logger.debug(f"[Netilion] Compte {account_id} - Nouveau timer send_to_netilion ({timer.interval}s)")
         else:
             logger.debug(f"[Netilion] Compte {account_id} - Mode production OFF, ou taux nul : timer send_to_netilion non lancé.")
             pass
@@ -108,7 +108,7 @@ def set_new_timer(timer_type: str, **kwargs):
             active_timers["modbus"] = timer
             logger.debug(f"[Modbus] Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.info(f"[Modbus] Nouveau timer modbus ({timer.interval}s)")
+            logger.debug(f"[Modbus] Nouveau timer modbus ({timer.interval}s)")
         else:
             logger.debug("[Modbus] Mode production inactif : le timer modbus ne redémarre pas.")
     
@@ -141,7 +141,7 @@ def set_new_timer(timer_type: str, **kwargs):
             active_timers["daily_accounts_sync"] = timer
             logger.debug(f"[Sync] Timer lancé à {time.time()} id={id(timer)}")
 
-            logger.info(f"[Sync] Nouveau timer synchronisation journalière  ({timer.interval}s)")
+            logger.debug(f"[Sync] Nouveau timer synchronisation journalière  ({timer.interval}s)")
         else:
             logger.debug("[Sync] Mode production inactif : le timer sync ne redémarre pas.")
 
@@ -213,6 +213,7 @@ def start_background_tasks():
     stop_event = threading.Event()
     thread = threading.Thread(target=periodic_check, daemon=True)
     thread.start()
+    logger.critical("  -- DEMARRAGE DE LA PASSERELLE --  ")
 
     def graceful_shutdown(*args):
         print("⏹️  Arrêt propre en cours...")
@@ -221,6 +222,7 @@ def start_background_tasks():
         for timer in active_timers.values():
             timer.cancel()
         print("✅ Threads annulés. Fermeture de Flask...")
+        logger.critical("  -- ARRET DE LA PASSERELLE --  ")
         sys.exit(0)
 
     signal.signal(signal.SIGINT, graceful_shutdown)
