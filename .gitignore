@@ -23,4 +23,4 @@ logs/
 
 
 # Fichiers divers
-serverweb\encryption_temp.py
+serverweb/encryption_temp.py
