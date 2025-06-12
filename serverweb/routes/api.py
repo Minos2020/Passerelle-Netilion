@@ -63,21 +63,40 @@ def get_config_encrypted():
             data = f.read()
     return data
 
+# Récupère la config chiffrée pour générer un fichier téléchargeable depuis l'interface web
+@api_bp.route('/get_config_file_encrypted', methods=['GET'])
+@login_required  # 🔒 Protège cette route
+def get_config_file_encrypted():
+    # print(type(passerelle.to_dict()["encryption"]))
+    # print(passerelle.to_dict()["encryption"])
+    save_config(True)
+    with open(CONFIG_PATH, "rb") as f:
+            data = f.read()
+    return data
+
 # Charge un fichier de configuration depuis l'interface web
 @api_bp.route('/load_config_file', methods=['POST'])
 @login_required  # 🔒 Protège cette route
 def load_config_encrypted():
     try:
-        # Déchiffrer les données reçues
-        decrypted_data = decrypt_data(request.data, CONFIG_ENCRYPTION_KEY)
+        # On vérifie si le fichier reçu est chiffré ou non
+        is_encrypted = request.headers.get("X-Encrypted", "false").lower() == "true"
+        raw_data = request.data
+
+        if is_encrypted:
+            decrypted_data = decrypt_data(raw_data, CONFIG_ENCRYPTION_KEY)
+            json_data = json.loads(decrypted_data)
+            # Sauvegarde du fichier chiffré tel quel
+            with open(CONFIG_PATH, "wb") as f:
+                f.write(raw_data)
+
+        else:
+            json_data = json.loads(raw_data)  # En clair
+            # Sauvegarde du fichier en clair
+            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                json.dump(json_data, f, indent=2)
         
-        # Vérifier si le contenu est bien un JSON valide
-        json_data = json.loads(decrypted_data)  # Déclenche une erreur si invalide
-        
-        # Sauvegarder les données chiffrées dans le fichier (on garde les données en clair en mémoire)
-        with open(CONFIG_PATH, "wb") as f:
-            f.write(request.data)  # Stockage chiffré
-        load_config()
+        load_config(False)
         print("✅ Configuration mise à jour avec succès !")
         
         return jsonify({"status": "success"})

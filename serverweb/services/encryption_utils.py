@@ -61,6 +61,8 @@ def decrypt_data(data, key: str) -> str:
 
 def encrypt_data_into_file(data: json, file_name: str, key: str, encrypted=True):
     try:
+        if key is None:
+            raise ValueError("La clé de chiffrement est None. Vérifiez que la clé a bien été chargée.")
         if encrypted:
             fernet = Fernet(key)
             encrypted_data = fernet.encrypt(data)

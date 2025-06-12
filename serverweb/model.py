@@ -832,6 +832,8 @@ class NetilionAccount:
             }
         }
         response = self.send_request("POST", "assets", data)
+        print(response)
+        print(response.json())
         data = response.json()
         createdAssetID = data.get("id")
         
