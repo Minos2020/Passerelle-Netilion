@@ -47,9 +47,9 @@
     document.addEventListener("DOMContentLoaded", function () {
 
       const modeToggle = document.getElementById("mode-toggle");
-      const encrToggle = document.getElementById("encryption-toggle");
+      // const encrToggle = document.getElementById("encryption-toggle");
       const modeToggleLabel = document.getElementById("mode-toggle-label");
-      const encrToggleLabel = document.getElementById("encryption-toggle-label");
+      // const encrToggleLabel = document.getElementById("encryption-toggle-label");
 
       fetch("/api/get_general_config")
         .then(response => response.json())
@@ -60,8 +60,8 @@
           modeToggle.checked = isProduction;
           modeToggleLabel.textContent = isProduction ? "Mode production" : "Mode configuration";
           
-          encrToggle.checked = data.encryption;
-          encrToggleLabel.textContent = data.encryption ? "Configuration chiffrée" : "Configuration en clair";
+          // encrToggle.checked = data.encryption;
+          // encrToggleLabel.textContent = data.encryption ? "Configuration chiffrée" : "Configuration en clair";
           
         });
 
@@ -74,21 +74,21 @@
           }
         });
         
-        encrToggle.addEventListener("change", function () {
-          if (this.checked) {
-            encrToggleLabel.textContent = "Configuration chiffrée";
+        // encrToggle.addEventListener("change", function () {
+        //   if (this.checked) {
+        //     encrToggleLabel.textContent = "Configuration chiffrée";
             
-          } else {
-            encrToggleLabel.textContent = "Configuration en clair";
-          }
-        });
+        //   } else {
+        //     encrToggleLabel.textContent = "Configuration en clair";
+        //   }
+        // });
 
       document.getElementById("parameters-form").addEventListener("submit", function (event) {
         event.preventDefault();
         const configData = {
           modbus_rate: parseInt(document.getElementById("rate").value, 10),
           mode: document.getElementById("mode-toggle").checked ? "production" : "configuration",
-          encryption: document.getElementById("encryption-toggle").checked
+          // encryption: document.getElementById("encryption-toggle").checked
         };
 
         fetch("/api/save_general_config", {
@@ -141,14 +141,14 @@
           </label>
           <span id="mode-toggle-label" style="min-width: 175px;">...</span>
         </div>
-        <div class="switch-container" title="Si activé, le fichier de configuration est crypté (au téléchargement, au chargement et sur la machine)
+        <!-- <div class="switch-container" title="Si activé, le fichier de configuration est crypté (au téléchargement, au chargement et sur la machine)
 Si désactivé il est en clair.">
           <label class="switch">
             <input type="checkbox" id="encryption-toggle">
             <span class="slider round"></span>
           </label>
           <span id="encryption-toggle-label" style="min-width: 175px;">...</span>
-        </div>
+        </div> -->
 
       <div class="parameters-box" title="Période d'interrogation des registres modbus pour chaque binding.
 (toutes les x secondes, chacun des registres configurés dans les bindings sera interrogé)
