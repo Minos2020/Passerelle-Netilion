@@ -1,4 +1,9 @@
-import json, time, os, psutil, socket, subprocess
+import json
+import time
+import os
+import psutil
+import socket
+import subprocess
 from services.encryption_utils import decrypt_data_from_file, encrypt_data_into_file
 from model import PasserelleNetilion
 
@@ -13,18 +18,23 @@ GLOBAL_CONFIG = {}
 config_modified = False
 last_save_time = time.time()
 
+
 def get_config() -> dict:
     return GLOBAL_CONFIG
+
 
 def set_config(new_config: dict):
     global GLOBAL_CONFIG
     GLOBAL_CONFIG = new_config
+
 
 def attach_callbacks(passerelle: PasserelleNetilion):
     for account in passerelle.accounts:
         account.changes_to_save = lambda: save_config(False)
 
 # Chargement de la config en mémoire depuis le fichier de sauvegarde
+
+
 def load_config(encrypted=True):
     """
     Charge la configuration depuis un fichier JSON;
@@ -33,24 +43,26 @@ def load_config(encrypted=True):
     """
     global GLOBAL_CONFIG
     global accounts
-    print(f"💾 Chargement de la configuration {"CHIFFREE" if encrypted else "EN CLAIR"}")
+    print(
+        f"💾 Chargement de la configuration {'CHIFFREE' if encrypted else 'EN CLAIR'}")
     try:
-        decrypted_conf = decrypt_data_from_file(CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
+        decrypted_conf = decrypt_data_from_file(
+            CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
         dataconf = json.loads(decrypted_conf)
 
         passerelle = PasserelleNetilion.from_dict(dataconf)
-        
+
         # Les identifiants du webserver sont chargés depuis des variables d'environnement
         passerelle.username = os.getenv('USER_NAME')
         passerelle.password = os.getenv('PASSWORD')
-        
+
         attach_callbacks(passerelle)
 
         print("\n✅ Configuration chargée en mémoire !\n")
     except Exception as e:
         print(f"❌ Erreur lors du chargement de la configuration : {e}")
         passerelle = PasserelleNetilion()
-    
+
 
 # Ecrase la configuration du fichier de sauvegarde avec celle qui est en mémoire
 def save_config(encrypted=True):
@@ -59,14 +71,18 @@ def save_config(encrypted=True):
     try:
         passerelle = PasserelleNetilion()
         data_to_encrypt = json.dumps(passerelle.to_dict(), indent=4)
-        encrypt_data_into_file(data_to_encrypt.encode(), CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
+        encrypt_data_into_file(data_to_encrypt.encode(),
+                               CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
         print("\n💾 Configuration enregistrée !\n")
         config_modified = False
         last_save_time = time.time()
     except Exception as e:
-        raise Exception(f"Erreur inattendue lors de l'enregistrement de la configuration : {e}") from e
+        raise Exception(
+            f"Erreur inattendue lors de l'enregistrement de la configuration : {e}") from e
 
 # Sauvegarde la config toutes les xx secondes, si elle a été modifiée entre temps
+
+
 def save_periodically():
     """Thread de sauvegarde automatique de la configuration."""
     global config_modified, last_save_time
@@ -82,12 +98,14 @@ def get_config_value(key):
     return find_nested_key(temp, key)
 
 # trouver une clé imbriquée dans un fichier json (dict)
+
+
 def find_nested_key(data, key):
     """
     Recherche récursivement une clé dans un dictionnaire JSON imbriqué.
     Renvoie la valeur associée à la première occurrence trouvée.
     """
-    if isinstance(data, dict):  
+    if isinstance(data, dict):
         if key in data:
             return data[key]
         for value in data.values():
@@ -115,12 +133,9 @@ def set_config_value(key, value):
         if update_nested_key(GLOBAL_CONFIG, key, value):
             config_modified = True  # Marque la config comme modifiée
 
-
-            save_config(False)  #A ENLEVER ENSUITE
+            save_config(False)  # A ENLEVER ENSUITE
             # lorsqu'un bouton écraser config sera implémenté
 
-
-            
             return True  # Modification réussie
         else:
             print("⚠ Clé non trouvée dans la variable 'config'.")
@@ -129,6 +144,7 @@ def set_config_value(key, value):
     except Exception as e:
         print(f"❌ Erreur lors de la modification du fichier JSON : {e}")
         return False
+
 
 def update_nested_key(data, key, new_value):
     """
@@ -172,13 +188,11 @@ def get_element_from_array(array, key, value):
     return None
 
 
-
-
 if __name__ == '__main__':
 
     # load_dotenv()
     # CONFIG_ENCRYPTION_KEY = os.getenv("CONFIG_ENCRYPTION_KEY")
-    
+
     # encrypt_file(CONFIG_PATH, CONFIG_ENCRYPTION_KEY)
 
     # print ("Avant chargement")
