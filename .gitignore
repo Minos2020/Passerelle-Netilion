@@ -9,6 +9,11 @@ venv
 # serverweb/.env
 # .env
 
+# Ignorer le fichier de configuration, spécifique à l'installation et qui contient des tokens d'accès Netilion
+serverweb/configuration.conf
+configuration.conf
+
+
 # Ignorer les données enregistrées, qui sont spécifique à une installation donnée
 serverweb/data
 
@@ -17,15 +22,11 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 
-# Fichiers de log
+# Fichiers de log, qui sont spécifique à une installation donnée
 *.log
 *.log.*
 logs/
 
-# Fichiers .env à la racine
-.env
 
-
-
-# Fichiers divers
+# Fichiers divers inutiles pour le projet final
 serverweb/encryption_temp.py
