@@ -6,8 +6,8 @@ venv/
 venv
 
 # Ignorer les fichiers de configuration et secrets
-serverweb/.env
-.env
+# serverweb/.env
+# .env
 
 # Ignorer les données enregistrées, qui sont spécifique à une installation donnée
 serverweb/data
