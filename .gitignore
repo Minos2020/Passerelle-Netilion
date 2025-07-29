@@ -1,6 +1,9 @@
 # Ignorer l'environnement virtuel
 serverweb/venv/
 .venv/
+venv/
+.venv
+venv
 
 # Ignorer les fichiers de configuration et secrets
 serverweb/.env

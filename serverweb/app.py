@@ -1,8 +1,9 @@
-import os
-import sys
+import os, sys
+# Change le répertoire de travail au dossier du script
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 from dotenv import load_dotenv
-
+load_dotenv()  # Charge les variables d'environnement depuis .env
 
 import signal
 import time
@@ -15,9 +16,7 @@ from services.modbus_utils import readAllBindings
 from routes.web import web_bp
 from routes.api import api_bp
 from services.logger_utils import logger
-# Change le répertoire de travail au dossier du script
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-load_dotenv()  # Charge les variables d'environnement depuis .env
+
 
 # pour suivre les changements de mode de la passerelle
 former_mode = None
