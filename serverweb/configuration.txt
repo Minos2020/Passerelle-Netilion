@@ -4,5 +4,5 @@
     "networks": [],
     "modbus_rate": 60,
     "encryption": false,
-    "mode": "configuration"
+    "mode": "production"
 }
