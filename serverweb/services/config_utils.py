@@ -8,7 +8,7 @@ from services.encryption_utils import decrypt_data_from_file, encrypt_data_into_
 from model import PasserelleNetilion
 
 # Chemin du fichier de configuration
-CONFIG_PATH = "configuration.conf"
+CONFIG_BASE_PATH = "configuration"
 SAVE_INTERVAL = 60  # secondes
 
 CONFIG_ENCRYPTION_KEY = os.getenv("CONFIG_ENCRYPTION_KEY")
@@ -32,6 +32,11 @@ def attach_callbacks(passerelle: PasserelleNetilion):
     for account in passerelle.accounts:
         account.changes_to_save = lambda: save_config(False)
 
+def get_config_path(encrypted: bool) -> str:
+    """Retourne le chemin du fichier config en fonction du chiffrement."""
+    return f"{CONFIG_BASE_PATH}.{'conf' if encrypted else 'txt'}"
+
+
 # Chargement de la config en mémoire depuis le fichier de sauvegarde
 
 
@@ -46,8 +51,10 @@ def load_config(encrypted=True):
     print(
         f"💾 Chargement de la configuration {'CHIFFREE' if encrypted else 'EN CLAIR'}")
     try:
+        config_path = get_config_path(encrypted=encrypted)
+
         decrypted_conf = decrypt_data_from_file(
-            CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
+            config_path, CONFIG_ENCRYPTION_KEY, encrypted)
         dataconf = json.loads(decrypted_conf)
 
         passerelle = PasserelleNetilion.from_dict(dataconf)
@@ -71,9 +78,21 @@ def save_config(encrypted=True):
     try:
         passerelle = PasserelleNetilion()
         data_to_encrypt = json.dumps(passerelle.to_dict(), indent=4)
+        config_path = get_config_path(encrypted=encrypted)
+
+        # on recupère le chemin "inverse" pour le supprimer
+        # et ainsi ne garder que la configuration qui nous intéresse
+        old_path = get_config_path(encrypted=not encrypted)
+
         encrypt_data_into_file(data_to_encrypt.encode(),
-                               CONFIG_PATH, CONFIG_ENCRYPTION_KEY, encrypted)
+                               config_path, CONFIG_ENCRYPTION_KEY, encrypted)
         print("\n💾 Configuration enregistrée !\n")
+        
+        # Suppression de l'ancien fichier s'il existe
+        if os.path.exists(old_path):
+            os.remove(old_path)
+            print(f"🧹 Ancienne configuration supprimée : {old_path}")
+
         config_modified = False
         last_save_time = time.time()
     except Exception as e:

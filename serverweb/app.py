@@ -230,18 +230,20 @@ def start_background_tasks():
     thread.start()
     logger.critical("  -- DEMARRAGE DE LA PASSERELLE --  ")
 
-    def graceful_shutdown(*args):
-        print("⏹️  Arrêt propre en cours...")
-        print("Enregistrement de la configuration...")
-        save_config(False)
-        for timer in active_timers.values():
-            timer.cancel()
-        print("✅ Threads annulés. Fermeture de Flask...")
-        logger.critical("  -- ARRET DE LA PASSERELLE --  ")
-        sys.exit(0)
+    # ⚠️ Enregistrement des signaux uniquement si on est dans le thread principal
+    if threading.current_thread() is threading.main_thread():
+        def graceful_shutdown(*args):
+            print("⏹️  Arrêt propre en cours...")
+            print("Enregistrement de la configuration...")
+            save_config(False)
+            for timer in active_timers.values():
+                timer.cancel()
+            print("✅ Threads annulés. Fermeture de Flask...")
+            logger.critical("  -- ARRET DE LA PASSERELLE --  ")
+            sys.exit(0)
 
-    signal.signal(signal.SIGINT, graceful_shutdown)
-    signal.signal(signal.SIGTERM, graceful_shutdown)
+        signal.signal(signal.SIGINT, graceful_shutdown)
+        signal.signal(signal.SIGTERM, graceful_shutdown)
 
 # ✅ Gunicorn : il suffit d'importer `app` depuis ce fichier
 # Gunicorn exécutera le code ci-dessus, mais pas le bloc `if __name__ == '__main__'`

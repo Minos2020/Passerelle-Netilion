@@ -58,8 +58,9 @@ def get_config_as_JSON():
 def get_config_encrypted():
     # print(type(passerelle.to_dict()["encryption"]))
     # print(passerelle.to_dict()["encryption"])
-    save_config(PasserelleNetilion().encryption)
-    with open(CONFIG_PATH, "rb") as f:
+    encryption = PasserelleNetilion().encryption
+    save_config(encryption)
+    with open(get_config_path(encryption), "rb") as f:
             data = f.read()
     return data
 
@@ -70,8 +71,9 @@ def get_config_file_encrypted():
     # print(type(passerelle.to_dict()["encryption"]))
     # print(passerelle.to_dict()["encryption"])
     save_config(True)
-    with open(CONFIG_PATH, "rb") as f:
+    with open(get_config_path(encrypted=True), "rb") as f:
             data = f.read()
+            print(data)
     return data
 
 # Charge un fichier de configuration depuis l'interface web
@@ -82,18 +84,19 @@ def load_config_encrypted():
         # On vérifie si le fichier reçu est chiffré ou non
         is_encrypted = request.headers.get("X-Encrypted", "false").lower() == "true"
         raw_data = request.data
+        encryption = PasserelleNetilion().encryption
 
         if is_encrypted:
             decrypted_data = decrypt_data(raw_data, CONFIG_ENCRYPTION_KEY)
             json_data = json.loads(decrypted_data)
             # Sauvegarde du fichier chiffré tel quel
-            with open(CONFIG_PATH, "wb") as f:
+            with open(get_config_path(encrypted=encryption), "wb") as f:
                 f.write(raw_data)
 
         else:
             json_data = json.loads(raw_data)  # En clair
             # Sauvegarde du fichier en clair
-            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            with open(get_config_path(encrypted=encryption), "w", encoding="utf-8") as f:
                 json.dump(json_data, f, indent=2)
         
         load_config(False)

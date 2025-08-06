@@ -26,7 +26,7 @@ class PasserelleNetilion:
             cls._instance.modbus_rate = 60
             cls._instance.username = ""
             cls._instance.password = ""
-            cls._instance.encryption = True
+            cls._instance.encryption = False
             cls._instance.mode = False
         return cls._instance
 
